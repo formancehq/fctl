@@ -5,8 +5,6 @@ package ledgerv3
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
-	"math/big"
 )
 
 // State - Current sync state (SYNCING = catching up, FOLLOWING = up to date)
@@ -41,24 +39,13 @@ type MirrorSyncProgress struct {
 	// Most recent mirror sync error (null if healthy)
 	MirrorSyncError *MirrorSyncError `json:"error,omitempty"`
 	// Last ingested v2 log ID
-	Cursor *big.Int `bigint:"string" json:"cursor"`
+	Cursor int64 `json:"cursor"`
 	// Number of remaining logs to sync (sourceLogCount - cursor)
-	RemainingLogs *big.Int `bigint:"string" json:"remainingLogs"`
+	RemainingLogs int64 `json:"remainingLogs"`
 	// Latest known log ID in the v2 source
-	SourceLogCount *big.Int `bigint:"string" json:"sourceLogCount"`
+	SourceLogCount int64 `json:"sourceLogCount"`
 	// Current sync state (SYNCING = catching up, FOLLOWING = up to date)
 	State State `json:"state"`
-}
-
-func (m MirrorSyncProgress) MarshalJSON() ([]byte, error) {
-	return utils.MarshalJSON(m, "", false)
-}
-
-func (m *MirrorSyncProgress) UnmarshalJSON(data []byte) error {
-	if err := utils.UnmarshalJSON(data, &m, "", false, nil); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (m *MirrorSyncProgress) GetMirrorSyncError() *MirrorSyncError {
@@ -68,23 +55,23 @@ func (m *MirrorSyncProgress) GetMirrorSyncError() *MirrorSyncError {
 	return m.MirrorSyncError
 }
 
-func (m *MirrorSyncProgress) GetCursor() *big.Int {
+func (m *MirrorSyncProgress) GetCursor() int64 {
 	if m == nil {
-		return big.NewInt(0)
+		return 0
 	}
 	return m.Cursor
 }
 
-func (m *MirrorSyncProgress) GetRemainingLogs() *big.Int {
+func (m *MirrorSyncProgress) GetRemainingLogs() int64 {
 	if m == nil {
-		return big.NewInt(0)
+		return 0
 	}
 	return m.RemainingLogs
 }
 
-func (m *MirrorSyncProgress) GetSourceLogCount() *big.Int {
+func (m *MirrorSyncProgress) GetSourceLogCount() int64 {
 	if m == nil {
-		return big.NewInt(0)
+		return 0
 	}
 	return m.SourceLogCount
 }

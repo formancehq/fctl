@@ -481,6 +481,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -664,6 +667,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -783,6 +789,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -837,6 +846,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -902,6 +914,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -1022,6 +1037,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -1119,6 +1137,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -1189,6 +1210,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -1265,6 +1289,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -1276,7 +1303,7 @@
       "post": {
         "operationId": "v3CreateTransaction",
         "summary": "Create a new transaction",
-        "description": "Creates a new transaction in the specified ledger with the specified postings. Requires `ledger:write` scope.",
+        "description": "Creates a new transaction in the specified ledger with the specified postings. Requires `ledger:write` scope.\nSigned requests use `application/json` (including MIME parameters) with\n`request` and standard-base64 `payload`. Either signing header, even if\nempty, selects this wrapper; with neither header present, the ordinary REST body applies.\nRuntime headers choose the representation from the documented anyOf.\nThe signed protobuf batch must\nequal the route/body/Idempotency-Key-derived batch in full. Supply exactly\none nonempty Formance-Signing-Key-Id and Formance-Signature header; the\nlatter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,\nempty or repeated signing headers, invalid base64 and wrong signature\nlength return 400. Signing headers with a non-JSON or missing content type return 415.\nSignature enforcement\nreturns 401 `UNAUTHENTICATED` when required but absent and 403\n`PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched\nsignatures. Malformed signed envelopes return 400. The complete\nwrapper counts toward the 4 MiB body limit. JWT scopes still apply.\n",
         "tags": [
           "ledger.v3"
         ],
@@ -1295,13 +1322,26 @@
           },
           {
             "$ref": "#/components/parameters/ledgerV3_IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_SigningKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_RequestSignature"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ledgerV3_CreateTransactionRequest"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ledgerV3_CreateTransactionRequest"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ledgerV3_SignedCreateTransactionRequest"
+                  }
+                ]
               }
             }
           },
@@ -1364,6 +1404,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -1490,6 +1533,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -1553,6 +1599,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -1663,6 +1712,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -1736,6 +1788,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -1835,6 +1890,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -1911,6 +1969,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -1970,6 +2031,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -2051,6 +2115,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -2062,7 +2129,7 @@
       "post": {
         "operationId": "v3SaveTransactionMetadata",
         "summary": "Save transaction metadata",
-        "description": "Saves metadata for a specific transaction in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).",
+        "description": "Saves metadata for a specific transaction in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).\nSigned requests use `application/json` (including MIME parameters) with\n`request` and standard-base64 `payload`. Either signing header, even if\nempty, selects this wrapper; with neither header present, the ordinary REST body applies.\nRuntime headers choose the representation from the documented anyOf.\nThe signed protobuf batch must\nequal the route/body/Idempotency-Key-derived batch in full. Supply exactly\none nonempty Formance-Signing-Key-Id and Formance-Signature header; the\nlatter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,\nempty or repeated signing headers, invalid base64 and wrong signature\nlength return 400. Signing headers with a non-JSON or missing content type return 415.\nSignature enforcement\nreturns 401 `UNAUTHENTICATED` when required but absent and 403\n`PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched\nsignatures. Malformed signed envelopes return 400. The complete\nwrapper counts toward the 4 MiB body limit. JWT scopes still apply.\n",
         "tags": [
           "ledger.v3"
         ],
@@ -2081,22 +2148,35 @@
           },
           {
             "$ref": "#/components/parameters/ledgerV3_IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_SigningKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_RequestSignature"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/ledgerV3_MetadataValue"
-                },
-                "description": "Metadata key-value pairs (supports typed values)",
-                "example": {
-                  "reason": "correction",
-                  "source": "support",
-                  "priority": 1
-                }
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/ledgerV3_MetadataValue"
+                    },
+                    "description": "Metadata key-value pairs (supports typed values)",
+                    "example": {
+                      "reason": "correction",
+                      "source": "support",
+                      "priority": 1
+                    }
+                  },
+                  {
+                    "$ref": "#/components/schemas/ledgerV3_SignedSaveTransactionMetadataRequest"
+                  }
+                ]
               }
             }
           },
@@ -2129,6 +2209,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -2193,6 +2276,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -2204,7 +2290,7 @@
       "delete": {
         "operationId": "v3DeleteTransactionMetadata",
         "summary": "Delete transaction metadata",
-        "description": "Deletes a metadata key for a specific transaction in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).",
+        "description": "Deletes a metadata key for a specific transaction in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).\nSigned requests use `application/json` (including MIME parameters) with\n`request` and standard-base64 `payload`. Either signing header, even if\nempty, selects this wrapper; with neither header present, the ordinary REST body applies.\nRuntime headers choose the representation from the documented anyOf.\nThe signed protobuf batch must\nequal the route/body/Idempotency-Key-derived batch in full. Supply exactly\none nonempty Formance-Signing-Key-Id and Formance-Signature header; the\nlatter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,\nempty or repeated signing headers, invalid base64 and wrong signature\nlength return 400. Signing headers with a non-JSON or missing content type return 415.\nSignature enforcement\nreturns 401 `UNAUTHENTICATED` when required but absent and 403\n`PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched\nsignatures. Malformed signed envelopes return 400. The complete\nwrapper counts toward the 4 MiB body limit. JWT scopes still apply.\n",
         "tags": [
           "ledger.v3"
         ],
@@ -2226,8 +2312,25 @@
           },
           {
             "$ref": "#/components/parameters/ledgerV3_IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_SigningKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_RequestSignature"
           }
         ],
+        "requestBody": {
+          "description": "Required when either signing header is present; request must be null. Unsigned DELETE remains bodyless.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ledgerV3_SignedDeleteTransactionMetadataRequest"
+              }
+            }
+          },
+          "required": false
+        },
         "responses": {
           "204": {
             "description": "Transaction metadata deleted successfully"
@@ -2256,6 +2359,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -2267,7 +2373,7 @@
       "post": {
         "operationId": "v3RevertTransaction",
         "summary": "Revert a transaction",
-        "description": "Reverts a transaction by creating a reverse transaction that undoes its effects. Requires `ledger:write` scope.\nThe body is optional; an absent or empty body uses default options. Supplied\noptions and metadata are decoded for both known-length and HTTP/1.1 chunked\nrequests. Malformed or truncated JSON, extra values, trailing non-whitespace\nand options of the wrong JSON type (for example `\"atEffectiveDate\": \"true\"`\nor a non-object `metadata`) return 400 before applying the revert. A JSON\n`null` option uses its default. The complete body, including trailing\nwhitespace, counts towards the 4 MiB limit; exceeding it returns 413.\n",
+        "description": "Reverts a transaction by creating a reverse transaction that undoes its effects. Requires `ledger:write` scope.\nThe body is optional; an absent or empty body uses default options. Supplied\noptions and metadata are decoded for both known-length and HTTP/1.1 chunked\nrequests. Malformed or truncated JSON, extra values, trailing non-whitespace\nand options of the wrong JSON type (for example `\"atEffectiveDate\": \"true\"`\nor a non-object `metadata`) return 400 before applying the revert. A JSON\n`null` option uses its default. The complete body, including trailing\nwhitespace, counts towards the 4 MiB limit; exceeding it returns 413.\nSigned requests use `application/json` (including MIME parameters) with\n`request` and standard-base64 `payload`. Either signing header, even if\nempty, selects this wrapper; with neither header present, the ordinary REST body applies.\nRuntime headers choose the representation from the documented anyOf.\nThe signed protobuf batch must\nequal the route/body/Idempotency-Key-derived batch in full. Supply exactly\none nonempty Formance-Signing-Key-Id and Formance-Signature header; the\nlatter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,\nempty or repeated signing headers, invalid base64 and wrong signature\nlength return 400. Signing headers with a non-JSON or missing content type return 415.\nSignature enforcement\nreturns 401 `UNAUTHENTICATED` when required but absent and 403\n`PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched\nsignatures. Malformed signed envelopes return 400. The complete\nwrapper counts toward the 4 MiB body limit. JWT scopes still apply.\n",
         "tags": [
           "ledger.v3"
         ],
@@ -2289,13 +2395,26 @@
           },
           {
             "$ref": "#/components/parameters/ledgerV3_IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_SigningKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_RequestSignature"
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ledgerV3_RevertTransactionRequestBody"
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ledgerV3_RevertTransactionRequestBody"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ledgerV3_SignedRevertTransactionRequest"
+                  }
+                ]
               }
             }
           },
@@ -2352,6 +2471,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -2410,6 +2532,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -2528,6 +2653,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -2596,6 +2724,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -2669,6 +2800,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -2739,6 +2873,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -2797,6 +2934,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -2829,6 +2969,9 @@
           "required": true
         },
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Analysis result",
             "content": {
@@ -2924,6 +3067,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -3013,6 +3159,9 @@
                 }
               }
             }
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -3119,6 +3268,9 @@
               }
             }
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -3185,6 +3337,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -3267,6 +3422,9 @@
               }
             }
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -3278,7 +3436,7 @@
       "post": {
         "operationId": "v3BulkOperations",
         "summary": "Bulk operations",
-        "description": "Execute multiple operations (create transactions, add metadata,\nrevert transactions, delete metadata) in a single request. Requires\n`ledger:write` scope.\n\nWith `atomic=true`, all elements target the URL's ledger and are\nsubmitted as one batch. `Idempotency-Key` identifies that whole batch;\nper-element `ik` values are ignored. With `atomic=false`\n(default), each element is submitted separately under its own\n`ik`; the header is ignored.\n\n`continueOnFailure` controls sequential continuation and business-error\nstatus rollup. It does not allow partial application of an atomic\nbatch. Non-atomic failures can follow already committed elements:\ninspect every result and preserve the original identities when retrying.\nA timeout or infrastructure failure does not prove that work was not\ncommitted. This contract does not enable automatic SDK retries.\n\nThe response status is decided in three tiers:\n\n1. **Request-level failures** (before per-element processing):\n   malformed body → `400`, missing/insufficient scope → `401` or\n   `403`, too many elements → `413`. Exceeding the byte limit while\n   decoding the body currently returns `400`.\n   Returned unconditionally, `continueOnFailure` does not apply.\n2. **Infrastructure failures during processing** (transport\n   timeout, cache-horizon exceeded, storage error): the overall\n   status is `503` for retryable failures and `500` otherwise,\n   regardless of `continueOnFailure`. Callers\n   must inspect the element outcomes before deciding what to retry.\n3. **Per-element errors during processing**: each element's error\n   carries the HTTP status it would surface as a single request\n   (via the same mapping `handleError` uses). The top-level\n   status is the \"worst\" of them, with `continueOnFailure`\n   applying only to per-element business failures (4xx):\n   - Business failures (validation, not-found, conflict,\n     precondition, permission — 4xx): rolled up per\n     `continueOnFailure`. `true` → `200`; `false` (default) →\n     the highest 4xx among failing elements (typically `400`).\n   - Resource exhaustion (`KindResourceExhausted`, `429`), including\n     rate limits and permanent authoritative-sequence exhaustion:\n     surface unconditionally as `429`.\n   - Retryable infrastructure failures (leader loss,\n     cache-horizon exceeded, `KindUnavailable`): surface as\n     `503` with `Retry-After: 1`, regardless of\n     `continueOnFailure`.\n   - Non-retryable infrastructure failures (transport / storage\n     errors, `KindInternal`, unclassified): surface as `500`.\n   - Aborted elements (`context.Canceled` from the sequential\n     runner after a prior failure): contribute nothing — the\n     originating error drives the rollup.\n",
+        "description": "Execute multiple operations (create transactions, add metadata,\nrevert transactions, delete metadata) in a single request. Requires\n`ledger:write` scope.\n\nWith `atomic=true`, all elements target the URL's ledger and are\nsubmitted as one batch. `Idempotency-Key` identifies that whole batch;\nper-element `ik` values are ignored. With `atomic=false`\n(default), each element is submitted separately under its own\n`ik`; the header is ignored.\n\n`continueOnFailure` controls sequential continuation and business-error\nstatus rollup. It does not allow partial application of an atomic\nbatch. Non-atomic failures can follow already committed elements:\ninspect every result and preserve the original identities when retrying.\nA timeout or infrastructure failure does not prove that work was not\ncommitted. This contract does not enable automatic SDK retries.\n\nThe response status is decided in three tiers:\n\n1. **Request-level failures** (before per-element processing):\n   malformed body → `400`, missing/insufficient scope → `401` or\n   `403`, too many elements → `413`. Exceeding the byte limit while\n   decoding the body currently returns `400`.\n   Returned unconditionally, `continueOnFailure` does not apply.\n2. **Infrastructure failures during processing** (transport\n   timeout, cache-horizon exceeded, storage error): the overall\n   status is `503` for retryable failures and `500` otherwise,\n   regardless of `continueOnFailure`. Callers\n   must inspect the element outcomes before deciding what to retry.\n3. **Per-element errors during processing**: each element's error\n   carries the HTTP status it would surface as a single request\n   (via the same mapping `handleError` uses). The top-level\n   status is the \"worst\" of them, with `continueOnFailure`\n   applying only to per-element business failures (4xx):\n   - Business failures (validation, not-found, conflict,\n     precondition — 4xx, except authentication/permission): rolled up per\n     `continueOnFailure`. `true` → `200`; `false` (default) →\n     the highest 4xx among failing elements (typically `400`).\n   - Authentication and permission failures: `401`/`403`, regardless\n     of `continueOnFailure`, with all processing outcomes retained.\n   - Resource exhaustion (`KindResourceExhausted`, `429`), including\n     rate limits and permanent authoritative-sequence exhaustion:\n     surface unconditionally as `429`.\n   - Retryable infrastructure failures (leader loss,\n     cache-horizon exceeded, `KindUnavailable`): surface as\n     `503` with `Retry-After: 1`, regardless of\n     `continueOnFailure`.\n   - Non-retryable infrastructure failures (transport / storage\n     errors, `KindInternal`, unclassified): surface as `500`.\n   - Aborted elements (`context.Canceled` from the sequential\n     runner after a prior failure): contribute nothing — the\n     originating error drives the rollup.\nSigned requests use `application/json` (including MIME parameters) with\n`request` and standard-base64 `payload`. Either signing header, even if\nempty, selects this wrapper; with neither header present, the ordinary REST body applies.\nRuntime headers choose the representation from the documented anyOf.\nThe signed protobuf batch must\nequal the route/body/Idempotency-Key-derived batch in full. Supply exactly\none nonempty Formance-Signing-Key-Id and Formance-Signature header; the\nlatter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,\nempty or repeated signing headers, invalid base64 and wrong signature\nlength return 400. Signing headers with a non-JSON or missing content type return 415.\nSignature enforcement\nreturns 401 `UNAUTHENTICATED` when required but absent and 403\n`PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched\nsignatures. Malformed signed envelopes return 400. The complete\nwrapper counts toward the 4 MiB body limit. JWT scopes still apply.\nSigning requires a nonempty array and `atomic=true` (otherwise 400).\nThe header key applies; per-element `ik` is ignored. Authentication\nand permission failures remain 401/403 even with continueOnFailure;\nprocessing errors preserve every element outcome.\n",
         "tags": [
           "ledger.v3"
         ],
@@ -3299,9 +3457,15 @@
             "$ref": "#/components/parameters/ledgerV3_IdempotencyKey"
           },
           {
+            "$ref": "#/components/parameters/ledgerV3_SigningKeyId"
+          },
+          {
+            "$ref": "#/components/parameters/ledgerV3_RequestSignature"
+          },
+          {
             "name": "continueOnFailure",
             "in": "query",
-            "description": "Continue sequential processing after a failure and suppress the\ntop-level status for business errors. Does not suppress 429 or 5xx\nfailures, or permit partial application when atomic=true.\n",
+            "description": "Continue sequential processing after a failure and suppress the\ntop-level status for business errors. Does not suppress 401, 403, 429 or 5xx\nfailures, or permit partial application when atomic=true.\n",
             "schema": {
               "type": "boolean",
               "default": false
@@ -3321,10 +3485,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/ledgerV3_BulkElement"
-                }
+                "anyOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ledgerV3_BulkElement"
+                    }
+                  },
+                  {
+                    "$ref": "#/components/schemas/ledgerV3_SignedBulkRequest"
+                  }
+                ]
               }
             }
           },
@@ -3362,7 +3533,7 @@
             }
           },
           "401": {
-            "description": "Authentication failure before processing or in an element",
+            "description": "Authentication failure before processing or in an element, including a missing mandatory signature (UNAUTHENTICATED); never suppressed by continueOnFailure",
             "content": {
               "application/json": {
                 "schema": {
@@ -3377,7 +3548,7 @@
             }
           },
           "403": {
-            "description": "Insufficient scope before processing or permission failure in an element",
+            "description": "Insufficient scope, mismatched signed batch, or invalid/unknown/revoked signature (PERMISSION_DENIED); never suppressed by continueOnFailure",
             "content": {
               "application/json": {
                 "schema": {
@@ -3447,6 +3618,9 @@
               }
             }
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -3514,6 +3688,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -3569,6 +3746,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -3637,6 +3817,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -3691,6 +3874,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -3802,6 +3988,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -3866,6 +4055,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -3921,6 +4113,9 @@
           },
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
+          },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
           },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
@@ -3986,6 +4181,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -4047,6 +4245,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -4102,6 +4303,9 @@
           "500": {
             "$ref": "#/components/responses/ledgerV3_InternalServerError"
           },
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "405": {
             "$ref": "#/components/responses/ledgerV3_MethodNotAllowed"
           }
@@ -4141,6 +4345,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Log retrieved successfully.",
             "content": {
@@ -4198,6 +4405,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "400": {
             "$ref": "#/components/responses/ledgerV3_BadRequest"
           },
@@ -4279,6 +4489,9 @@
           "required": true
         },
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "201": {
             "description": "Event sink created successfully. Only its name is returned.",
             "content": {
@@ -4379,6 +4592,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "204": {
             "description": "Event sink removed successfully. No response body."
           },
@@ -4445,6 +4661,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Signing keys retrieved successfully.",
             "content": {
@@ -4527,6 +4746,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Indexes retrieved successfully.",
             "content": {
@@ -4595,6 +4817,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Index retrieved successfully.",
             "content": {
@@ -4663,6 +4888,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Index entry retrieved successfully.",
             "content": {
@@ -4729,6 +4957,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "400": {
             "$ref": "#/components/responses/ledgerV3_BadRequest"
           },
@@ -4788,6 +5019,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Indexes retrieved successfully.",
             "content": {
@@ -4875,6 +5109,9 @@
           "required": true
         },
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "201": {
             "description": "Index creation queued. The body carries the canonical id of the\ncreated index (round-trip normalized), usable directly on the\nfollow-up GET/DELETE `/v3/{ledgerName}/indexes/{canonicalId}` routes.\n",
             "content": {
@@ -4952,6 +5189,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Index retrieved successfully.",
             "content": {
@@ -5025,6 +5265,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "204": {
             "description": "Index removed, or no index with this id was registered on the ledger."
           },
@@ -5095,6 +5338,9 @@
           }
         ],
         "responses": {
+          "415": {
+            "$ref": "#/components/responses/ledgerV3_UnsupportedMediaType"
+          },
           "200": {
             "description": "Index entry retrieved successfully.",
             "content": {
@@ -9364,7 +9610,7 @@
                     "type": "string"
                   },
                   "params": {
-                    "$ref": "#/components/schemas/ledger_V2QueryParams"
+                    "$ref": "#/components/schemas/ledger_V2RunQueryParams"
                   },
                   "vars": {
                     "type": "object",
@@ -20170,7 +20416,7 @@
           "data": {
             "type": "object",
             "additionalProperties": true,
-            "description": "Direct operation payload selected by type. NEW_TRANSACTION contains\ntransaction and optional accountMetadata. REVERTED_TRANSACTION\ncontains revertedTransactionId and revertTransaction.\nSET_METADATA and DELETE_METADATA contain targetType (ACCOUNT or\nTRANSACTION) and targetId: an account-address string or an unsigned\n64-bit transaction integer, including zero. SET_METADATA also\ncontains metadata; DELETE_METADATA contains key. ORDER_SKIPPED\ncontains reason and optional context. Other types carry the fields\nof their corresponding operation directly. FILL_GAP contains originalId,\na uint64 encoded as a decimal JSON string by protobuf JSON.\nTransaction IDs, revertedTransactionId and transaction targetId\nare JSON numbers; consumers must preserve full integer precision.\nMetadata integers are\nJSON numbers and null-valued keys are preserved.\n"
+            "description": "Direct operation payload selected by type. NEW_TRANSACTION contains\ntransaction and optional accountMetadata. REVERTED_TRANSACTION\ncontains revertedTransactionId and revertTransaction.\nSET_METADATA and DELETE_METADATA contain targetType (ACCOUNT or\nTRANSACTION) and targetId: an account-address string or an unsigned\n64-bit transaction integer, including zero. SET_METADATA also\ncontains metadata; DELETE_METADATA contains key. ORDER_SKIPPED\ncontains reason and optional context. Other types carry the fields\nof their corresponding operation directly. FILL_GAP contains originalId,\na uint64 encoded as a decimal JSON number. Transaction IDs,\nrevertedTransactionId and transaction targetId are JSON numbers;\nconsumers must preserve full integer precision.\nMetadata integers are\nJSON numbers and null-valued keys are preserved.\n"
           },
           "date": {
             "type": "string",
@@ -20218,7 +20464,7 @@
             "type": "boolean"
           }
         ],
-        "description": "A typed metadata value (string, integer, boolean, or null). Integer numbers are decoded exactly, including int64 bounds and values beyond 2^53. Integral decimal and exponent spellings are accepted; fractions and out-of-range values are rejected. String values must not contain NUL bytes. A value is limited to 16384 bytes by default; the effective ceiling comes from the cluster policy (`--metadata-max-value-bytes`). Exceeding it returns 400 with reason `METADATA_LIMIT_EXCEEDED`.",
+        "description": "A typed metadata value (string, integer, boolean, or null). Integer numbers are decoded exactly, including int64 bounds and values beyond 2^53. Integral decimal and exponent spellings are accepted; fractions and out-of-range values are rejected. String values must not contain NUL bytes. A value is limited to 16384 bytes by default; the effective ceiling comes from the cluster policy (`--metadata-max-value-bytes`). Exceeding it returns 400 with reason `METADATA_LIMIT_EXCEEDED` for a new or expired idempotency key. A live retained key with matching content returns its historical outcome; different content returns 409 with reason `IDEMPOTENCY_KEY_CONFLICT`. Requests without a key retain the limit error. Fresh policy refusals are audited without business effects; keyed refusals replay while retained, even if the policy is later loosened.",
         "nullable": true,
         "x-speakeasy-name-override": "MetadataValue",
         "x-speakeasy-model-namespace": "ledgerV3"
@@ -20532,21 +20778,18 @@
             "description": "Current sync state (SYNCING = catching up, FOLLOWING = up to date)"
           },
           "cursor": {
-            "type": "string",
-            "pattern": "^(0|[1-9][0-9]*)$",
-            "format": "bigint",
+            "type": "integer",
+            "format": "uint64",
             "description": "Last ingested v2 log ID"
           },
           "sourceLogCount": {
-            "type": "string",
-            "pattern": "^(0|[1-9][0-9]*)$",
-            "format": "bigint",
+            "type": "integer",
+            "format": "uint64",
             "description": "Latest known log ID in the v2 source"
           },
           "remainingLogs": {
-            "type": "string",
-            "pattern": "^(0|[1-9][0-9]*)$",
-            "format": "bigint",
+            "type": "integer",
+            "format": "uint64",
             "description": "Number of remaining logs to sync (sourceLogCount - cursor)"
           },
           "error": {
@@ -20578,6 +20821,117 @@
         },
         "description": "Most recent mirror sync error (null if healthy)",
         "x-speakeasy-name-override": "MirrorSyncError",
+        "x-speakeasy-model-namespace": "ledgerV3"
+      },
+      "ledgerV3_SignedBatchPayload": {
+        "type": "string",
+        "minLength": 1,
+        "format": "byte",
+        "description": "Standard-base64 exact serialized protobuf ApplyBatch bytes signed by the\nclient. Formance-Signing-Key-Id and Formance-Signature headers supply the\nother fields of the existing gRPC SignedApplyBatch envelope. The adapter\nassembles that envelope and uses ApplyRequest.signed and the existing\nadmission, proposal and audit signature path. The server compares the\ncomplete decoded batch with the HTTP-derived batch before forwarding the\noriginal payload and signature bytes. No canonical protobuf encoding is\nrequired. The proof does not sign JWT claims, ignored JSON fields,\npresentation options or the HTTP response.\n",
+        "x-speakeasy-name-override": "SignedBatchPayload",
+        "x-speakeasy-model-namespace": "ledgerV3"
+      },
+      "ledgerV3_SignedCreateTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/ledgerV3_CreateTransactionRequest"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ledgerV3_SignedBatchPayload"
+          }
+        },
+        "required": [
+          "request",
+          "payload"
+        ],
+        "additionalProperties": false,
+        "x-speakeasy-name-override": "SignedCreateTransactionRequest",
+        "x-speakeasy-model-namespace": "ledgerV3"
+      },
+      "ledgerV3_SignedRevertTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/ledgerV3_RevertTransactionRequestBody"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ledgerV3_SignedBatchPayload"
+          }
+        },
+        "required": [
+          "request",
+          "payload"
+        ],
+        "additionalProperties": false,
+        "x-speakeasy-name-override": "SignedRevertTransactionRequest",
+        "x-speakeasy-model-namespace": "ledgerV3"
+      },
+      "ledgerV3_SignedSaveTransactionMetadataRequest": {
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ledgerV3_MetadataValue"
+            }
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ledgerV3_SignedBatchPayload"
+          }
+        },
+        "required": [
+          "request",
+          "payload"
+        ],
+        "additionalProperties": false,
+        "x-speakeasy-name-override": "SignedSaveTransactionMetadataRequest",
+        "x-speakeasy-model-namespace": "ledgerV3"
+      },
+      "ledgerV3_SignedDeleteTransactionMetadataRequest": {
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "object",
+            "enum": [
+              null
+            ],
+            "additionalProperties": false,
+            "description": "Explicit null; the command is entirely determined by the route and header.",
+            "nullable": true
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ledgerV3_SignedBatchPayload"
+          }
+        },
+        "required": [
+          "request",
+          "payload"
+        ],
+        "additionalProperties": false,
+        "x-speakeasy-name-override": "SignedDeleteTransactionMetadataRequest",
+        "x-speakeasy-model-namespace": "ledgerV3"
+      },
+      "ledgerV3_SignedBulkRequest": {
+        "type": "object",
+        "properties": {
+          "request": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ledgerV3_BulkElement"
+            },
+            "minItems": 1
+          },
+          "payload": {
+            "$ref": "#/components/schemas/ledgerV3_SignedBatchPayload"
+          }
+        },
+        "required": [
+          "request",
+          "payload"
+        ],
+        "additionalProperties": false,
+        "x-speakeasy-name-override": "SignedBulkRequest",
         "x-speakeasy-model-namespace": "ledgerV3"
       },
       "ledgerV3_CreateTransactionRequest": {
@@ -22067,9 +22421,10 @@
           "clientSecret": {
             "type": "string",
             "enum": [
+              "",
               "[redacted]"
             ],
-            "description": "Presence marker only; reusable secret material is never returned"
+            "description": "Empty when unset; otherwise a presence marker only. Reusable secret material is never returned"
           },
           "tokenEndpoint": {
             "type": "string",
@@ -22198,7 +22553,7 @@
             "type": "boolean"
           }
         },
-        "description": "Read representation of a mirror rewrite rule, using protojson camelCase names. Default scalar values (including empty regex replacements) are omitted; missing replacements mean the empty string. Creation uses the separate MirrorRewriteRule schema.\n",
+        "description": "Read representation of a mirror rewrite rule, using protojson camelCase names. Default scalar values and empty collections follow the generated protobuf JSON projection and are emitted for non-presence fields, including empty regex replacements. Creation uses the separate MirrorRewriteRule schema.\n",
         "x-speakeasy-name-override": "MirrorRewriteRuleRead",
         "x-speakeasy-model-namespace": "ledgerV3"
       },
@@ -26822,201 +27177,139 @@
         "x-speakeasy-name-override": "V2QueryResource",
         "x-speakeasy-model-namespace": "ledger"
       },
-      "ledger_V2QueryParamsCommon": {
+      "ledger_V2QueryParams": {
         "type": "object",
         "properties": {
           "pageSize": {
             "type": "integer",
-            "maximum": 1000,
-            "minimum": 1,
             "format": "int64",
             "description": "The maximum number of results to return per page.\n",
             "example": 100
-          },
-          "cursor": {
-            "type": "string",
-            "description": "Parameter used in pagination requests. Maximum page size is set to 15.\nSet to the value of next for the next page of results.\nSet to the value of previous for the previous page of results.\nNo other parameters can be set when this parameter is set.\n",
-            "example": "aHR0cHM6Ly9nLnBhZ2UvTmVrby1SYW1lbj9zaGFyZQ=="
-          },
-          "expand": {
-            "type": "string",
-            "items": {
-              "type": "string"
-            },
-            "description": "Additional data to include in the response, such as volumes"
-          },
-          "pit": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Point-in-time. Returns the state as it existed at this timestamp"
           },
           "sort": {
             "type": "string",
             "description": "Sort results using a field name and order (ascending or descending).\nFormat: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.\n",
             "example": "id:desc"
+          },
+          "expand": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Additional data to include in the response, such as volumes"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Lower bound of the time window the query covers"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Upper bound of the time window the query covers"
           }
         },
-        "x-speakeasy-name-override": "V2QueryParamsCommon",
-        "x-speakeasy-model-namespace": "ledger"
-      },
-      "ledger_V2QueryParams": {
-        "type": "object",
-        "oneOf": [
-          {
-            "properties": {
-              "resource": {
-                "type": "string",
-                "const": "accounts"
-              },
-              "pageSize": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/pageSize"
-              },
-              "cursor": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/cursor"
-              },
-              "expand": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/expand"
-              },
-              "pit": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/pit"
-              },
-              "sort": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/sort"
-              }
-            },
-            "required": [
-              "resource"
-            ],
-            "x-speakeasy-name-override": "QueryTemplateAccountParams"
-          },
-          {
-            "properties": {
-              "resource": {
-                "type": "string",
-                "const": "transactions"
-              },
-              "pageSize": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/pageSize"
-              },
-              "cursor": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/cursor"
-              },
-              "expand": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/expand"
-              },
-              "pit": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/pit"
-              },
-              "sort": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/sort"
-              }
-            },
-            "required": [
-              "resource"
-            ],
-            "x-speakeasy-name-override": "QueryTemplateTransactionParams"
-          },
-          {
-            "properties": {
-              "resource": {
-                "type": "string",
-                "const": "logs"
-              },
-              "pageSize": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/pageSize"
-              },
-              "cursor": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/cursor"
-              },
-              "expand": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/expand"
-              },
-              "pit": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/pit"
-              },
-              "sort": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/sort"
-              }
-            },
-            "required": [
-              "resource"
-            ],
-            "x-speakeasy-name-override": "QueryTemplateLogParams"
-          },
-          {
-            "properties": {
-              "resource": {
-                "type": "string",
-                "const": "volumes"
-              },
-              "insertionDate": {
-                "type": "boolean"
-              },
-              "groupBy": {
-                "type": "integer"
-              },
-              "pageSize": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/pageSize"
-              },
-              "cursor": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/cursor"
-              },
-              "expand": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/expand"
-              },
-              "pit": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/pit"
-              },
-              "sort": {
-                "$ref": "#/components/schemas/ledger_V2QueryParamsCommon/properties/sort"
-              }
-            },
-            "required": [
-              "resource"
-            ],
-            "x-speakeasy-name-override": "QueryTemplateVolumeParams"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "pageSize": {
-                "type": "integer",
-                "format": "int64"
-              },
-              "sort": {
-                "type": "string"
-              },
-              "expand": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "startTime": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "endTime": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "insertionDate": {
-                "type": "boolean"
-              },
-              "groupBy": {
-                "type": "integer"
-              }
-            },
-            "additionalProperties": false,
-            "description": "Parameters without a nested resource; the parent query selects the resource. groupBy and insertionDate apply only to volumes.",
-            "x-speakeasy-name-override": "QueryTemplatePlainParams"
-          }
-        ],
         "description": "Parameters applied when running a query template",
         "x-speakeasy-name-override": "V2QueryParams",
         "x-speakeasy-model-namespace": "ledger"
       },
-      "ledger_V2QueryTemplate": {
+      "ledger_V2VolumeQueryParams": {
+        "type": "object",
+        "properties": {
+          "pageSize": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The maximum number of results to return per page.\n",
+            "example": 100
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort results using a field name and order (ascending or descending).\nFormat: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.\n",
+            "example": "id:desc"
+          },
+          "expand": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Additional data to include in the response, such as volumes"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Lower bound of the time window the query covers"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Upper bound of the time window the query covers"
+          },
+          "insertionDate": {
+            "type": "boolean",
+            "description": "Use the insertion date instead of the effective date for the time window"
+          },
+          "groupBy": {
+            "type": "integer",
+            "description": "Number of address segments to group volumes by"
+          }
+        },
+        "description": "Parameters applied when running a query template targeting volumes",
+        "x-speakeasy-name-override": "V2VolumeQueryParams",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2RunQueryParams": {
+        "type": "object",
+        "properties": {
+          "pageSize": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The maximum number of results to return per page.\n",
+            "example": 100
+          },
+          "sort": {
+            "type": "string",
+            "description": "Sort results using a field name and order (ascending or descending).\nFormat: `<field>:<order>`, where `<field>` is the field name and `<order>` is either `asc` or `desc`.\n",
+            "example": "id:desc"
+          },
+          "expand": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Additional data to include in the response, such as volumes"
+          },
+          "startTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Lower bound of the time window the query covers"
+          },
+          "endTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Upper bound of the time window the query covers"
+          },
+          "insertionDate": {
+            "type": "boolean",
+            "description": "Use the insertion date instead of the effective date for the time window"
+          },
+          "groupBy": {
+            "type": "integer",
+            "description": "Number of address segments to group volumes by"
+          }
+        },
+        "description": "Parameter overrides applied when running a query template. `insertionDate` and `groupBy` only apply to volume queries.",
+        "x-speakeasy-name-override": "V2RunQueryParams",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2AccountQueryTemplateResource": {
+        "type": "string",
+        "enum": [
+          "accounts"
+        ],
+        "x-speakeasy-name-override": "V2AccountQueryTemplateResource",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2AccountQueryTemplate": {
         "type": "object",
         "properties": {
           "description": {
@@ -27024,7 +27317,7 @@
             "description": "Human-readable description of what the query returns"
           },
           "resource": {
-            "$ref": "#/components/schemas/ledger_V2QueryResource"
+            "$ref": "#/components/schemas/ledger_V2AccountQueryTemplateResource"
           },
           "params": {
             "$ref": "#/components/schemas/ledger_V2QueryParams"
@@ -27042,6 +27335,157 @@
             "description": "The filter expression the query evaluates"
           }
         },
+        "required": [
+          "resource"
+        ],
+        "x-speakeasy-name-override": "V2AccountQueryTemplate",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2TransactionQueryTemplateResource": {
+        "type": "string",
+        "enum": [
+          "transactions"
+        ],
+        "x-speakeasy-name-override": "V2TransactionQueryTemplateResource",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2TransactionQueryTemplate": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what the query returns"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/ledger_V2TransactionQueryTemplateResource"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ledger_V2QueryParams"
+          },
+          "vars": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ledger_V2QueryTemplateVar"
+            },
+            "description": "Variables the query accepts, keyed by variable name"
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The filter expression the query evaluates"
+          }
+        },
+        "required": [
+          "resource"
+        ],
+        "x-speakeasy-name-override": "V2TransactionQueryTemplate",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2LogQueryTemplateResource": {
+        "type": "string",
+        "enum": [
+          "logs"
+        ],
+        "x-speakeasy-name-override": "V2LogQueryTemplateResource",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2LogQueryTemplate": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what the query returns"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/ledger_V2LogQueryTemplateResource"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ledger_V2QueryParams"
+          },
+          "vars": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ledger_V2QueryTemplateVar"
+            },
+            "description": "Variables the query accepts, keyed by variable name"
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The filter expression the query evaluates"
+          }
+        },
+        "required": [
+          "resource"
+        ],
+        "x-speakeasy-name-override": "V2LogQueryTemplate",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2VolumeQueryTemplateResource": {
+        "type": "string",
+        "enum": [
+          "volumes"
+        ],
+        "x-speakeasy-name-override": "V2VolumeQueryTemplateResource",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2VolumeQueryTemplate": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "Human-readable description of what the query returns"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/ledger_V2VolumeQueryTemplateResource"
+          },
+          "params": {
+            "$ref": "#/components/schemas/ledger_V2VolumeQueryParams"
+          },
+          "vars": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ledger_V2QueryTemplateVar"
+            },
+            "description": "Variables the query accepts, keyed by variable name"
+          },
+          "body": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The filter expression the query evaluates"
+          }
+        },
+        "required": [
+          "resource"
+        ],
+        "x-speakeasy-name-override": "V2VolumeQueryTemplate",
+        "x-speakeasy-model-namespace": "ledger"
+      },
+      "ledger_V2QueryTemplate": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ledger_V2AccountQueryTemplate"
+          },
+          {
+            "$ref": "#/components/schemas/ledger_V2TransactionQueryTemplate"
+          },
+          {
+            "$ref": "#/components/schemas/ledger_V2LogQueryTemplate"
+          },
+          {
+            "$ref": "#/components/schemas/ledger_V2VolumeQueryTemplate"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "resource",
+          "mapping": {
+            "accounts": "#/components/schemas/ledger_V2AccountQueryTemplate",
+            "transactions": "#/components/schemas/ledger_V2TransactionQueryTemplate",
+            "logs": "#/components/schemas/ledger_V2LogQueryTemplate",
+            "volumes": "#/components/schemas/ledger_V2VolumeQueryTemplate"
+          }
+        },
+        "description": "A query template. `resource` selects which parameters apply.",
         "x-speakeasy-name-override": "V2QueryTemplate",
         "x-speakeasy-model-namespace": "ledger"
       },
@@ -42761,6 +43205,16 @@
       }
     },
     "responses": {
+      "ledgerV3_UnsupportedMediaType": {
+        "description": "Signing headers are unsupported on this route or require application/json with an explicit content type.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ledgerV3_ErrorResponse"
+            }
+          }
+        }
+      },
       "ledgerV3_RequestEntityTooLarge": {
         "description": "Request body exceeds the 4 MiB HTTP limit (`BODY_TOO_LARGE`)",
         "content": {
@@ -42823,7 +43277,7 @@
         }
       },
       "ledgerV3_Unauthorized": {
-        "description": "Authentication required (missing or invalid JWT token)",
+        "description": "Authentication required (missing or invalid JWT token, or missing mandatory request signature with errorCode UNAUTHENTICATED)",
         "content": {
           "application/json": {
             "schema": {
@@ -42840,7 +43294,7 @@
         }
       },
       "ledgerV3_Forbidden": {
-        "description": "Insufficient permissions (missing required scope)",
+        "description": "Insufficient permissions (missing required scope, or invalid/unknown/revoked request signature or batch mismatch with errorCode PERMISSION_DENIED)",
         "content": {
           "application/json": {
             "schema": {
@@ -43374,6 +43828,30 @@
       }
     },
     "parameters": {
+      "ledgerV3_SigningKeyId": {
+        "name": "Formance-Signing-Key-Id",
+        "in": "header",
+        "description": "Signing key ID. Either signing header, even if empty, selects the signed\nwrapper under application/json (including MIME parameters). Both headers\nare then required exactly once and nonempty. With neither header present,\nordinary unsigned decoding applies. Missing, empty or repeated signing headers\nreturn 400. A non-JSON or missing content type with either header returns\n415. JWT authentication and scopes remain independent.\n",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "x-speakeasy-name-override": "SigningKeyId",
+          "x-speakeasy-model-namespace": "ledgerV3"
+        }
+      },
+      "ledgerV3_RequestSignature": {
+        "name": "Formance-Signature",
+        "in": "header",
+        "description": "Standard-base64 Ed25519 signature over the exact decoded body payload\n(serialized protobuf ApplyBatch bytes). Either signing header, even if\nempty, selects the signed wrapper under application/json (including MIME\nparameters). Both headers are then required exactly once and nonempty.\nWith neither header present, ordinary unsigned decoding applies. The signature must\ndecode to 64 bytes. Missing, empty, repeated, invalid-base64 or wrong-length\nsignatures return 400. A non-JSON or missing content type returns 415.\n",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "byte",
+          "x-speakeasy-name-override": "RequestSignature",
+          "x-speakeasy-model-namespace": "ledgerV3"
+        }
+      },
       "ledgerV3_PageSize": {
         "name": "pageSize",
         "in": "query",

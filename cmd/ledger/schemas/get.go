@@ -10,11 +10,12 @@ import (
 
 	internal "github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 type GetStore struct {
-	Schema Schema `json:"schema"`
+	Schema ledger.V2SchemaData `json:"schema"`
 }
 type GetController struct {
 	store      *GetStore
@@ -56,12 +57,12 @@ func (c *GetController) Run(cmd *cobra.Command, args []string) (fctl.Renderable,
 		return nil, err
 	}
 
-	stackClient, err := fctl.NewStackClientsFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := getSchema(cmd.Context(), stackClient, operations.V2GetSchemaRequest{
+	response, err := stackClient.Ledger.V2.GetSchema(cmd.Context(), operations.V2GetSchemaRequest{
 		Ledger:  fctl.GetString(cmd, internal.LedgerFlag),
 		Version: args[0],
 	})
@@ -69,7 +70,7 @@ func (c *GetController) Run(cmd *cobra.Command, args []string) (fctl.Renderable,
 		return nil, err
 	}
 
-	c.store.Schema = *response
+	c.store.Schema = response.V2SchemaResponse.V2SchemaData
 	return c, nil
 }
 

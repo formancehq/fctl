@@ -3,7 +3,10 @@
 package operations
 
 import (
+	"errors"
+	"fmt"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledgerv3"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 	"net/http"
 )
 
@@ -21,8 +24,70 @@ func (v *V3CreateTransactionSecurity) GetBearerAuth() *string {
 // #region class-body-v3createtransactionsecurity
 // #endregion class-body-v3createtransactionsecurity
 
+type V3CreateTransactionRequestBodyType string
+
+const (
+	V3CreateTransactionRequestBodyTypeCreateTransactionRequest       V3CreateTransactionRequestBodyType = "CreateTransactionRequest"
+	V3CreateTransactionRequestBodyTypeSignedCreateTransactionRequest V3CreateTransactionRequestBodyType = "SignedCreateTransactionRequest"
+)
+
+type V3CreateTransactionRequestBody struct {
+	CreateTransactionRequest       *ledgerv3.CreateTransactionRequest       `queryParam:"inline" union:"member"`
+	SignedCreateTransactionRequest *ledgerv3.SignedCreateTransactionRequest `queryParam:"inline" union:"member"`
+
+	Type V3CreateTransactionRequestBodyType
+}
+
+func CreateV3CreateTransactionRequestBodyCreateTransactionRequest(createTransactionRequest ledgerv3.CreateTransactionRequest) V3CreateTransactionRequestBody {
+	typ := V3CreateTransactionRequestBodyTypeCreateTransactionRequest
+
+	return V3CreateTransactionRequestBody{
+		CreateTransactionRequest: &createTransactionRequest,
+		Type:                     typ,
+	}
+}
+
+func CreateV3CreateTransactionRequestBodySignedCreateTransactionRequest(signedCreateTransactionRequest ledgerv3.SignedCreateTransactionRequest) V3CreateTransactionRequestBody {
+	typ := V3CreateTransactionRequestBodyTypeSignedCreateTransactionRequest
+
+	return V3CreateTransactionRequestBody{
+		SignedCreateTransactionRequest: &signedCreateTransactionRequest,
+		Type:                           typ,
+	}
+}
+
+func (u *V3CreateTransactionRequestBody) UnmarshalJSON(data []byte) error {
+
+	var signedCreateTransactionRequest ledgerv3.SignedCreateTransactionRequest = ledgerv3.SignedCreateTransactionRequest{}
+	if err := utils.UnmarshalJSON(data, &signedCreateTransactionRequest, "", true, nil); err == nil {
+		u.SignedCreateTransactionRequest = &signedCreateTransactionRequest
+		u.Type = V3CreateTransactionRequestBodyTypeSignedCreateTransactionRequest
+		return nil
+	}
+
+	var createTransactionRequest ledgerv3.CreateTransactionRequest = ledgerv3.CreateTransactionRequest{}
+	if err := utils.UnmarshalJSON(data, &createTransactionRequest, "", true, nil); err == nil {
+		u.CreateTransactionRequest = &createTransactionRequest
+		u.Type = V3CreateTransactionRequestBodyTypeCreateTransactionRequest
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for V3CreateTransactionRequestBody", string(data))
+}
+
+func (u V3CreateTransactionRequestBody) MarshalJSON() ([]byte, error) {
+	if u.CreateTransactionRequest != nil {
+		return utils.MarshalJSON(u.CreateTransactionRequest, "", true)
+	}
+
+	if u.SignedCreateTransactionRequest != nil {
+		return utils.MarshalJSON(u.SignedCreateTransactionRequest, "", true)
+	}
+
+	return nil, errors.New("could not marshal union type V3CreateTransactionRequestBody: all fields are null")
+}
+
 type V3CreateTransactionRequest struct {
-	CreateTransactionRequest ledgerv3.CreateTransactionRequest `request:"mediaType=application/json"`
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
 	// amounts, volume input/output and balances. Ordinary integer IDs/counts,
@@ -34,17 +99,28 @@ type V3CreateTransactionRequest struct {
 	// and bulk results. Request decoding is unchanged.
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Standard-base64 Ed25519 signature over the exact decoded body payload
+	// (serialized protobuf ApplyBatch bytes). Either signing header, even if
+	// empty, selects the signed wrapper under application/json (including MIME
+	// parameters). Both headers are then required exactly once and nonempty.
+	// With neither header present, ordinary unsigned decoding applies. The signature must
+	// decode to 64 bytes. Missing, empty, repeated, invalid-base64 or wrong-length
+	// signatures return 400. A non-JSON or missing content type returns 415.
+	//
+	FormanceSignature *string `header:"style=simple,explode=false,name=Formance-Signature"`
+	// Signing key ID. Either signing header, even if empty, selects the signed
+	// wrapper under application/json (including MIME parameters). Both headers
+	// are then required exactly once and nonempty. With neither header present,
+	// ordinary unsigned decoding applies. Missing, empty or repeated signing headers
+	// return 400. A non-JSON or missing content type with either header returns
+	// 415. JWT authentication and scopes remain independent.
+	//
+	FormanceSigningKeyID *string `header:"style=simple,explode=false,name=Formance-Signing-Key-Id"`
 	// Idempotency key for the request
-	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	IdempotencyKey *string                        `header:"style=simple,explode=false,name=Idempotency-Key"`
+	RequestBody    V3CreateTransactionRequestBody `request:"mediaType=application/json"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
-}
-
-func (v *V3CreateTransactionRequest) GetCreateTransactionRequest() ledgerv3.CreateTransactionRequest {
-	if v == nil {
-		return ledgerv3.CreateTransactionRequest{}
-	}
-	return v.CreateTransactionRequest
 }
 
 func (v *V3CreateTransactionRequest) GetFormanceBigintAsString() *string {
@@ -54,11 +130,32 @@ func (v *V3CreateTransactionRequest) GetFormanceBigintAsString() *string {
 	return v.FormanceBigintAsString
 }
 
+func (v *V3CreateTransactionRequest) GetFormanceSignature() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSignature
+}
+
+func (v *V3CreateTransactionRequest) GetFormanceSigningKeyID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSigningKeyID
+}
+
 func (v *V3CreateTransactionRequest) GetIdempotencyKey() *string {
 	if v == nil {
 		return nil
 	}
 	return v.IdempotencyKey
+}
+
+func (v *V3CreateTransactionRequest) GetRequestBody() V3CreateTransactionRequestBody {
+	if v == nil {
+		return V3CreateTransactionRequestBody{}
+	}
+	return v.RequestBody
 }
 
 func (v *V3CreateTransactionRequest) GetLedgerName() string {
@@ -78,14 +175,14 @@ type V3CreateTransactionResponse struct {
 	CreateTransactionResponse *ledgerv3.CreateTransactionResponse
 	// Bad request
 	ErrorResponse *ledgerv3.ErrorResponse
-	// Insufficient permissions (missing required scope)
+	// Insufficient permissions (missing required scope, or invalid/unknown/revoked request signature or batch mismatch with errorCode PERMISSION_DENIED)
 	Forbidden *string
 	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Authentication required (missing or invalid JWT token)
+	// Authentication required (missing or invalid JWT token, or missing mandatory request signature with errorCode UNAUTHENTICATED)
 	Unauthorized *string
 }
 

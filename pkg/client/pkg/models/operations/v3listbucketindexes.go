@@ -112,13 +112,13 @@ type V3ListBucketIndexesResponse struct {
 	ContentType string
 	// Bad request
 	ErrorResponse *ledgerv3.ErrorResponse
-	// Insufficient permissions (missing required scope)
+	// Insufficient permissions (missing required scope, or invalid/unknown/revoked request signature or batch mismatch with errorCode PERMISSION_DENIED)
 	Forbidden *string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Authentication required (missing or invalid JWT token)
+	// Authentication required (missing or invalid JWT token, or missing mandatory request signature with errorCode UNAUTHENTICATED)
 	Unauthorized *string
 	// Indexes retrieved successfully.
 	Object *V3ListBucketIndexesResponseBody

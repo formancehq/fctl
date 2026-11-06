@@ -3,6 +3,8 @@
 package operations
 
 import (
+	"errors"
+	"fmt"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledgerv3"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 	"net/http"
@@ -22,6 +24,69 @@ func (v *V3BulkOperationsSecurity) GetBearerAuth() *string {
 // #region class-body-v3bulkoperationssecurity
 // #endregion class-body-v3bulkoperationssecurity
 
+type V3BulkOperationsRequestBodyType string
+
+const (
+	V3BulkOperationsRequestBodyTypeArrayOfBulkElement V3BulkOperationsRequestBodyType = "arrayOfBulkElement"
+	V3BulkOperationsRequestBodyTypeSignedBulkRequest  V3BulkOperationsRequestBodyType = "SignedBulkRequest"
+)
+
+type V3BulkOperationsRequestBody struct {
+	ArrayOfBulkElement []ledgerv3.BulkElement      `queryParam:"inline" union:"member"`
+	SignedBulkRequest  *ledgerv3.SignedBulkRequest `queryParam:"inline" union:"member"`
+
+	Type V3BulkOperationsRequestBodyType
+}
+
+func CreateV3BulkOperationsRequestBodyArrayOfBulkElement(arrayOfBulkElement []ledgerv3.BulkElement) V3BulkOperationsRequestBody {
+	typ := V3BulkOperationsRequestBodyTypeArrayOfBulkElement
+
+	return V3BulkOperationsRequestBody{
+		ArrayOfBulkElement: arrayOfBulkElement,
+		Type:               typ,
+	}
+}
+
+func CreateV3BulkOperationsRequestBodySignedBulkRequest(signedBulkRequest ledgerv3.SignedBulkRequest) V3BulkOperationsRequestBody {
+	typ := V3BulkOperationsRequestBodyTypeSignedBulkRequest
+
+	return V3BulkOperationsRequestBody{
+		SignedBulkRequest: &signedBulkRequest,
+		Type:              typ,
+	}
+}
+
+func (u *V3BulkOperationsRequestBody) UnmarshalJSON(data []byte) error {
+
+	var signedBulkRequest ledgerv3.SignedBulkRequest = ledgerv3.SignedBulkRequest{}
+	if err := utils.UnmarshalJSON(data, &signedBulkRequest, "", true, nil); err == nil {
+		u.SignedBulkRequest = &signedBulkRequest
+		u.Type = V3BulkOperationsRequestBodyTypeSignedBulkRequest
+		return nil
+	}
+
+	var arrayOfBulkElement []ledgerv3.BulkElement = []ledgerv3.BulkElement{}
+	if err := utils.UnmarshalJSON(data, &arrayOfBulkElement, "", true, nil); err == nil {
+		u.ArrayOfBulkElement = arrayOfBulkElement
+		u.Type = V3BulkOperationsRequestBodyTypeArrayOfBulkElement
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for V3BulkOperationsRequestBody", string(data))
+}
+
+func (u V3BulkOperationsRequestBody) MarshalJSON() ([]byte, error) {
+	if u.ArrayOfBulkElement != nil {
+		return utils.MarshalJSON(u.ArrayOfBulkElement, "", true)
+	}
+
+	if u.SignedBulkRequest != nil {
+		return utils.MarshalJSON(u.SignedBulkRequest, "", true)
+	}
+
+	return nil, errors.New("could not marshal union type V3BulkOperationsRequestBody: all fields are null")
+}
+
 type V3BulkOperationsRequest struct {
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
@@ -34,9 +99,26 @@ type V3BulkOperationsRequest struct {
 	// and bulk results. Request decoding is unchanged.
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Standard-base64 Ed25519 signature over the exact decoded body payload
+	// (serialized protobuf ApplyBatch bytes). Either signing header, even if
+	// empty, selects the signed wrapper under application/json (including MIME
+	// parameters). Both headers are then required exactly once and nonempty.
+	// With neither header present, ordinary unsigned decoding applies. The signature must
+	// decode to 64 bytes. Missing, empty, repeated, invalid-base64 or wrong-length
+	// signatures return 400. A non-JSON or missing content type returns 415.
+	//
+	FormanceSignature *string `header:"style=simple,explode=false,name=Formance-Signature"`
+	// Signing key ID. Either signing header, even if empty, selects the signed
+	// wrapper under application/json (including MIME parameters). Both headers
+	// are then required exactly once and nonempty. With neither header present,
+	// ordinary unsigned decoding applies. Missing, empty or repeated signing headers
+	// return 400. A non-JSON or missing content type with either header returns
+	// 415. JWT authentication and scopes remain independent.
+	//
+	FormanceSigningKeyID *string `header:"style=simple,explode=false,name=Formance-Signing-Key-Id"`
 	// Idempotency key for the request
-	IdempotencyKey *string                `header:"style=simple,explode=false,name=Idempotency-Key"`
-	RequestBody    []ledgerv3.BulkElement `request:"mediaType=application/json"`
+	IdempotencyKey *string                     `header:"style=simple,explode=false,name=Idempotency-Key"`
+	RequestBody    V3BulkOperationsRequestBody `request:"mediaType=application/json"`
 	// Submit all operations as one atomic batch under the optional
 	// Idempotency-Key header. Per-element ik values are ignored.
 	// All elements target ledgerName. On failure every element reports
@@ -44,7 +126,7 @@ type V3BulkOperationsRequest struct {
 	//
 	Atomic *bool `default:"false" queryParam:"style=form,explode=true,name=atomic"`
 	// Continue sequential processing after a failure and suppress the
-	// top-level status for business errors. Does not suppress 429 or 5xx
+	// top-level status for business errors. Does not suppress 401, 403, 429 or 5xx
 	// failures, or permit partial application when atomic=true.
 	//
 	ContinueOnFailure *bool `default:"false" queryParam:"style=form,explode=true,name=continueOnFailure"`
@@ -70,6 +152,20 @@ func (v *V3BulkOperationsRequest) GetFormanceBigintAsString() *string {
 	return v.FormanceBigintAsString
 }
 
+func (v *V3BulkOperationsRequest) GetFormanceSignature() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSignature
+}
+
+func (v *V3BulkOperationsRequest) GetFormanceSigningKeyID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSigningKeyID
+}
+
 func (v *V3BulkOperationsRequest) GetIdempotencyKey() *string {
 	if v == nil {
 		return nil
@@ -77,9 +173,9 @@ func (v *V3BulkOperationsRequest) GetIdempotencyKey() *string {
 	return v.IdempotencyKey
 }
 
-func (v *V3BulkOperationsRequest) GetRequestBody() []ledgerv3.BulkElement {
+func (v *V3BulkOperationsRequest) GetRequestBody() V3BulkOperationsRequestBody {
 	if v == nil {
-		return []ledgerv3.BulkElement{}
+		return V3BulkOperationsRequestBody{}
 	}
 	return v.RequestBody
 }
@@ -122,7 +218,7 @@ type V3BulkOperationsResponse struct {
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Authentication failure before processing or in an element
+	// Authentication failure before processing or in an element, including a missing mandatory signature (UNAUTHENTICATED); never suppressed by continueOnFailure
 	Res *string
 }
 

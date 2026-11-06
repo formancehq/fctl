@@ -11,15 +11,17 @@ from Stack `2615a186` after #2017, with these moving inputs resolved at generati
 
 | Component | Source revision |
 | --- | --- |
-| Ledger v2 (`release/v2.4`) | `275962012684950622efbe0875eb02dbdd323b5c` |
-| Ledger v3 (`main`) | `c523c431b3ce6fd4070e8d7293e961be8dfa6749` |
-| Connectivity (`main`) | `6c6f971e3f638a009a9ee4446d1daad3a9ec1c8f` |
+| Ledger v2 (`release/v2.4`) | `f77eb05b129038c21071806c0f90af03bdc0e369` |
+| Ledger v3 (`main`) | `8e30edf29e2586aefaeed7e0bc871936e5978bb7` |
+| Connectivity (`main`) | `d518138f22139e4fe633465ce7632c3f22150461` |
 
 Other component versions come from that Stack revision's `Justfile`.
 The snapshot SHA-256 is
-`e18983308bfe4d5387090c67522d414fba76c81da91103673c3a64f94fcc6a46`.
+`7fd1f9a8abd11f018ed05008e64aa9c105dfa70821c9f41a96b8171921559dca`.
 It includes Connectivity's `errorCode`/`errorMessage`, string `details`, and
-raw connection `status.lastError`. Ledger #2501 is not included.
+raw connection `status.lastError`. Ledger v2 includes the corrected query-template
+contract from #2501: templates discriminate on their own `resource`, with flat
+common parameters and separate volume parameters.
 
 Generation uses Speakeasy **1.757.1** and Go generator **2.866.2**, matching
 `formance-sdk-go v4.0.0`. Its Go options are preserved, including
@@ -43,10 +45,10 @@ To refresh the source, generate `releases/build/generate.json` in an isolated
 checkout of the intended Stack revision, review its resolved component inputs,
 and replace `openapi/stack.json`. Update the revisions and checksum above,
 regenerate, inspect the SDK/lock diff, and repeat generation to check drift.
-The current Stack validator still assumes every V2 query-params union member
-has a resource constant and rejects the valid plain-params member. This upstream
-gate failure must be assessed separately; SDK generation/tests do not qualify
-Stack for release.
+Ledger-specific validation in the selected Stack revision assumes the earlier
+query-params union. The composed document was obtained with that obsolete
+validation relaxed; validation-only changes do not alter the generated input.
+SDK generation/tests do not qualify Stack for release.
 
 Do not edit generated Go files. Generated SDK reference docs and usage guides
 are ignored; FCTL maintains this document. `just tests` covers both the CLI and
@@ -60,11 +62,14 @@ envelope through `Ledger.V1.GetInfo`. Import resume reads the latest log ID
 through the SDK without a response-body fallback. Contract tests cover schema
 logs, IDs above 2^53, the four plain query-param resources, and both info models.
 
-Ledger schema commands retain a raw-params adapter. The selected v2 contract
-accepts plain params, but legacy union members still silently discard time
-bounds when a redundant nested `params.resource` is present. The adapter
-preserves those existing inputs and returned values; its regression test covers
-both insert and get. It remains necessary with the selected source.
+Ledger schema commands use the generated SDK directly; no raw-params adapter
+or response-body fallback is needed. The typed query-template union preserves
+array expansion, time bounds, and volume `groupBy`/`insertionDate`. Regression
+tests cover all four resources through get/list/insert, schema logs, YAML input
+normalization, parent-resource validation, optional params, and run overrides.
+A redundant nested `params.resource` is tolerated without losing time bounds.
+The original file/URL loading logic is unchanged; local tests do not exercise
+authenticated command execution against a deployed API.
 
 Payments raw provider objects retain their fields in JSON output, but generic
 JSON numbers use `float64` and are not lossless above 2^53. Compatibility with

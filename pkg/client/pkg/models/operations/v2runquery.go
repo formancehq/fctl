@@ -13,17 +13,17 @@ import (
 )
 
 type V2RunQueryRequestBody struct {
-	// Parameters applied when running a query template
-	V2QueryParams *ledger.V2QueryParams `json:"params,omitempty"`
-	Cursor        *string               `json:"cursor,omitempty"`
-	Vars          map[string]string     `json:"vars,omitempty"`
+	// Parameter overrides applied when running a query template. `insertionDate` and `groupBy` only apply to volume queries.
+	V2RunQueryParams *ledger.V2RunQueryParams `json:"params,omitempty"`
+	Cursor           *string                  `json:"cursor,omitempty"`
+	Vars             map[string]string        `json:"vars,omitempty"`
 }
 
-func (v *V2RunQueryRequestBody) GetV2QueryParams() *ledger.V2QueryParams {
+func (v *V2RunQueryRequestBody) GetV2RunQueryParams() *ledger.V2RunQueryParams {
 	if v == nil {
 		return nil
 	}
-	return v.V2QueryParams
+	return v.V2RunQueryParams
 }
 
 func (v *V2RunQueryRequestBody) GetCursor() *string {

@@ -3,7 +3,10 @@
 package operations
 
 import (
+	"errors"
+	"fmt"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledgerv3"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 	"net/http"
 )
 
@@ -21,14 +24,108 @@ func (v *V3SaveTransactionMetadataSecurity) GetBearerAuth() *string {
 // #region class-body-v3savetransactionmetadatasecurity
 // #endregion class-body-v3savetransactionmetadatasecurity
 
+type V3SaveTransactionMetadataRequestBodyType string
+
+const (
+	V3SaveTransactionMetadataRequestBodyTypeMapOfMetadataValue                   V3SaveTransactionMetadataRequestBodyType = "mapOfMetadataValue"
+	V3SaveTransactionMetadataRequestBodyTypeSignedSaveTransactionMetadataRequest V3SaveTransactionMetadataRequestBodyType = "SignedSaveTransactionMetadataRequest"
+)
+
+type V3SaveTransactionMetadataRequestBody struct {
+	MapOfMetadataValue                   map[string]*ledgerv3.MetadataValue             `queryParam:"inline" union:"member"`
+	SignedSaveTransactionMetadataRequest *ledgerv3.SignedSaveTransactionMetadataRequest `queryParam:"inline" union:"member"`
+
+	Type V3SaveTransactionMetadataRequestBodyType
+}
+
+func CreateV3SaveTransactionMetadataRequestBodyMapOfMetadataValue(mapOfMetadataValue map[string]*ledgerv3.MetadataValue) V3SaveTransactionMetadataRequestBody {
+	typ := V3SaveTransactionMetadataRequestBodyTypeMapOfMetadataValue
+
+	return V3SaveTransactionMetadataRequestBody{
+		MapOfMetadataValue: mapOfMetadataValue,
+		Type:               typ,
+	}
+}
+
+func CreateV3SaveTransactionMetadataRequestBodySignedSaveTransactionMetadataRequest(signedSaveTransactionMetadataRequest ledgerv3.SignedSaveTransactionMetadataRequest) V3SaveTransactionMetadataRequestBody {
+	typ := V3SaveTransactionMetadataRequestBodyTypeSignedSaveTransactionMetadataRequest
+
+	return V3SaveTransactionMetadataRequestBody{
+		SignedSaveTransactionMetadataRequest: &signedSaveTransactionMetadataRequest,
+		Type:                                 typ,
+	}
+}
+
+func (u *V3SaveTransactionMetadataRequestBody) UnmarshalJSON(data []byte) error {
+
+	var signedSaveTransactionMetadataRequest ledgerv3.SignedSaveTransactionMetadataRequest = ledgerv3.SignedSaveTransactionMetadataRequest{}
+	if err := utils.UnmarshalJSON(data, &signedSaveTransactionMetadataRequest, "", true, nil); err == nil {
+		u.SignedSaveTransactionMetadataRequest = &signedSaveTransactionMetadataRequest
+		u.Type = V3SaveTransactionMetadataRequestBodyTypeSignedSaveTransactionMetadataRequest
+		return nil
+	}
+
+	var mapOfMetadataValue map[string]*ledgerv3.MetadataValue = map[string]*ledgerv3.MetadataValue{}
+	if err := utils.UnmarshalJSON(data, &mapOfMetadataValue, "", true, nil); err == nil {
+		u.MapOfMetadataValue = mapOfMetadataValue
+		u.Type = V3SaveTransactionMetadataRequestBodyTypeMapOfMetadataValue
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for V3SaveTransactionMetadataRequestBody", string(data))
+}
+
+func (u V3SaveTransactionMetadataRequestBody) MarshalJSON() ([]byte, error) {
+	if u.MapOfMetadataValue != nil {
+		return utils.MarshalJSON(u.MapOfMetadataValue, "", true)
+	}
+
+	if u.SignedSaveTransactionMetadataRequest != nil {
+		return utils.MarshalJSON(u.SignedSaveTransactionMetadataRequest, "", true)
+	}
+
+	return nil, errors.New("could not marshal union type V3SaveTransactionMetadataRequestBody: all fields are null")
+}
+
 type V3SaveTransactionMetadataRequest struct {
+	// Standard-base64 Ed25519 signature over the exact decoded body payload
+	// (serialized protobuf ApplyBatch bytes). Either signing header, even if
+	// empty, selects the signed wrapper under application/json (including MIME
+	// parameters). Both headers are then required exactly once and nonempty.
+	// With neither header present, ordinary unsigned decoding applies. The signature must
+	// decode to 64 bytes. Missing, empty, repeated, invalid-base64 or wrong-length
+	// signatures return 400. A non-JSON or missing content type returns 415.
+	//
+	FormanceSignature *string `header:"style=simple,explode=false,name=Formance-Signature"`
+	// Signing key ID. Either signing header, even if empty, selects the signed
+	// wrapper under application/json (including MIME parameters). Both headers
+	// are then required exactly once and nonempty. With neither header present,
+	// ordinary unsigned decoding applies. Missing, empty or repeated signing headers
+	// return 400. A non-JSON or missing content type with either header returns
+	// 415. JWT authentication and scopes remain independent.
+	//
+	FormanceSigningKeyID *string `header:"style=simple,explode=false,name=Formance-Signing-Key-Id"`
 	// Idempotency key for the request
-	IdempotencyKey *string                            `header:"style=simple,explode=false,name=Idempotency-Key"`
-	RequestBody    map[string]*ledgerv3.MetadataValue `request:"mediaType=application/json"`
+	IdempotencyKey *string                              `header:"style=simple,explode=false,name=Idempotency-Key"`
+	RequestBody    V3SaveTransactionMetadataRequestBody `request:"mediaType=application/json"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Transaction ID
 	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
+}
+
+func (v *V3SaveTransactionMetadataRequest) GetFormanceSignature() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSignature
+}
+
+func (v *V3SaveTransactionMetadataRequest) GetFormanceSigningKeyID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSigningKeyID
 }
 
 func (v *V3SaveTransactionMetadataRequest) GetIdempotencyKey() *string {
@@ -38,9 +135,9 @@ func (v *V3SaveTransactionMetadataRequest) GetIdempotencyKey() *string {
 	return v.IdempotencyKey
 }
 
-func (v *V3SaveTransactionMetadataRequest) GetRequestBody() map[string]*ledgerv3.MetadataValue {
+func (v *V3SaveTransactionMetadataRequest) GetRequestBody() V3SaveTransactionMetadataRequestBody {
 	if v == nil {
-		return map[string]*ledgerv3.MetadataValue{}
+		return V3SaveTransactionMetadataRequestBody{}
 	}
 	return v.RequestBody
 }
@@ -67,14 +164,14 @@ type V3SaveTransactionMetadataResponse struct {
 	ContentType string
 	// Bad request
 	ErrorResponse *ledgerv3.ErrorResponse
-	// Insufficient permissions (missing required scope)
+	// Insufficient permissions (missing required scope, or invalid/unknown/revoked request signature or batch mismatch with errorCode PERMISSION_DENIED)
 	Forbidden *string
 	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Authentication required (missing or invalid JWT token)
+	// Authentication required (missing or invalid JWT token, or missing mandatory request signature with errorCode UNAUTHENTICATED)
 	Unauthorized *string
 }
 

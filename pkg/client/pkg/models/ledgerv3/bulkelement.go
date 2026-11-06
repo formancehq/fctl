@@ -215,6 +215,17 @@ type BulkElement struct {
 	SkippableReasons []SkippableReasons `json:"skippableReasons,omitempty"`
 }
 
+func (b BulkElement) MarshalJSON() ([]byte, error) {
+	return utils.MarshalJSON(b, "", false)
+}
+
+func (b *BulkElement) UnmarshalJSON(data []byte) error {
+	if err := utils.UnmarshalJSON(data, &b, "", false, []string{"action", "data"}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (b *BulkElement) GetAction() Action {
 	if b == nil {
 		return Action("")

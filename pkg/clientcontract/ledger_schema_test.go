@@ -131,3 +131,13 @@ func TestLedgerV3InfoContractRemainsSeparate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "v3.0.0", response.ServerInfo.Version)
 }
+
+func TestLedgerSchemaRejectsUnexpectedContentType(t *testing.T) {
+	sdk := ledgerSDK(func(*http.Request) (*http.Response, error) {
+		response := ledgerResponse(http.StatusOK, `{"data":{"version":"v1","createdAt":"2026-01-01T00:00:00Z","chart":{}}}`)
+		response.Header.Set("Content-Type", "text/plain")
+		return response, nil
+	})
+	_, err := sdk.Ledger.V2.GetSchema(t.Context(), operations.V2GetSchemaRequest{Ledger: "default", Version: "v1"})
+	require.Error(t, err)
+}

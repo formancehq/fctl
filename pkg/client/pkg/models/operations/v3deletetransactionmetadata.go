@@ -22,8 +22,27 @@ func (v *V3DeleteTransactionMetadataSecurity) GetBearerAuth() *string {
 // #endregion class-body-v3deletetransactionmetadatasecurity
 
 type V3DeleteTransactionMetadataRequest struct {
+	// Standard-base64 Ed25519 signature over the exact decoded body payload
+	// (serialized protobuf ApplyBatch bytes). Either signing header, even if
+	// empty, selects the signed wrapper under application/json (including MIME
+	// parameters). Both headers are then required exactly once and nonempty.
+	// With neither header present, ordinary unsigned decoding applies. The signature must
+	// decode to 64 bytes. Missing, empty, repeated, invalid-base64 or wrong-length
+	// signatures return 400. A non-JSON or missing content type returns 415.
+	//
+	FormanceSignature *string `header:"style=simple,explode=false,name=Formance-Signature"`
+	// Signing key ID. Either signing header, even if empty, selects the signed
+	// wrapper under application/json (including MIME parameters). Both headers
+	// are then required exactly once and nonempty. With neither header present,
+	// ordinary unsigned decoding applies. Missing, empty or repeated signing headers
+	// return 400. A non-JSON or missing content type with either header returns
+	// 415. JWT authentication and scopes remain independent.
+	//
+	FormanceSigningKeyID *string `header:"style=simple,explode=false,name=Formance-Signing-Key-Id"`
 	// Idempotency key for the request
 	IdempotencyKey *string `header:"style=simple,explode=false,name=Idempotency-Key"`
+	// Required when either signing header is present; request must be null. Unsigned DELETE remains bodyless.
+	SignedDeleteTransactionMetadataRequest *ledgerv3.SignedDeleteTransactionMetadataRequest `request:"mediaType=application/json"`
 	// Raw metadata key, for example formance.com/reviewed. SDK callers pass
 	// the raw key and let the SDK encode it. Direct HTTP clients URL-encode
 	// the key as one path segment, encoding slashes as %2F.
@@ -38,11 +57,32 @@ type V3DeleteTransactionMetadataRequest struct {
 	TransactionID int64 `pathParam:"style=simple,explode=false,name=transactionId"`
 }
 
+func (v *V3DeleteTransactionMetadataRequest) GetFormanceSignature() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSignature
+}
+
+func (v *V3DeleteTransactionMetadataRequest) GetFormanceSigningKeyID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSigningKeyID
+}
+
 func (v *V3DeleteTransactionMetadataRequest) GetIdempotencyKey() *string {
 	if v == nil {
 		return nil
 	}
 	return v.IdempotencyKey
+}
+
+func (v *V3DeleteTransactionMetadataRequest) GetSignedDeleteTransactionMetadataRequest() *ledgerv3.SignedDeleteTransactionMetadataRequest {
+	if v == nil {
+		return nil
+	}
+	return v.SignedDeleteTransactionMetadataRequest
 }
 
 func (v *V3DeleteTransactionMetadataRequest) GetKey() string {
@@ -74,14 +114,14 @@ type V3DeleteTransactionMetadataResponse struct {
 	ContentType string
 	// Bad request
 	ErrorResponse *ledgerv3.ErrorResponse
-	// Insufficient permissions (missing required scope)
+	// Insufficient permissions (missing required scope, or invalid/unknown/revoked request signature or batch mismatch with errorCode PERMISSION_DENIED)
 	Forbidden *string
 	Headers   map[string][]string
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
 	RawResponse *http.Response
-	// Authentication required (missing or invalid JWT token)
+	// Authentication required (missing or invalid JWT token, or missing mandatory request signature with errorCode UNAUTHENTICATED)
 	Unauthorized *string
 }
 

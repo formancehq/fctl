@@ -6,7 +6,7 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// MirrorRewriteRuleRead - Read representation of a mirror rewrite rule, using protojson camelCase names. Default scalar values (including empty regex replacements) are omitted; missing replacements mean the empty string. Creation uses the separate MirrorRewriteRule schema.
+// MirrorRewriteRuleRead - Read representation of a mirror rewrite rule, using protojson camelCase names. Default scalar values and empty collections follow the generated protobuf JSON projection and are emitted for non-presence fields, including empty regex replacements. Creation uses the separate MirrorRewriteRule schema.
 type MirrorRewriteRuleRead struct {
 	// Rule scoped to every variant. `log` is the full MirrorLogEntry — use `has(log.<variant>)` guards to read variant-specific fields.
 	//

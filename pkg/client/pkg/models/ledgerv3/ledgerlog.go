@@ -84,9 +84,9 @@ type LedgerLog struct {
 	// contains metadata; DELETE_METADATA contains key. ORDER_SKIPPED
 	// contains reason and optional context. Other types carry the fields
 	// of their corresponding operation directly. FILL_GAP contains originalId,
-	// a uint64 encoded as a decimal JSON string by protobuf JSON.
-	// Transaction IDs, revertedTransactionId and transaction targetId
-	// are JSON numbers; consumers must preserve full integer precision.
+	// a uint64 encoded as a decimal JSON number. Transaction IDs,
+	// revertedTransactionId and transaction targetId are JSON numbers;
+	// consumers must preserve full integer precision.
 	// Metadata integers are
 	// JSON numbers and null-valued keys are preserved.
 	//

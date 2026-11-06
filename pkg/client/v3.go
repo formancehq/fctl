@@ -273,6 +273,8 @@ func (s *V3) AddAccountType(ctx context.Context, request operations.V3AddAccount
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -611,6 +613,8 @@ func (s *V3) AggregateVolumes(ctx context.Context, request operations.V3Aggregat
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -945,6 +949,8 @@ func (s *V3) AnalyzeAccounts(ctx context.Context, request operations.V3AnalyzeAc
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -1276,6 +1282,8 @@ func (s *V3) AnalyzeNumscript(ctx context.Context, request ledgerv3.AnalyzeNumsc
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 413:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -1587,6 +1595,8 @@ func (s *V3) AnalyzeTransactions(ctx context.Context, request operations.V3Analy
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -1699,9 +1709,11 @@ func (s *V3) AnalyzeTransactions(ctx context.Context, request operations.V3Analy
 //     status is the "worst" of them, with `continueOnFailure`
 //     applying only to per-element business failures (4xx):
 //     - Business failures (validation, not-found, conflict,
-//     precondition, permission — 4xx): rolled up per
+//     precondition — 4xx, except authentication/permission): rolled up per
 //     `continueOnFailure`. `true` → `200`; `false` (default) →
 //     the highest 4xx among failing elements (typically `400`).
+//     - Authentication and permission failures: `401`/`403`, regardless
+//     of `continueOnFailure`, with all processing outcomes retained.
 //     - Resource exhaustion (`KindResourceExhausted`, `429`), including
 //     rate limits and permanent authoritative-sequence exhaustion:
 //     surface unconditionally as `429`.
@@ -1714,6 +1726,26 @@ func (s *V3) AnalyzeTransactions(ctx context.Context, request operations.V3Analy
 //     - Aborted elements (`context.Canceled` from the sequential
 //     runner after a prior failure): contribute nothing — the
 //     originating error drives the rollup.
+//
+// Signed requests use `application/json` (including MIME parameters) with
+// `request` and standard-base64 `payload`. Either signing header, even if
+// empty, selects this wrapper; with neither header present, the ordinary REST body applies.
+// Runtime headers choose the representation from the documented anyOf.
+// The signed protobuf batch must
+// equal the route/body/Idempotency-Key-derived batch in full. Supply exactly
+// one nonempty Formance-Signing-Key-Id and Formance-Signature header; the
+// latter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,
+// empty or repeated signing headers, invalid base64 and wrong signature
+// length return 400. Signing headers with a non-JSON or missing content type return 415.
+// Signature enforcement
+// returns 401 `UNAUTHENTICATED` when required but absent and 403
+// `PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched
+// signatures. Malformed signed envelopes return 400. The complete
+// wrapper counts toward the 4 MiB body limit. JWT scopes still apply.
+// Signing requires a nonempty array and `atomic=true` (otherwise 400).
+// The header key applies; per-element `ik` is ignored. Authentication
+// and permission failures remain 401/403 even with continueOnFailure;
+// processing errors preserve every element outcome.
 func (s *V3) BulkOperations(ctx context.Context, request operations.V3BulkOperationsRequest, security *operations.V3BulkOperationsSecurity, opts ...operations.Option) (*operations.V3BulkOperationsResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -1971,6 +2003,8 @@ func (s *V3) BulkOperations(ctx context.Context, request operations.V3BulkOperat
 	case httpRes.StatusCode == 405:
 		fallthrough
 	case httpRes.StatusCode == 413:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -2558,6 +2592,8 @@ func (s *V3) CreateIndex(ctx context.Context, request operations.V3CreateIndexRe
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -2902,6 +2938,8 @@ func (s *V3) CreateLedger(ctx context.Context, request operations.V3CreateLedger
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -3223,6 +3261,8 @@ func (s *V3) CreatePreparedQuery(ctx context.Context, request operations.V3Creat
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -3302,6 +3342,21 @@ func (s *V3) CreatePreparedQuery(ctx context.Context, request operations.V3Creat
 
 // CreateTransaction - Create a new transaction
 // Creates a new transaction in the specified ledger with the specified postings. Requires `ledger:write` scope.
+// Signed requests use `application/json` (including MIME parameters) with
+// `request` and standard-base64 `payload`. Either signing header, even if
+// empty, selects this wrapper; with neither header present, the ordinary REST body applies.
+// Runtime headers choose the representation from the documented anyOf.
+// The signed protobuf batch must
+// equal the route/body/Idempotency-Key-derived batch in full. Supply exactly
+// one nonempty Formance-Signing-Key-Id and Formance-Signature header; the
+// latter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,
+// empty or repeated signing headers, invalid base64 and wrong signature
+// length return 400. Signing headers with a non-JSON or missing content type return 415.
+// Signature enforcement
+// returns 401 `UNAUTHENTICATED` when required but absent and 403
+// `PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched
+// signatures. Malformed signed envelopes return 400. The complete
+// wrapper counts toward the 4 MiB body limit. JWT scopes still apply.
 func (s *V3) CreateTransaction(ctx context.Context, request operations.V3CreateTransactionRequest, security *operations.V3CreateTransactionSecurity, opts ...operations.Option) (*operations.V3CreateTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -3336,7 +3391,7 @@ func (s *V3) CreateTransaction(ctx context.Context, request operations.V3CreateT
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "CreateTransactionRequest", "json", `request:"mediaType=application/json"`)
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, false, "RequestBody", "json", `request:"mediaType=application/json"`)
 	if err != nil {
 		return nil, err
 	}
@@ -3561,6 +3616,8 @@ func (s *V3) CreateTransaction(ctx context.Context, request operations.V3CreateT
 	case httpRes.StatusCode == 405:
 		fallthrough
 	case httpRes.StatusCode == 409:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -3875,6 +3932,8 @@ func (s *V3) DeleteAccountMetadata(ctx context.Context, request operations.V3Del
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -4187,6 +4246,8 @@ func (s *V3) DeleteLedger(ctx context.Context, request operations.V3DeleteLedger
 	case httpRes.StatusCode == 405:
 		fallthrough
 	case httpRes.StatusCode == 409:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -4501,6 +4562,8 @@ func (s *V3) DeleteLedgerMetadata(ctx context.Context, request operations.V3Dele
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -4812,6 +4875,8 @@ func (s *V3) DeletePreparedQuery(ctx context.Context, request operations.V3Delet
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -4891,6 +4956,21 @@ func (s *V3) DeletePreparedQuery(ctx context.Context, request operations.V3Delet
 
 // DeleteTransactionMetadata - Delete transaction metadata
 // Deletes a metadata key for a specific transaction in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
+// Signed requests use `application/json` (including MIME parameters) with
+// `request` and standard-base64 `payload`. Either signing header, even if
+// empty, selects this wrapper; with neither header present, the ordinary REST body applies.
+// Runtime headers choose the representation from the documented anyOf.
+// The signed protobuf batch must
+// equal the route/body/Idempotency-Key-derived batch in full. Supply exactly
+// one nonempty Formance-Signing-Key-Id and Formance-Signature header; the
+// latter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,
+// empty or repeated signing headers, invalid base64 and wrong signature
+// length return 400. Signing headers with a non-JSON or missing content type return 415.
+// Signature enforcement
+// returns 401 `UNAUTHENTICATED` when required but absent and 403
+// `PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched
+// signatures. Malformed signed envelopes return 400. The complete
+// wrapper counts toward the 4 MiB body limit. JWT scopes still apply.
 func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.V3DeleteTransactionMetadataRequest, security *operations.V3DeleteTransactionMetadataSecurity, opts ...operations.Option) (*operations.V3DeleteTransactionMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -4925,6 +5005,10 @@ func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.V
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "SignedDeleteTransactionMetadataRequest", "json", `request:"mediaType=application/json"`)
+	if err != nil {
+		return nil, err
+	}
 
 	timeout := o.Timeout
 	if timeout == nil {
@@ -4937,7 +5021,7 @@ func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.V
 		defer cancel()
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "DELETE", opURL, nil)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", opURL, bodyReader)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}
@@ -4948,6 +5032,9 @@ func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.V
 	}
 
 	req.Header.Set("User-Agent", s.sdkConfiguration.UserAgent)
+	if reqContentType != "" {
+		req.Header.Set("Content-Type", reqContentType)
+	}
 
 	utils.PopulateHeaders(ctx, req, request, nil)
 
@@ -5124,6 +5211,8 @@ func (s *V3) DeleteTransactionMetadata(ctx context.Context, request operations.V
 	case httpRes.StatusCode == 405:
 		fallthrough
 	case httpRes.StatusCode == 409:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -5444,6 +5533,8 @@ func (s *V3) DropIndex(ctx context.Context, request operations.V3DropIndexReques
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 409:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -5792,6 +5883,8 @@ func (s *V3) ExecutePreparedQuery(ctx context.Context, request operations.V3Exec
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -6124,6 +6217,8 @@ func (s *V3) GetAccount(ctx context.Context, request operations.V3GetAccountLedg
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -6452,6 +6547,8 @@ func (s *V3) GetAccountType(ctx context.Context, request operations.V3GetAccount
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -6782,6 +6879,8 @@ func (s *V3) GetAuditEntry(ctx context.Context, request operations.V3GetAuditEnt
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -7113,6 +7212,8 @@ func (s *V3) GetBucketIndex(ctx context.Context, request operations.V3GetBucketI
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -7418,6 +7519,8 @@ func (s *V3) GetBucketIndexEntryStatus(ctx context.Context, request operations.V
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -7661,27 +7764,6 @@ func (s *V3) GetEventsSinks(ctx context.Context, request operations.V3GetEventsS
 			}
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
-	case httpRes.StatusCode == 400:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
 	case httpRes.StatusCode == 401:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -7733,6 +7815,29 @@ func (s *V3) GetEventsSinks(ctx context.Context, request operations.V3GetEventsS
 
 			out := string(rawBody)
 			res.Forbidden = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 415:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -8025,6 +8130,8 @@ func (s *V3) GetIndex(ctx context.Context, request operations.V3GetIndexRequest,
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -8332,6 +8439,8 @@ func (s *V3) GetIndexEntryStatus(ctx context.Context, request operations.V3GetIn
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -8583,27 +8692,6 @@ func (s *V3) GetIndexStatus(ctx context.Context, request operations.V3GetIndexSt
 			}
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
-	case httpRes.StatusCode == 400:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
 	case httpRes.StatusCode == 401:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -8655,6 +8743,29 @@ func (s *V3) GetIndexStatus(ctx context.Context, request operations.V3GetIndexSt
 
 			out := string(rawBody)
 			res.Forbidden = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 415:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -8947,6 +9058,8 @@ func (s *V3) GetLedger(ctx context.Context, request operations.V3GetLedgerReques
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -9275,6 +9388,8 @@ func (s *V3) GetLedgerStats(ctx context.Context, request operations.V3GetLedgerS
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -9602,6 +9717,8 @@ func (s *V3) GetLog(ctx context.Context, request operations.V3GetLogRequest, sec
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -9907,6 +10024,8 @@ func (s *V3) GetMetadataSchemaStatus(ctx context.Context, request operations.V3G
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -10240,6 +10359,8 @@ func (s *V3) GetNumscript(ctx context.Context, request operations.V3GetNumscript
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -10571,6 +10692,8 @@ func (s *V3) GetNumscriptUsage(ctx context.Context, request operations.V3GetNums
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -10899,6 +11022,8 @@ func (s *V3) GetTransaction(ctx context.Context, request operations.V3GetTransac
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -11643,6 +11768,8 @@ func (s *V3) InspectIndex(ctx context.Context, request operations.V3InspectIndex
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -11972,6 +12099,8 @@ func (s *V3) ListAccountTypes(ctx context.Context, request operations.V3ListAcco
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -12309,6 +12438,8 @@ func (s *V3) ListAccounts(ctx context.Context, request operations.V3ListAccounts
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -12640,6 +12771,8 @@ func (s *V3) ListAllLedgers(ctx context.Context, request operations.V3ListAllLed
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -12984,6 +13117,8 @@ func (s *V3) ListAuditEntries(ctx context.Context, request operations.V3ListAudi
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -13259,27 +13394,6 @@ func (s *V3) ListBucketIndexes(ctx context.Context, request operations.V3ListBuc
 			}
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
-	case httpRes.StatusCode == 400:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
 	case httpRes.StatusCode == 401:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -13331,6 +13445,29 @@ func (s *V3) ListBucketIndexes(ctx context.Context, request operations.V3ListBuc
 
 			out := string(rawBody)
 			res.Forbidden = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 415:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -13622,6 +13759,8 @@ func (s *V3) ListLedgerIndexes(ctx context.Context, request operations.V3ListLed
 	case httpRes.StatusCode == 400:
 		fallthrough
 	case httpRes.StatusCode == 404:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -13934,6 +14073,8 @@ func (s *V3) ListLedgerLogs(ctx context.Context, request operations.V3ListLedger
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -14281,6 +14422,8 @@ func (s *V3) ListLedgerTransactions(ctx context.Context, request operations.V3Li
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -14610,6 +14753,8 @@ func (s *V3) ListNumscriptVersions(ctx context.Context, request operations.V3Lis
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -14943,6 +15088,8 @@ func (s *V3) ListNumscripts(ctx context.Context, request operations.V3ListNumscr
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -15271,6 +15418,8 @@ func (s *V3) ListPreparedQueries(ctx context.Context, request operations.V3ListP
 	case httpRes.StatusCode == 404:
 		fallthrough
 	case httpRes.StatusCode == 405:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
 			rawBody, err := utils.ConsumeRawBody(httpRes)
@@ -15545,27 +15694,6 @@ func (s *V3) ListSigningKeys(ctx context.Context, request operations.V3ListSigni
 			}
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
-	case httpRes.StatusCode == 400:
-		switch {
-		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-
-			var out ledgerv3.ErrorResponse
-			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
-				return nil, err
-			}
-
-			res.ErrorResponse = &out
-		default:
-			rawBody, err := utils.ConsumeRawBody(httpRes)
-			if err != nil {
-				return nil, err
-			}
-			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
-		}
 	case httpRes.StatusCode == 401:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -15617,6 +15745,29 @@ func (s *V3) ListSigningKeys(ctx context.Context, request operations.V3ListSigni
 
 			out := string(rawBody)
 			res.Forbidden = &out
+		default:
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
+		}
+	case httpRes.StatusCode == 400:
+		fallthrough
+	case httpRes.StatusCode == 415:
+		switch {
+		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
+			rawBody, err := utils.ConsumeRawBody(httpRes)
+			if err != nil {
+				return nil, err
+			}
+
+			var out ledgerv3.ErrorResponse
+			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
+				return nil, err
+			}
+
+			res.ErrorResponse = &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -16103,6 +16254,8 @@ func (s *V3) PromoteLedger(ctx context.Context, request operations.V3PromoteLedg
 	case httpRes.StatusCode == 405:
 		fallthrough
 	case httpRes.StatusCode == 409:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -16636,6 +16789,8 @@ func (s *V3) RemoveAccountType(ctx context.Context, request operations.V3RemoveA
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -16957,6 +17112,8 @@ func (s *V3) RemoveEventsSink(ctx context.Context, request operations.V3RemoveEv
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -17269,6 +17426,8 @@ func (s *V3) RemoveMetadataFieldType(ctx context.Context, request operations.V3R
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -17355,6 +17514,21 @@ func (s *V3) RemoveMetadataFieldType(ctx context.Context, request operations.V3R
 // or a non-object `metadata`) return 400 before applying the revert. A JSON
 // `null` option uses its default. The complete body, including trailing
 // whitespace, counts towards the 4 MiB limit; exceeding it returns 413.
+// Signed requests use `application/json` (including MIME parameters) with
+// `request` and standard-base64 `payload`. Either signing header, even if
+// empty, selects this wrapper; with neither header present, the ordinary REST body applies.
+// Runtime headers choose the representation from the documented anyOf.
+// The signed protobuf batch must
+// equal the route/body/Idempotency-Key-derived batch in full. Supply exactly
+// one nonempty Formance-Signing-Key-Id and Formance-Signature header; the
+// latter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,
+// empty or repeated signing headers, invalid base64 and wrong signature
+// length return 400. Signing headers with a non-JSON or missing content type return 415.
+// Signature enforcement
+// returns 401 `UNAUTHENTICATED` when required but absent and 403
+// `PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched
+// signatures. Malformed signed envelopes return 400. The complete
+// wrapper counts toward the 4 MiB body limit. JWT scopes still apply.
 func (s *V3) RevertTransaction(ctx context.Context, request operations.V3RevertTransactionRequest, security *operations.V3RevertTransactionSecurity, opts ...operations.Option) (*operations.V3RevertTransactionResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -17389,7 +17563,7 @@ func (s *V3) RevertTransaction(ctx context.Context, request operations.V3RevertT
 		OAuth2Scopes:     nil,
 		SecuritySource:   utils.AsSecuritySource(security),
 	}
-	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "RevertTransactionRequestBody", "json", `request:"mediaType=application/json"`)
+	bodyReader, reqContentType, err := utils.SerializeRequestBody(ctx, request, false, true, "RequestBody", "json", `request:"mediaType=application/json"`)
 	if err != nil {
 		return nil, err
 	}
@@ -17616,6 +17790,8 @@ func (s *V3) RevertTransaction(ctx context.Context, request operations.V3RevertT
 	case httpRes.StatusCode == 409:
 		fallthrough
 	case httpRes.StatusCode == 413:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -17937,6 +18113,8 @@ func (s *V3) SaveAccountMetadata(ctx context.Context, request operations.V3SaveA
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -18256,6 +18434,8 @@ func (s *V3) SaveLedgerMetadata(ctx context.Context, request operations.V3SaveLe
 	case httpRes.StatusCode == 405:
 		fallthrough
 	case httpRes.StatusCode == 409:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -18595,6 +18775,8 @@ func (s *V3) SaveNumscript(ctx context.Context, request operations.V3SaveNumscri
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -18674,6 +18856,21 @@ func (s *V3) SaveNumscript(ctx context.Context, request operations.V3SaveNumscri
 
 // SaveTransactionMetadata - Save transaction metadata
 // Saves metadata for a specific transaction in the ledger. Requires `ledger:WriteMetadata` scope (included in the default `ledger:write` mapping).
+// Signed requests use `application/json` (including MIME parameters) with
+// `request` and standard-base64 `payload`. Either signing header, even if
+// empty, selects this wrapper; with neither header present, the ordinary REST body applies.
+// Runtime headers choose the representation from the documented anyOf.
+// The signed protobuf batch must
+// equal the route/body/Idempotency-Key-derived batch in full. Supply exactly
+// one nonempty Formance-Signing-Key-Id and Formance-Signature header; the
+// latter is a standard-base64 Ed25519 signature of 64 decoded bytes. Missing,
+// empty or repeated signing headers, invalid base64 and wrong signature
+// length return 400. Signing headers with a non-JSON or missing content type return 415.
+// Signature enforcement
+// returns 401 `UNAUTHENTICATED` when required but absent and 403
+// `PERMISSION_DENIED` for invalid, unknown/revoked-key or mismatched
+// signatures. Malformed signed envelopes return 400. The complete
+// wrapper counts toward the 4 MiB body limit. JWT scopes still apply.
 func (s *V3) SaveTransactionMetadata(ctx context.Context, request operations.V3SaveTransactionMetadataRequest, security *operations.V3SaveTransactionMetadataSecurity, opts ...operations.Option) (*operations.V3SaveTransactionMetadataResponse, error) {
 	o := operations.Options{}
 	supportedOptions := []string{
@@ -18914,6 +19111,8 @@ func (s *V3) SaveTransactionMetadata(ctx context.Context, request operations.V3S
 	case httpRes.StatusCode == 405:
 		fallthrough
 	case httpRes.StatusCode == 409:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
@@ -19237,6 +19436,8 @@ func (s *V3) SetDefaultEnforcementMode(ctx context.Context, request operations.V
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -19557,6 +19758,8 @@ func (s *V3) SetMetadataFieldType(ctx context.Context, request operations.V3SetM
 		fallthrough
 	case httpRes.StatusCode == 409:
 		fallthrough
+	case httpRes.StatusCode == 415:
+		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -19874,6 +20077,8 @@ func (s *V3) UpdatePreparedQuery(ctx context.Context, request operations.V3Updat
 	case httpRes.StatusCode == 405:
 		fallthrough
 	case httpRes.StatusCode == 409:
+		fallthrough
+	case httpRes.StatusCode == 415:
 		fallthrough
 	case httpRes.StatusCode == 429:
 		switch {

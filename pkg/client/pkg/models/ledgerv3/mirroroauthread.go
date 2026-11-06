@@ -8,10 +8,11 @@ import (
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 )
 
-// ClientSecret - Presence marker only; reusable secret material is never returned
+// ClientSecret - Empty when unset; otherwise a presence marker only. Reusable secret material is never returned
 type ClientSecret string
 
 const (
+	ClientSecretUnknown  ClientSecret = ""
 	ClientSecretRedacted ClientSecret = "[redacted]"
 )
 
@@ -24,6 +25,8 @@ func (e *ClientSecret) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	switch v {
+	case "":
+		fallthrough
 	case "[redacted]":
 		*e = ClientSecret(v)
 		return nil
@@ -34,7 +37,7 @@ func (e *ClientSecret) UnmarshalJSON(data []byte) error {
 
 type MirrorOAuthRead struct {
 	ClientID *string `json:"clientId,omitempty"`
-	// Presence marker only; reusable secret material is never returned
+	// Empty when unset; otherwise a presence marker only. Reusable secret material is never returned
 	ClientSecret *ClientSecret `json:"clientSecret,omitempty"`
 	Scopes       []string      `json:"scopes,omitempty"`
 	// OAuth endpoint URL with userinfo (including passwordless tokens) and query credentials masked

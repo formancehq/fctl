@@ -3,7 +3,10 @@
 package operations
 
 import (
+	"errors"
+	"fmt"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledgerv3"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/utils"
 	"net/http"
 )
 
@@ -21,6 +24,69 @@ func (v *V3RevertTransactionSecurity) GetBearerAuth() *string {
 // #region class-body-v3reverttransactionsecurity
 // #endregion class-body-v3reverttransactionsecurity
 
+type V3RevertTransactionRequestBodyType string
+
+const (
+	V3RevertTransactionRequestBodyTypeRevertTransactionRequestBody   V3RevertTransactionRequestBodyType = "RevertTransactionRequestBody"
+	V3RevertTransactionRequestBodyTypeSignedRevertTransactionRequest V3RevertTransactionRequestBodyType = "SignedRevertTransactionRequest"
+)
+
+type V3RevertTransactionRequestBody struct {
+	RevertTransactionRequestBody   *ledgerv3.RevertTransactionRequestBody   `queryParam:"inline" union:"member"`
+	SignedRevertTransactionRequest *ledgerv3.SignedRevertTransactionRequest `queryParam:"inline" union:"member"`
+
+	Type V3RevertTransactionRequestBodyType
+}
+
+func CreateV3RevertTransactionRequestBodyRevertTransactionRequestBody(revertTransactionRequestBody ledgerv3.RevertTransactionRequestBody) V3RevertTransactionRequestBody {
+	typ := V3RevertTransactionRequestBodyTypeRevertTransactionRequestBody
+
+	return V3RevertTransactionRequestBody{
+		RevertTransactionRequestBody: &revertTransactionRequestBody,
+		Type:                         typ,
+	}
+}
+
+func CreateV3RevertTransactionRequestBodySignedRevertTransactionRequest(signedRevertTransactionRequest ledgerv3.SignedRevertTransactionRequest) V3RevertTransactionRequestBody {
+	typ := V3RevertTransactionRequestBodyTypeSignedRevertTransactionRequest
+
+	return V3RevertTransactionRequestBody{
+		SignedRevertTransactionRequest: &signedRevertTransactionRequest,
+		Type:                           typ,
+	}
+}
+
+func (u *V3RevertTransactionRequestBody) UnmarshalJSON(data []byte) error {
+
+	var signedRevertTransactionRequest ledgerv3.SignedRevertTransactionRequest = ledgerv3.SignedRevertTransactionRequest{}
+	if err := utils.UnmarshalJSON(data, &signedRevertTransactionRequest, "", true, nil); err == nil {
+		u.SignedRevertTransactionRequest = &signedRevertTransactionRequest
+		u.Type = V3RevertTransactionRequestBodyTypeSignedRevertTransactionRequest
+		return nil
+	}
+
+	var revertTransactionRequestBody ledgerv3.RevertTransactionRequestBody = ledgerv3.RevertTransactionRequestBody{}
+	if err := utils.UnmarshalJSON(data, &revertTransactionRequestBody, "", true, nil); err == nil {
+		u.RevertTransactionRequestBody = &revertTransactionRequestBody
+		u.Type = V3RevertTransactionRequestBodyTypeRevertTransactionRequestBody
+		return nil
+	}
+
+	return fmt.Errorf("could not unmarshal `%s` into any supported union types for V3RevertTransactionRequestBody", string(data))
+}
+
+func (u V3RevertTransactionRequestBody) MarshalJSON() ([]byte, error) {
+	if u.RevertTransactionRequestBody != nil {
+		return utils.MarshalJSON(u.RevertTransactionRequestBody, "", true)
+	}
+
+	if u.SignedRevertTransactionRequest != nil {
+		return utils.MarshalJSON(u.SignedRevertTransactionRequest, "", true)
+	}
+
+	return nil, errors.New("could not marshal union type V3RevertTransactionRequestBody: all fields are null")
+}
+
 type V3RevertTransactionRequest struct {
 	// Render all response Uint256, BigUint and SignedBigInt values as canonical
 	// decimal strings, regardless of business meaning, including posting
@@ -33,9 +99,26 @@ type V3RevertTransactionRequest struct {
 	// and bulk results. Request decoding is unchanged.
 	//
 	FormanceBigintAsString *string `header:"style=simple,explode=false,name=Formance-Bigint-As-String"`
+	// Standard-base64 Ed25519 signature over the exact decoded body payload
+	// (serialized protobuf ApplyBatch bytes). Either signing header, even if
+	// empty, selects the signed wrapper under application/json (including MIME
+	// parameters). Both headers are then required exactly once and nonempty.
+	// With neither header present, ordinary unsigned decoding applies. The signature must
+	// decode to 64 bytes. Missing, empty, repeated, invalid-base64 or wrong-length
+	// signatures return 400. A non-JSON or missing content type returns 415.
+	//
+	FormanceSignature *string `header:"style=simple,explode=false,name=Formance-Signature"`
+	// Signing key ID. Either signing header, even if empty, selects the signed
+	// wrapper under application/json (including MIME parameters). Both headers
+	// are then required exactly once and nonempty. With neither header present,
+	// ordinary unsigned decoding applies. Missing, empty or repeated signing headers
+	// return 400. A non-JSON or missing content type with either header returns
+	// 415. JWT authentication and scopes remain independent.
+	//
+	FormanceSigningKeyID *string `header:"style=simple,explode=false,name=Formance-Signing-Key-Id"`
 	// Idempotency key for the request
-	IdempotencyKey               *string                                `header:"style=simple,explode=false,name=Idempotency-Key"`
-	RevertTransactionRequestBody *ledgerv3.RevertTransactionRequestBody `request:"mediaType=application/json"`
+	IdempotencyKey *string                         `header:"style=simple,explode=false,name=Idempotency-Key"`
+	RequestBody    *V3RevertTransactionRequestBody `request:"mediaType=application/json"`
 	// Name of the ledger
 	LedgerName string `pathParam:"style=simple,explode=false,name=ledgerName"`
 	// Transaction ID
@@ -49,6 +132,20 @@ func (v *V3RevertTransactionRequest) GetFormanceBigintAsString() *string {
 	return v.FormanceBigintAsString
 }
 
+func (v *V3RevertTransactionRequest) GetFormanceSignature() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSignature
+}
+
+func (v *V3RevertTransactionRequest) GetFormanceSigningKeyID() *string {
+	if v == nil {
+		return nil
+	}
+	return v.FormanceSigningKeyID
+}
+
 func (v *V3RevertTransactionRequest) GetIdempotencyKey() *string {
 	if v == nil {
 		return nil
@@ -56,11 +153,11 @@ func (v *V3RevertTransactionRequest) GetIdempotencyKey() *string {
 	return v.IdempotencyKey
 }
 
-func (v *V3RevertTransactionRequest) GetRevertTransactionRequestBody() *ledgerv3.RevertTransactionRequestBody {
+func (v *V3RevertTransactionRequest) GetRequestBody() *V3RevertTransactionRequestBody {
 	if v == nil {
 		return nil
 	}
-	return v.RevertTransactionRequestBody
+	return v.RequestBody
 }
 
 func (v *V3RevertTransactionRequest) GetLedgerName() string {
@@ -85,7 +182,7 @@ type V3RevertTransactionResponse struct {
 	ContentType string
 	// Bad request
 	ErrorResponse *ledgerv3.ErrorResponse
-	// Insufficient permissions (missing required scope)
+	// Insufficient permissions (missing required scope, or invalid/unknown/revoked request signature or batch mismatch with errorCode PERMISSION_DENIED)
 	Forbidden *string
 	Headers   map[string][]string
 	// HTTP response status code for this operation
@@ -94,7 +191,7 @@ type V3RevertTransactionResponse struct {
 	RawResponse *http.Response
 	// Transaction reverted successfully
 	RevertedTransactionResponse *ledgerv3.RevertedTransactionResponse
-	// Authentication required (missing or invalid JWT token)
+	// Authentication required (missing or invalid JWT token, or missing mandatory request signature with errorCode UNAUTHENTICATED)
 	Unauthorized *string
 }
 

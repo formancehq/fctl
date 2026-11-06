@@ -16,6 +16,7 @@ import (
 
 	internal "github.com/formancehq/fctl/v3/cmd/ledger/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
@@ -61,7 +62,7 @@ func (c *InsertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, err
 	}
 
-	stackClient, err := fctl.NewStackClientsFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
+	stackClient, err := fctl.NewStackClientFromFlags(cmd, relyingParty, fctl.NewPTermDialog(), profileName, *profile)
 	if err != nil {
 		return nil, err
 	}
@@ -78,15 +79,19 @@ func (c *InsertController) Run(cmd *cobra.Command, args []string) (fctl.Renderab
 		return nil, fctl.ErrMissingApproval
 	}
 
-	err = insertSchema(cmd.Context(), stackClient, operations.V2InsertSchemaRequest{
-		Ledger:  ledgerName,
-		Version: version,
-	}, schemaData)
+	response, err := stackClient.Ledger.V2.InsertSchema(cmd.Context(), operations.V2InsertSchemaRequest{
+		Ledger:       ledgerName,
+		Version:      version,
+		V2SchemaData: *schemaData,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	c.store.Success = true
+	c.store.Success = response.StatusCode == 204
+	if !c.store.Success {
+		return nil, fmt.Errorf("unexpected status code %d while inserting schema", response.StatusCode)
+	}
 	return c, nil
 }
 
@@ -95,7 +100,7 @@ func (c *InsertController) Render(cmd *cobra.Command, _ []string) error {
 	return nil
 }
 
-func loadSchemaData(cmd *cobra.Command, source string) (*SchemaData, error) {
+func loadSchemaData(cmd *cobra.Command, source string) (*ledger.V2SchemaDataInput, error) {
 	raw, err := readSource(cmd, source)
 	if err != nil {
 		return nil, err
@@ -111,7 +116,7 @@ func loadSchemaData(cmd *cobra.Command, source string) (*SchemaData, error) {
 		return nil, err
 	}
 
-	schemaData := &SchemaData{}
+	schemaData := &ledger.V2SchemaDataInput{}
 	if err := json.Unmarshal(normalized, schemaData); err != nil {
 		return nil, err
 	}
