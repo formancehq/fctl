@@ -2,6 +2,10 @@
 
 package connectivity
 
+import (
+	"encoding/json"
+)
+
 // Error - Request or server error. The HTTP status and code identify the failure.
 type Error struct {
 	// Additional details; when structured, this string contains a JSON object.
@@ -11,23 +15,9 @@ type Error struct {
 	ErrorMessage *string `json:"errorMessage,omitempty"`
 }
 
-func (e *Error) GetDetails() *string {
-	if e == nil {
-		return nil
-	}
-	return e.Details
-}
+var _ error = &Error{}
 
-func (e *Error) GetErrorCode() *string {
-	if e == nil {
-		return nil
-	}
-	return e.ErrorCode
-}
-
-func (e *Error) GetErrorMessage() *string {
-	if e == nil {
-		return nil
-	}
-	return e.ErrorMessage
+func (e *Error) Error() string {
+	data, _ := json.Marshal(e)
+	return string(data)
 }

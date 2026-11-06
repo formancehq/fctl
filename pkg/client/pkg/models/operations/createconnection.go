@@ -23,8 +23,6 @@ type CreateConnectionResponse struct {
 	Connection *connectivity.Connection
 	// HTTP response content type for this operation
 	ContentType string
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 	// HTTP response status code for this operation
 	StatusCode int
 	// Raw HTTP response; suitable for custom response parsing
@@ -43,13 +41,6 @@ func (c *CreateConnectionResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
-}
-
-func (c *CreateConnectionResponse) GetError() *connectivity.Error {
-	if c == nil {
-		return nil
-	}
-	return c.Error
 }
 
 func (c *CreateConnectionResponse) GetStatusCode() int {

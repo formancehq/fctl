@@ -10,8 +10,6 @@ import (
 type ConnectivityInfoResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 	// Build information
 	Info *connectivity.Info
 	// HTTP response status code for this operation
@@ -25,13 +23,6 @@ func (c *ConnectivityInfoResponse) GetContentType() string {
 		return ""
 	}
 	return c.ContentType
-}
-
-func (c *ConnectivityInfoResponse) GetError() *connectivity.Error {
-	if c == nil {
-		return nil
-	}
-	return c.Error
 }
 
 func (c *ConnectivityInfoResponse) GetInfo() *connectivity.Info {

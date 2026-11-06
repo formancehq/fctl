@@ -6,22 +6,21 @@ Membership and Deploy Server retain their separate local SDKs.
 
 ## Source and generation
 
-The workflow reads the committed `openapi/stack.json` snapshot. It was composed
-from Stack `2615a186` after #2017, with these moving inputs resolved at generation:
+The workflow reads the exact versioned
+[Stack v4.0.0-beta.3 release asset](https://github.com/formancehq/stack/releases/download/v4.0.0-beta.3/generate.json)
+directly. No composed OpenAPI snapshot is vendored in FCTL.
+The release tag points to Stack commit
+`a476c6c75c480b91626c64919f7450a3625a16ab`. The asset filename is `generate.json`
+(its release label is `openapi.json`). Its SHA-256 is
+`4395810e7958f1bc5a63337dca5344441d361240ed3b99d9b994f6571509f48f`.
+This published artifact is the authoritative generation input; moving component
+branches are not fetched when regenerating FCTL. The asset is downloaded only
+during generation; ordinary builds and tests use the committed generated SDK.
 
-| Component | Source revision |
-| --- | --- |
-| Ledger v2 (`release/v2.4`) | `f77eb05b129038c21071806c0f90af03bdc0e369` |
-| Ledger v3 (`main`) | `8e30edf29e2586aefaeed7e0bc871936e5978bb7` |
-| Connectivity (`main`) | `d518138f22139e4fe633465ce7632c3f22150461` |
-
-Other component versions come from that Stack revision's `Justfile`.
-The snapshot SHA-256 is
-`7fd1f9a8abd11f018ed05008e64aa9c105dfa70821c9f41a96b8171921559dca`.
-It includes Connectivity's `errorCode`/`errorMessage`, string `details`, and
-raw connection `status.lastError`. Ledger v2 includes the corrected query-template
-contract from #2501: templates discriminate on their own `resource`, with flat
-common parameters and separate volume parameters.
+The asset includes Connectivity's `errorCode`/`errorMessage`, string `details`,
+and raw connection `status.lastError`. Ledger v2 query templates discriminate
+on their own `resource`, with flat common parameters and separate volume
+parameters.
 
 Generation uses Speakeasy **1.757.1** and Go generator **2.866.2**, matching
 `formance-sdk-go v4.0.0`. Its Go options are preserved, including
@@ -36,19 +35,16 @@ nix develop --command just tests
 nix develop --command just pre-commit
 ```
 
-Ordinary builds/tests use checked-in code. Generation requires existing
-Speakeasy authentication. The `stack-speakeasy` Nix package isolates the Stack
+Ordinary builds/tests use checked-in code. Generation requires network access
+to the versioned release asset and existing Speakeasy authentication. The `stack-speakeasy` Nix package isolates the Stack
 pin from Membership/Deploy Server. Stack generation uses Go 1.25.10 for the
 bundled Staticcheck; FCTL uses its repository toolchain.
 
-To refresh the source, generate `releases/build/generate.json` in an isolated
-checkout of the intended Stack revision, review its resolved component inputs,
-and replace `openapi/stack.json`. Update the revisions and checksum above,
-regenerate, inspect the SDK/lock diff, and repeat generation to check drift.
-Ledger-specific validation in the selected Stack revision assumes the earlier
-query-params union. The composed document was obtained with that obsolete
-validation relaxed; validation-only changes do not alter the generated input.
-SDK generation/tests do not qualify Stack for release.
+To refresh the source, select a published Stack release and update the exact
+`generate.json` asset URL in `pkg/client/.speakeasy/workflow.yaml`. Verify the
+asset digest and update the tag, commit and checksum above. Regenerate, inspect
+the SDK/lock diff, and repeat generation to check drift. SDK generation/tests do
+not qualify Stack for release or establish a deployed compatibility matrix.
 
 Do not edit generated Go files. Generated SDK reference docs and usage guides
 are ignored; FCTL maintains this document. `just tests` covers both the CLI and
@@ -70,6 +66,12 @@ normalization, parent-resource validation, optional params, and run overrides.
 A redundant nested `params.resource` is tolerated without losing time bounds.
 The original file/URL loading logic is unchanged; local tests do not exercise
 authenticated command execution against a deployed API.
+
+Connectivity HTTP `4XX`/`5XX` responses are returned through the SDK error
+channel. Consumers must handle the returned error before using the response;
+the previous `response.Error` field is no longer generated. JSON application
+errors carry `errorCode`, `errorMessage` and string `details`. Non-JSON and
+bodyless responses use `sdkerrors.SDKError`, retaining the HTTP status and body.
 
 Payments raw provider objects retain their fields in JSON output, but generic
 JSON numbers use `float64` and are not lossless above 2^53. Compatibility with

@@ -21,8 +21,6 @@ func (g *GetQueryCapabilitiesSecurity) GetBearerAuth() *string {
 type GetQueryCapabilitiesResponse struct {
 	// HTTP response content type for this operation
 	ContentType string
-	// Request or server error. The HTTP status and code identify the failure.
-	Error *connectivity.Error
 	// OK
 	QueryCapabilities *connectivity.QueryCapabilities
 	// HTTP response status code for this operation
@@ -36,13 +34,6 @@ func (g *GetQueryCapabilitiesResponse) GetContentType() string {
 		return ""
 	}
 	return g.ContentType
-}
-
-func (g *GetQueryCapabilitiesResponse) GetError() *connectivity.Error {
-	if g == nil {
-		return nil
-	}
-	return g.Error
 }
 
 func (g *GetQueryCapabilitiesResponse) GetQueryCapabilities() *connectivity.QueryCapabilities {

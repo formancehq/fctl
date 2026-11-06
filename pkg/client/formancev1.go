@@ -167,7 +167,7 @@ func (s *FormanceV1) ConnectivityInfo(ctx context.Context, opts ...operations.Op
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -223,7 +223,7 @@ func (s *FormanceV1) ConnectivityInfo(ctx context.Context, opts ...operations.Op
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -244,7 +244,7 @@ func (s *FormanceV1) ConnectivityInfo(ctx context.Context, opts ...operations.Op
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -418,7 +418,7 @@ func (s *FormanceV1) CreateConnection(ctx context.Context, request connectivity.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -462,7 +462,11 @@ func (s *FormanceV1) CreateConnection(ctx context.Context, request connectivity.
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -476,7 +480,7 @@ func (s *FormanceV1) CreateConnection(ctx context.Context, request connectivity.
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -497,7 +501,7 @@ func (s *FormanceV1) CreateConnection(ctx context.Context, request connectivity.
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -654,7 +658,7 @@ func (s *FormanceV1) DeleteConnection(ctx context.Context, request operations.De
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -679,7 +683,11 @@ func (s *FormanceV1) DeleteConnection(ctx context.Context, request operations.De
 	case httpRes.StatusCode == 204:
 		utils.DrainBody(httpRes)
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -693,7 +701,7 @@ func (s *FormanceV1) DeleteConnection(ctx context.Context, request operations.De
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -714,7 +722,7 @@ func (s *FormanceV1) DeleteConnection(ctx context.Context, request operations.De
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -871,7 +879,7 @@ func (s *FormanceV1) GetConnection(ctx context.Context, request operations.GetCo
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -915,7 +923,11 @@ func (s *FormanceV1) GetConnection(ctx context.Context, request operations.GetCo
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -929,7 +941,7 @@ func (s *FormanceV1) GetConnection(ctx context.Context, request operations.GetCo
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -950,7 +962,7 @@ func (s *FormanceV1) GetConnection(ctx context.Context, request operations.GetCo
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1107,7 +1119,7 @@ func (s *FormanceV1) GetConnector(ctx context.Context, request operations.GetCon
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1151,7 +1163,11 @@ func (s *FormanceV1) GetConnector(ctx context.Context, request operations.GetCon
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -1165,7 +1181,7 @@ func (s *FormanceV1) GetConnector(ctx context.Context, request operations.GetCon
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1186,7 +1202,7 @@ func (s *FormanceV1) GetConnector(ctx context.Context, request operations.GetCon
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1351,7 +1367,7 @@ func (s *FormanceV1) GetConnectorFacets(ctx context.Context, request operations.
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1395,7 +1411,11 @@ func (s *FormanceV1) GetConnectorFacets(ctx context.Context, request operations.
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -1409,7 +1429,7 @@ func (s *FormanceV1) GetConnectorFacets(ctx context.Context, request operations.
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1430,7 +1450,7 @@ func (s *FormanceV1) GetConnectorFacets(ctx context.Context, request operations.
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1587,7 +1607,7 @@ func (s *FormanceV1) GetConnectorVersion(ctx context.Context, request operations
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1631,7 +1651,11 @@ func (s *FormanceV1) GetConnectorVersion(ctx context.Context, request operations
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -1645,7 +1669,7 @@ func (s *FormanceV1) GetConnectorVersion(ctx context.Context, request operations
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1666,7 +1690,7 @@ func (s *FormanceV1) GetConnectorVersion(ctx context.Context, request operations
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1826,7 +1850,7 @@ func (s *FormanceV1) GetQueryCapabilities(ctx context.Context, security *operati
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -1870,7 +1894,11 @@ func (s *FormanceV1) GetQueryCapabilities(ctx context.Context, security *operati
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -1884,7 +1912,7 @@ func (s *FormanceV1) GetQueryCapabilities(ctx context.Context, security *operati
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -1905,7 +1933,7 @@ func (s *FormanceV1) GetQueryCapabilities(ctx context.Context, security *operati
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2061,7 +2089,7 @@ func (s *FormanceV1) Healthcheck(ctx context.Context, opts ...operations.Option)
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"4XX", "500", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2112,12 +2140,12 @@ func (s *FormanceV1) Healthcheck(ctx context.Context, opts ...operations.Option)
 				return nil, err
 			}
 
-			var out connectivity.Health
+			var out connectivity.HealthError
 			if err := utils.UnmarshalJsonFromResponseBody(bytes.NewBuffer(rawBody), &out, ""); err != nil {
 				return nil, err
 			}
 
-			res.Health = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2138,7 +2166,7 @@ func (s *FormanceV1) Healthcheck(ctx context.Context, opts ...operations.Option)
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2159,7 +2187,7 @@ func (s *FormanceV1) Healthcheck(ctx context.Context, opts ...operations.Option)
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2320,7 +2348,7 @@ func (s *FormanceV1) ListConnections(ctx context.Context, request operations.Lis
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2364,7 +2392,11 @@ func (s *FormanceV1) ListConnections(ctx context.Context, request operations.Lis
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -2378,7 +2410,7 @@ func (s *FormanceV1) ListConnections(ctx context.Context, request operations.Lis
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2399,7 +2431,7 @@ func (s *FormanceV1) ListConnections(ctx context.Context, request operations.Lis
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2563,7 +2595,7 @@ func (s *FormanceV1) ListConnectorVersions(ctx context.Context, request operatio
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2607,7 +2639,11 @@ func (s *FormanceV1) ListConnectorVersions(ctx context.Context, request operatio
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -2621,7 +2657,7 @@ func (s *FormanceV1) ListConnectorVersions(ctx context.Context, request operatio
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2642,7 +2678,7 @@ func (s *FormanceV1) ListConnectorVersions(ctx context.Context, request operatio
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2806,7 +2842,7 @@ func (s *FormanceV1) ListConnectors(ctx context.Context, request operations.List
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -2850,7 +2886,11 @@ func (s *FormanceV1) ListConnectors(ctx context.Context, request operations.List
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -2864,7 +2904,7 @@ func (s *FormanceV1) ListConnectors(ctx context.Context, request operations.List
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -2885,7 +2925,7 @@ func (s *FormanceV1) ListConnectors(ctx context.Context, request operations.List
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -3057,7 +3097,7 @@ func (s *FormanceV1) PatchConnection(ctx context.Context, request operations.Pat
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3101,7 +3141,11 @@ func (s *FormanceV1) PatchConnection(ctx context.Context, request operations.Pat
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -3115,7 +3159,7 @@ func (s *FormanceV1) PatchConnection(ctx context.Context, request operations.Pat
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -3136,7 +3180,7 @@ func (s *FormanceV1) PatchConnection(ctx context.Context, request operations.Pat
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -3308,7 +3352,7 @@ func (s *FormanceV1) ReplaceConnection(ctx context.Context, request operations.R
 
 			_, err = s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, nil, err)
 			return nil, err
-		} else if utils.MatchStatusCodes([]string{"default"}, httpRes.StatusCode) {
+		} else if utils.MatchStatusCodes([]string{"401", "4XX", "5XX", "default"}, httpRes.StatusCode) {
 			_httpRes, err := s.hooks.AfterError(hooks.AfterErrorContext{HookContext: hookCtx}, httpRes, nil)
 			if err != nil {
 				return nil, err
@@ -3352,7 +3396,11 @@ func (s *FormanceV1) ReplaceConnection(ctx context.Context, request operations.R
 			return nil, sdkerrors.NewSDKError(fmt.Sprintf("unknown content-type received: %s", httpRes.Header.Get("Content-Type")), httpRes.StatusCode, string(rawBody), httpRes)
 		}
 	case httpRes.StatusCode == 401:
-		utils.DrainBody(httpRes)
+		rawBody, err := utils.ConsumeRawBody(httpRes)
+		if err != nil {
+			return nil, err
+		}
+		return nil, sdkerrors.NewSDKError("API error occurred", httpRes.StatusCode, string(rawBody), httpRes)
 	case httpRes.StatusCode >= 400 && httpRes.StatusCode < 500:
 		switch {
 		case utils.MatchContentType(httpRes.Header.Get("Content-Type"), `application/json`):
@@ -3366,7 +3414,7 @@ func (s *FormanceV1) ReplaceConnection(ctx context.Context, request operations.R
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {
@@ -3387,7 +3435,7 @@ func (s *FormanceV1) ReplaceConnection(ctx context.Context, request operations.R
 				return nil, err
 			}
 
-			res.Error = &out
+			return nil, &out
 		default:
 			rawBody, err := utils.ConsumeRawBody(httpRes)
 			if err != nil {

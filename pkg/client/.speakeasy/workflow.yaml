@@ -3,7 +3,7 @@ speakeasyVersion: 1.757.1
 sources:
   stacks-source:
     inputs:
-      - location: ../../openapi/stack.json
+      - location: https://github.com/formancehq/stack/releases/download/v4.0.0-beta.3/generate.json
     overlays:
       - location: ./bulk-naming-overlay.yaml
 targets:
