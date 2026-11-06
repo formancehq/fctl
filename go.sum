@@ -103,8 +103,6 @@ github.com/felixge/httpsnoop v1.0.4 h1:NFTV2Zj1bL4mc9sqWACXbQFVBBg2W3GPvqp8/ESS2
 github.com/felixge/httpsnoop v1.0.4/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b h1:8sPsvBsI0CJEzskLvdRMSBSdQKUlYTRGRdTiuL1HTfI=
 github.com/formancehq/cobra v1.10.3-0.20260226173701-7f22399f993b/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
-github.com/formancehq/formance-sdk-go/v4 v4.0.0 h1:VaDHdPdy2oLU80rhWsG7ll4M5fc5zFgr5KgZlZ7Zy74=
-github.com/formancehq/formance-sdk-go/v4 v4.0.0/go.mod h1:dkPQPeS133IQcePjTkgfKJEeX3IAbBFYMEwcYBf/WYM=
 github.com/formancehq/go-libs/v3 v3.6.3 h1:pr66K8aoqiR/mJRmC8tasiqOwry7ekhj/pL9LyLuxoo=
 github.com/formancehq/go-libs/v3 v3.6.3/go.mod h1:zWgFos2lhuunwk6YqXscMEokOKvEeH6Et5VjTyaF9mM=
 github.com/formancehq/go-libs/v4 v4.1.1 h1:D4LRPyssaq/2rPyNlmvAfypY5CsjLSQLLX2N4I/PsR4=
@@ -359,8 +357,8 @@ golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLL
 golang.org/x/net v0.0.0-20210226172049-e18ecbb05110/go.mod h1:m0MpNAwzfU5UDzcl9v0D8zg8gWTRqZa9RBIspLL5mdg=
 golang.org/x/net v0.0.0-20220722155237-a158d28d115b/go.mod h1:XRhObCWvk6IyKnWLug+ECip1KBveYUHfp+8e9klMJ9c=
 golang.org/x/net v0.6.0/go.mod h1:2Tu9+aMcznHK/AK1HMvgo6xiTLG5rD5rZLDS+rp2Bjs=
-golang.org/x/net v0.57.0 h1:K5+3DljvIuDG9/Jv9rvyMywYNFCQ9RSUY6OOTTkT+tE=
-golang.org/x/net v0.57.0/go.mod h1:KpXc8iv+r3XplLAG/f7Jsf9RPszJzdR0f58q9vGOuEU=
+golang.org/x/net v0.62.0 h1:18ELalfM5+XNRwzM2nYqXsZQ9ByS1uhj2O/U7+5jqRY=
+golang.org/x/net v0.62.0/go.mod h1:WgDCOTH8iwtB66T4/GfI94AHo/hhdb7Hah9NDseQfiI=
 golang.org/x/oauth2 v0.36.0 h1:peZ/1z27fi9hUOFCAZaHyrpWG5lwe0RJEEEeH0ThlIs=
 golang.org/x/oauth2 v0.36.0/go.mod h1:YDBUJMTkDnJS+A4BP4eZBjCqtokkg1hODuPjwiGPO7Q=
 golang.org/x/sync v0.0.0-20190423024810-112230192c58/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
