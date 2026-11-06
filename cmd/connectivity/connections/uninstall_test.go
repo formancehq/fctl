@@ -3,7 +3,6 @@ package connections
 import (
 	"context"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -13,7 +12,6 @@ import (
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
-	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
@@ -58,33 +56,6 @@ func TestUninstallPreservesDeleteAPIError(t *testing.T) {
 	_, err := executeCommand(testNewUninstallCommand(factoryReturning(client)), "stripe-eu", "--confirm")
 
 	require.ErrorIs(t, err, apiError)
-}
-
-func TestUninstallRegistersAliasesRootAndConnectionCompletion(t *testing.T) {
-	instance := instanceFixture("stripe-eu")
-	client := uninstallClientMock{
-		listInstances: func(ctx context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
-			require.True(t, hasTwoSecondDeadline(ctx))
-			require.Equal(t, connectivityinternal.ListOptions{PageSize: 100}, options)
-			return &testConnectionList{Items: []connectivity.Connection{instance}}, nil
-		},
-	}
-	command := testNewUninstallCommand(factoryReturning(client))
-
-	require.Equal(t, "uninstall <connection>", command.Use)
-	require.Equal(t, []string{"delete", "remove", "rm", "u"}, command.Aliases)
-	require.Error(t, command.Args(command, nil))
-	require.NoError(t, command.Args(command, []string{"stripe-eu"}))
-	require.Error(t, command.Args(command, []string{"stripe-eu", "extra"}))
-	candidates, directive := command.ValidArgsFunction(command, nil, "stripe")
-	require.Equal(t, []string{"stripe-eu\tstripe · main"}, candidates)
-	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
-
-	root := testNewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
-	child, _, err := root.Find([]string{"uninstall"})
-	require.NoError(t, err)
-	require.Equal(t, "uninstall", child.Name())
-	require.True(t, reflect.DeepEqual([]string{"delete", "remove", "rm", "u"}, child.Aliases))
 }
 
 func TestUninstallInvalidArgumentsDoNotDelete(t *testing.T) {

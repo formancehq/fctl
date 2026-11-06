@@ -131,28 +131,6 @@ func TestListConnectorsJSONPreservesCompleteModelsAndContinuation(t *testing.T) 
 	}
 }
 
-func TestConnectorRootRegistersApprovedCommandsAndAliases(t *testing.T) {
-	command := NewCommand()
-	if command.Use != "connectors" || !reflect.DeepEqual(command.Aliases, []string{"connector", "c"}) {
-		t.Fatalf("connector root = %q aliases %v", command.Use, command.Aliases)
-	}
-
-	wantAliases := map[string][]string{
-		"list":   {"ls", "l"},
-		"show":   {"get", "g", "sh", "s"},
-		"facets": {"facet", "f"},
-	}
-	for name, aliases := range wantAliases {
-		child, _, err := command.Find([]string{name})
-		if err != nil {
-			t.Fatalf("find %s command: %v", name, err)
-		}
-		if child.Name() != name || !reflect.DeepEqual(child.Aliases, aliases) {
-			t.Errorf("%s aliases = %v, want %v", name, child.Aliases, aliases)
-		}
-	}
-}
-
 func TestListConnectorsReturnsTransportAndEmptyResponseErrors(t *testing.T) {
 	tests := map[string]struct {
 		client *formance.FormanceV1

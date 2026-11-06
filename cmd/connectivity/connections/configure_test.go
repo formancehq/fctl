@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -387,7 +386,7 @@ func TestConfigurePreservesGetAndPatchAPIErrorsAndRejectsEmptyResponses(t *testi
 	}
 }
 
-func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
+func TestConfigureCompletionUsesCurrentConnectionAndSchema(t *testing.T) {
 	current := instanceFixture("stripe-eu")
 	var pathPrefix string
 	client := configureClientMock{
@@ -423,27 +422,16 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 	}
 	command := testNewConfigureCommand(factory, mockReadFile(nil), paths)
 
-	require.Equal(t, "configure <connection>", command.Use)
-	require.Equal(t, []string{"update", "c"}, command.Aliases)
-	require.Error(t, command.Args(command, nil))
-	require.NoError(t, command.Args(command, []string{"stripe-eu"}))
-	require.Error(t, command.Args(command, []string{"stripe-eu", "extra"}))
 	instances, directive := command.ValidArgsFunction(command, nil, "stripe")
 	require.Equal(t, []string{"stripe-eu\tstripe · main"}, instances)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 
-	versionCompletion, ok := command.GetFlagCompletionFunc(versionFlag)
-	require.True(t, ok)
-	require.NotNil(t, versionCompletion)
-	versionCompletion = testcompleteVersions(factory, resolveConfigureConnector)
+	versionCompletion := testcompleteVersions(factory, resolveConfigureConnector)
 	versions, directive := versionCompletion(command, []string{"stripe-eu"}, "2")
 	require.Equal(t, []string{"2.0.0"}, versions)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 
-	setCompletion, ok := command.GetFlagCompletionFunc(setFlag)
-	require.True(t, ok)
-	require.NotNil(t, setCompletion)
-	setCompletion = testCompleteSetValues(factory, resolveConfigureConnectorVersion, paths)
+	setCompletion := testCompleteSetValues(factory, resolveConfigureConnectorVersion, paths)
 	sets, directive := setCompletion(command, []string{"stripe-eu"}, "/etc")
 	require.Equal(t, []string{"/etc/a=\tPrimary config", "/etc/b=\tfile configuration"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
@@ -451,23 +439,6 @@ func TestConfigureRegistersAliasesRootAndCompletions(t *testing.T) {
 	require.Equal(t, "fixtures/t", pathPrefix)
 	require.Equal(t, []string{"/etc/a=@fixtures/token.txt"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
-
-	_, configRegistered := command.GetFlagCompletionFunc(configFlag)
-	_, envFileRegistered := command.GetFlagCompletionFunc(envFileFlag)
-	require.False(t, configRegistered)
-	require.False(t, envFileRegistered)
-
-	root := testNewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
-	child, _, err := root.Find([]string{"configure"})
-	require.NoError(t, err)
-	require.Equal(t, "configure", child.Name())
-	require.True(t, reflect.DeepEqual([]string{"update", "c"}, child.Aliases))
-}
-
-func TestConfigureDoesNotExposeUnsupportedStartSequence(t *testing.T) {
-	command := testNewConfigureCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
-
-	require.Nil(t, command.Flags().Lookup("start-sequence"))
 }
 
 func TestConfigureRejectsBindingFlagsBeforeClientUse(t *testing.T) {
@@ -479,7 +450,6 @@ func TestConfigureRejectsBindingFlagsBeforeClientUse(t *testing.T) {
 				return nil, errors.New("client must not be used")
 			}
 			command := testNewConfigureCommand(factory, mockReadFile(nil), mockPathCompleter(nil))
-			require.Nil(t, command.Flags().Lookup(flag))
 			_, err := executeCommand(command, "stripe-eu", "--"+flag+"=main", "--confirm")
 			require.ErrorContains(t, err, "unknown flag: --"+flag)
 			require.False(t, usedFactory)

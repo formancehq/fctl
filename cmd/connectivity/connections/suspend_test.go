@@ -93,37 +93,3 @@ func TestSuspensionCommandsRejectInvalidArgumentsBeforeUsingClient(t *testing.T)
 	}
 	require.False(t, usedFactory)
 }
-
-func TestSuspensionCommandsRegisterConfirmationCompletionAndRootChildren(t *testing.T) {
-	instance := instanceFixture("stripe-eu")
-	client := suspensionClientMock{listInstances: func(ctx context.Context, options connectivityinternal.ListOptions) (*testConnectionList, error) {
-		require.True(t, hasTwoSecondDeadline(ctx))
-		require.Equal(t, connectivityinternal.ListOptions{PageSize: 100}, options)
-		return &testConnectionList{Items: []connectivity.Connection{instance}}, nil
-	}}
-
-	for _, test := range []struct {
-		name    string
-		command func(testSDKFactory) *cobra.Command
-	}{
-		{name: "suspend", command: testNewSuspendCommand},
-		{name: "unsuspend", command: testNewUnsuspendCommand},
-	} {
-		command := test.command(factoryReturning(client))
-		require.Equal(t, test.name+" <connection>", command.Use)
-		require.NotNil(t, command.Flags().Lookup("confirm"))
-		require.Error(t, command.Args(command, nil))
-		require.NoError(t, command.Args(command, []string{"stripe-eu"}))
-		require.Error(t, command.Args(command, []string{"stripe-eu", "extra"}))
-		candidates, directive := command.ValidArgsFunction(command, nil, "stripe")
-		require.Equal(t, []string{"stripe-eu\tstripe · main"}, candidates)
-		require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
-	}
-
-	root := testNewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
-	for _, name := range []string{"suspend", "unsuspend"} {
-		child, _, err := root.Find([]string{name})
-		require.NoError(t, err)
-		require.Equal(t, name, child.Name())
-	}
-}

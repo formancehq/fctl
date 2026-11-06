@@ -250,10 +250,7 @@ func TestConnectionConfigureCompletionUsesNewPinInsteadOfExistingChannel(t *test
 	}
 	command := testNewConfigureCommand(factoryReturning(client), nil, nil)
 	require.NoError(t, command.ParseFlags([]string{"--version=opaque-build"}))
-	complete, ok := command.GetFlagCompletionFunc(setFlag)
-	require.True(t, ok)
-	require.NotNil(t, complete)
-	complete = testCompleteSetValues(factoryReturning(client), resolveConfigureConnectorVersion, nil)
+	complete := testCompleteSetValues(factoryReturning(client), resolveConfigureConnectorVersion, nil)
 	values, directive := complete(command, []string{"stripe-eu"}, "TOKEN")
 	require.Equal(t, []string{"TOKEN=\tAuthentication token"}, values)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)

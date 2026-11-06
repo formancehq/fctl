@@ -40,7 +40,6 @@ func TestConnectorCommandsUseGeneratedSDK(t *testing.T) {
 		want    string
 	}{
 		{"list", testNewListCommand, "/api/connectivity/connectors", `{"cursor":{"data":[{"name":"stripe"}],"pageSize":15,"hasMore":false}}`, "stripe"},
-		{"facets", testNewFacetsCommand, "/api/connectivity/connectors/_facets", `{"total":1,"facets":{"catalog":{"ee":1}}}`, "catalog"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			client := sdkWithTransport(func(request *http.Request) (*http.Response, error) {
@@ -58,7 +57,7 @@ func TestConnectorCommandsUseGeneratedSDK(t *testing.T) {
 }
 
 func TestConnectorCommandsRejectGeneratedErrorEnvelopes(t *testing.T) {
-	for _, constructor := range []func(*formance.FormanceV1) *cobra.Command{testNewListCommand, testNewFacetsCommand, testNewShowCommand} {
+	for _, constructor := range []func(*formance.FormanceV1) *cobra.Command{testNewListCommand, testNewShowCommand} {
 		command := constructor(nil)
 		t.Run(command.Name(), func(t *testing.T) {
 			for _, status := range []int{http.StatusUnauthorized, http.StatusBadRequest} {
@@ -163,7 +162,6 @@ func TestConnectorCommandsValidateGeneratedSuccessPayloads(t *testing.T) {
 	}{
 		{"list", testNewListCommand, []string{`{}`, `{"cursor":null}`, `{"cursor":{}}`, `{"cursor":{"data":null}}`}, `{"cursor":{"data":[],"hasMore":false,"pageSize":15}}`, "cursor.data must be an array"},
 		{"show", testNewShowCommand, []string{`{}`, `{"cursor":null}`, `{"cursor":{}}`, `{"cursor":{"data":null}}`}, `{"cursor":{"data":[],"hasMore":false,"pageSize":100}}`, "cursor.data must be an array"},
-		{"facets", testNewFacetsCommand, []string{`{}`, `{"total":0}`, `{"total":0,"facets":null}`}, `{"total":0,"facets":{}}`, "facets must be an object"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			for _, body := range append(test.bodies, test.emptyBody) {

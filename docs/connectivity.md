@@ -19,8 +19,7 @@ fctl connectivity
 ├── status
 ├── connectors
 │   ├── list
-│   ├── show <connector>
-│   └── facets
+│   └── show <connector>
 └── connections
     ├── list
     ├── show <connection>
@@ -33,7 +32,7 @@ fctl connectivity
 ```
 
 `connection` is the singular alias of `connections`. `connectors ls`, `connectors l`,
-`connectors facets` (`facet`, `f`), and `connections ls` (`l`) remain available.
+and `connections ls` (`l`) remain available.
 `install` also accepts `create` and `in`. `configuration` aliases the `config`
 group. `connections configure <connection>`, `connections update <connection>`,
 and `connections c <connection>` remain compatible with earlier CLI builds.
@@ -187,7 +186,7 @@ source has disappeared from Core.
 
 ## Filtering, pagination and catalogue metadata
 
-List and facets commands accept repeatable `--filter` expressions:
+List commands accept repeatable `--filter` expressions:
 
 ```bash
 fctl connectivity connectors list --filter catalog=ee --filter tags~provider:%
@@ -199,6 +198,7 @@ and `KEY~PATTERN` uses SQL `%` and `_` wildcards. Use `--query '<JSON>'` for
 the full API query dialect; it cannot be combined with `--filter`. The CLI
 also accepts `--page-size` and the opaque `--cursor` from a previous response.
 Shell completion obtains supported keys, values and channels from the API.
+Connector facets supply tag suggestions for `connectors list --filter`.
 Use `lifecycle` and `appliedVersion` for status filters.
 Raw `--query` JSON passes through to the
 API, including supported `$match`, `$in`, `$exists` and range operators.

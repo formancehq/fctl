@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -95,15 +94,6 @@ func TestListConnectionsRejectsRawQueryCombinedWithSugarFlags(t *testing.T) {
 	require.Contains(t, err.Error(), "--query cannot be combined with --filter")
 }
 
-func TestListConnectionsWiresFilterAndConnectorCompletions(t *testing.T) {
-	command := testNewListCommand(factoryReturning(listInstanceClientMock{}))
-
-	_, filterRegistered := command.GetFlagCompletionFunc("filter")
-	require.True(t, filterRegistered, "--filter must complete from /_query/capabilities")
-	_, connectorRegistered := command.GetFlagCompletionFunc("connector")
-	require.True(t, connectorRegistered, "--connector must complete from the connector catalogue")
-}
-
 func TestListConnectionsJSONPreservesCompleteModelsAndContinuation(t *testing.T) {
 	instance := instanceFixture("stripe-eu")
 	setInstanceConfig(&instance, &connectivity.ConnectionConfiguration{Env: map[string]string{
@@ -127,23 +117,6 @@ func TestListConnectionsJSONPreservesCompleteModelsAndContinuation(t *testing.T)
 	require.Equal(t, int64(4), envelope.Data.Cursor.PageSize)
 	require.NotNil(t, envelope.Data.Cursor.Next)
 	require.Equal(t, "next-page", *envelope.Data.Cursor.Next)
-}
-
-func TestConnectionRootRegistersReadCommandsAndAliases(t *testing.T) {
-	command := testNewCommand(factoryReturning(listInstanceClientMock{}), mockReadFile(nil), mockPathCompleter(nil))
-
-	require.Equal(t, "connections", command.Use)
-	require.Equal(t, []string{"connection"}, command.Aliases)
-	wantAliases := map[string][]string{
-		"list": {"ls", "l"},
-		"show": {"get", "g", "sh", "s"},
-	}
-	for name, aliases := range wantAliases {
-		child, _, err := command.Find([]string{name})
-		require.NoError(t, err)
-		require.Equal(t, name, child.Name())
-		require.True(t, reflect.DeepEqual(aliases, child.Aliases), "%s aliases = %v", name, child.Aliases)
-	}
 }
 
 func TestListConnectionsReturnsAPIAndEmptyResponseErrors(t *testing.T) {

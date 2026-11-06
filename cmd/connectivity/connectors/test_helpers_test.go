@@ -20,7 +20,6 @@ import (
 
 type connectorTransportMock struct {
 	list         func(context.Context, connectivityinternal.ListOptions) (*connectorPage, error)
-	facets       func(context.Context, string) (*connectivity.FacetDistribution, error)
 	get          func(context.Context, string) (*connectivity.Connector, error)
 	listVersions func(context.Context, string, connectivityinternal.ListOptions) (*connectorVersionPage, error)
 	getVersion   func(context.Context, string, string) (*connectivity.ConnectorVersion, error)
@@ -54,12 +53,6 @@ func (m connectorTransportMock) RoundTrip(request *http.Request) (*http.Response
 		page, err = m.list(ctx, options)
 		if page != nil {
 			data = connectivity.ConnectorCursor{Cursor: connectivity.ConnectorCursorCursor{Data: page.Items, PageSize: int(page.PageSize), HasMore: page.HasMore, Next: connectivityinternal.OptionalString(page.Next)}}
-		}
-	case path == "/_facets":
-		var facets *connectivity.FacetDistribution
-		facets, err = m.facets(ctx, options.Query)
-		if facets != nil {
-			data = facets
 		}
 	case strings.HasSuffix(path, "/versions"):
 		name := strings.TrimSuffix(strings.TrimPrefix(path, "/"), "/versions")
@@ -136,19 +129,6 @@ func testNewListCommand(client *formance.FormanceV1) *cobra.Command {
 func testNewShowCommand(client *formance.FormanceV1) *cobra.Command {
 	controller := NewShowController()
 	command := NewShowCommand()
-	command.RunE = func(cmd *cobra.Command, args []string) error {
-		renderable, err := controller.run(cmd, args, client)
-		if err != nil {
-			return err
-		}
-		return fctl.WithRender(cmd, args, controller, renderable)
-	}
-	return command
-}
-
-func testNewFacetsCommand(client *formance.FormanceV1) *cobra.Command {
-	controller := NewFacetsController()
-	command := NewFacetsCommand()
 	command.RunE = func(cmd *cobra.Command, args []string) error {
 		renderable, err := controller.run(cmd, args, client)
 		if err != nil {

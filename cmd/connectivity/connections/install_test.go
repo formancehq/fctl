@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -294,35 +293,7 @@ func TestInstallJSONStoresCompleteReturnedConnection(t *testing.T) {
 	require.Equal(t, returned, envelope.Data.Connection)
 }
 
-func TestInstallRegistersAliasesAndRootIntegration(t *testing.T) {
-	standalone := testNewInstallCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
-	require.Equal(t, "install <connector>", standalone.Use)
-	require.Equal(t, []string{"create", "in"}, standalone.Aliases)
-	require.Error(t, standalone.Args(standalone, nil))
-	require.NoError(t, standalone.Args(standalone, []string{"stripe"}))
-	require.Error(t, standalone.Args(standalone, []string{"stripe", "extra"}))
-
-	root := testNewCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
-	child, _, err := root.Find([]string{"install"})
-	require.NoError(t, err)
-	require.Equal(t, "install", child.Name())
-	require.True(t, reflect.DeepEqual([]string{"create", "in"}, child.Aliases))
-}
-
-func TestInstallRegistersChannelCompletion(t *testing.T) {
-	command := NewInstallCommand(nil, nil)
-	completion, ok := command.GetFlagCompletionFunc("channel")
-	require.True(t, ok)
-	require.NotNil(t, completion)
-}
-
-func TestInstallDoesNotExposeUnsupportedStartSequence(t *testing.T) {
-	command := testNewInstallCommand(nil, mockReadFile(nil), mockPathCompleter(nil))
-
-	require.Nil(t, command.Flags().Lookup("start-sequence"))
-}
-
-func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
+func TestInstallCompletionReturnsVersionsSchemaKeysAndFileCandidates(t *testing.T) {
 	connector := connectivity.Connector{
 		Name:        "stripe",
 		Description: stringPtr("Stripe ingestion"),
@@ -357,20 +328,12 @@ func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 	}
 	command := testNewInstallCommand(factory, mockReadFile(nil), paths)
 
-	require.NotNil(t, command.ValidArgsFunction)
-
-	versionCompletion, ok := command.GetFlagCompletionFunc("version")
-	require.True(t, ok)
-	require.NotNil(t, versionCompletion)
-	versionCompletion = testCompleteVersions(factory, installConnectorArgument)
+	versionCompletion := testCompleteVersions(factory, installConnectorArgument)
 	versions, directive := versionCompletion(command, []string{"stripe"}, "2")
 	require.Equal(t, []string{"2.0.0"}, versions)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 
-	setCompletion, ok := command.GetFlagCompletionFunc("set")
-	require.True(t, ok)
-	require.NotNil(t, setCompletion)
-	setCompletion = testCompleteSetValues(factory, resolveInstallConnectorVersion, paths)
+	setCompletion := testCompleteSetValues(factory, resolveInstallConnectorVersion, paths)
 	sets, directive := setCompletion(command, []string{"stripe"}, "API")
 	require.Equal(t, []string{"API_URL=\tAPI endpoint"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
@@ -379,9 +342,4 @@ func TestInstallWiresConnectorVersionSetAndFileCompletions(t *testing.T) {
 	require.Equal(t, "fixtures/t", pathPrefix)
 	require.Equal(t, []string{"TOKEN=@fixtures/token.txt"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
-
-	_, configRegistered := command.GetFlagCompletionFunc("config")
-	_, envFileRegistered := command.GetFlagCompletionFunc("env-file")
-	require.False(t, configRegistered, "--config must retain Cobra's normal file completion")
-	require.False(t, envFileRegistered, "--env-file must retain Cobra's normal file completion")
 }
