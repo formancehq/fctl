@@ -47,6 +47,7 @@ func NewRootCommand() *cobra.Command {
 	cmd := fctl.NewCommand("fctl",
 		fctl.WithSilenceError(),
 		fctl.WithShortDescription("Formance Control CLI"),
+		fctl.WithTerminalHelp(),
 		fctl.WithChildCommands(
 			ui.NewCommand(),
 			version.NewCommand(),
