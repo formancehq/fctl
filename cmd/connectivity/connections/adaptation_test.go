@@ -254,7 +254,7 @@ func TestConnectionConfigureCompletionUsesNewPinInsteadOfExistingChannel(t *test
 	complete := testCompleteSetValues(factoryReturning(client), resolveConfigureConnectorVersion, nil)
 	values, directive := complete(command, []string{"stripe-eu"}, "TOKEN")
 	require.Equal(t, []string{"TOKEN=\tAuthentication token"}, values)
-	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
+	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace|cobra.ShellCompDirectiveKeepOrder, directive)
 }
 
 func TestConnectionShowAllowsUnboundPublicConfiguration(t *testing.T) {

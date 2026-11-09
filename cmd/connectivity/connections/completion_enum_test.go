@@ -52,7 +52,7 @@ func TestInstallSetCompletionGivenNoStableReleaseThenUsesTheLatestVersionSchema(
 	candidates, directive := completeSetValuesWithClient(mockSDK(catalog), command, []string{"ee-stripeconnect"}, "", resolveInstallConnectorVersion, nil)
 
 	require.Equal(t, []string{"ENVIRONMENT=\trequired · Bound Stripe environment: sandbox or live. [sandbox | live]"}, candidates)
-	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
+	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace|cobra.ShellCompDirectiveKeepOrder, directive)
 	require.Contains(t, catalog.requested, "/api/connectivity/connectors/ee-stripeconnect")
 }
 

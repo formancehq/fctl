@@ -140,9 +140,9 @@ func TestCompleteSetValuesPrioritizesRequiredKeysDescribesAndOmitsSuppliedKeys(t
 	if !reflect.DeepEqual(candidates, want) {
 		t.Fatalf("candidates = %#v, want required then optional keys %#v", candidates, want)
 	}
-	wantDirective := cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveNoSpace
+	wantDirective := cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveNoSpace | cobra.ShellCompDirectiveKeepOrder
 	if directive != wantDirective {
-		t.Fatalf("directive = %v, want NoFileComp|NoSpace", directive)
+		t.Fatalf("directive = %v, want NoFileComp|NoSpace|KeepOrder", directive)
 	}
 }
 

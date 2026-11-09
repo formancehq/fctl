@@ -228,7 +228,7 @@ func completeSetValuesWithClient(client *sdk.FormanceV1, completionCommand *cobr
 	for _, field := range ordered {
 		candidates = append(candidates, field.Key+"=\t"+schemaFieldDescription(field))
 	}
-	return candidates, cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveNoSpace
+	return candidates, cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveNoSpace | cobra.ShellCompDirectiveKeepOrder
 }
 
 // schemaFieldDescription is one line: required marker, first sentence and
