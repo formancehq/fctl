@@ -25,8 +25,12 @@ func printBody(data []byte) {
 	if len(data) == 0 {
 		return
 	}
+	// UseNumber keeps large integers exact; decoding into float64 would round
+	// identifiers and sequences in the debug output.
 	raw := make(map[string]any)
-	if err := json.Unmarshal(data, &raw); err == nil {
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.UseNumber()
+	if err := decoder.Decode(&raw); err == nil {
 		f := colorjson.NewFormatter()
 		f.Indent = 2
 		colorized, err := f.Marshal(raw)

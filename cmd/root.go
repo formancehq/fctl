@@ -18,6 +18,7 @@ import (
 
 	"github.com/formancehq/fctl/v3/cmd/auth"
 	"github.com/formancehq/fctl/v3/cmd/cloud"
+	"github.com/formancehq/fctl/v3/cmd/connectivity"
 	"github.com/formancehq/fctl/v3/cmd/ledger"
 	"github.com/formancehq/fctl/v3/cmd/login"
 	"github.com/formancehq/fctl/v3/cmd/orchestration"
@@ -30,6 +31,7 @@ import (
 	"github.com/formancehq/fctl/v3/cmd/wallets"
 	"github.com/formancehq/fctl/v3/cmd/webhooks"
 	fctl "github.com/formancehq/fctl/v3/pkg"
+	connectivitymodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	ledgermodels "github.com/formancehq/fctl/v3/pkg/client/pkg/models/ledger"
 )
 
@@ -46,6 +48,7 @@ func NewRootCommand() *cobra.Command {
 	cmd := fctl.NewCommand("fctl",
 		fctl.WithSilenceError(),
 		fctl.WithShortDescription("Formance Control CLI"),
+		fctl.WithTerminalHelp(),
 		fctl.WithChildCommands(
 			ui.NewCommand(),
 			version.NewCommand(),
@@ -61,6 +64,7 @@ func NewRootCommand() *cobra.Command {
 			webhooks.NewCommand(),
 			wallets.NewCommand(),
 			orchestration.NewCommand(),
+			connectivity.NewCommand(),
 		),
 		fctl.WithPersistentStringPFlag(fctl.ProfileFlag, "p", "", "Configuration profile to use"),
 		fctl.WithPersistentStringPFlag(fctl.ConfigDir, "c", fmt.Sprintf("%s/.config/formance/fctl", homedir), "Path to configuration dir"),
@@ -129,6 +133,10 @@ func Execute() {
 					}
 					printError(errResponse.ErrorCode, errResponse.ErrorMessage, &errResponse.Details)
 					return
+				case *connectivitymodels.Error:
+					code, message := connectivityErrorParts(err)
+					printError(code, message, err.Details)
+					return
 				case *apierrors.Error:
 					errMsg := ""
 					if err.ErrorMessage != nil {
@@ -153,6 +161,21 @@ func printError(code string, message string, details *string) {
 		pterm.Error.WithWriter(os.Stderr).Printfln("Details:\r\n%s", *details)
 	}
 	os.Exit(2)
+}
+
+// connectivityErrorParts reads a Connectivity API error. The generated type
+// does not carry the HTTP status, so an empty body gets an explicit message
+// instead of an empty JSON object.
+func connectivityErrorParts(err *connectivitymodels.Error) (string, string) {
+	code := fctl.StringPointerToString(err.ErrorCode)
+	message := fctl.StringPointerToString(err.ErrorMessage)
+	if code == "" {
+		code = "UNKNOWN"
+	}
+	if message == "" {
+		message = "the Connectivity API returned an error without a message"
+	}
+	return code, message
 }
 
 func printV2ErrorResponse(target *ledgermodels.V2ErrorResponseError) {

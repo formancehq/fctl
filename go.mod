@@ -13,6 +13,7 @@ require (
 	github.com/formancehq/go-libs/v4 v4.1.1
 	github.com/go-jose/go-jose/v4 v4.1.6
 	github.com/iancoleman/strcase v0.3.0
+	github.com/mattn/go-runewidth v0.0.21
 	github.com/mattn/go-shellwords v1.0.12
 	github.com/pkg/errors v0.9.1
 	github.com/pterm/pterm v0.12.83
@@ -63,7 +64,6 @@ require (
 	github.com/mailru/easyjson v0.9.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mattn/go-runewidth v0.0.21 // indirect
 	github.com/mattn/go-tty v0.0.7 // indirect
 	github.com/muhlemmer/gu v0.3.1 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect

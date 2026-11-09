@@ -5,3 +5,5 @@ the same PRs as the code they describe (RFC 0004).
 
 - [Ledger import](ledger-import.md): `fctl ledger import`, batching, and
   resuming an interrupted import.
+- [Terminal output helpers](terminal-output.md): fitting tables, text and help
+  to the terminal width, and completion options shared by all commands.
