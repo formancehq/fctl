@@ -286,15 +286,19 @@ func appendComposedFields(schema map[string]any, fields []schemaField, placement
 		if field.Kind == configuration.ConfigFile {
 			source, reference = "file", "files"+key
 		}
-		kind := ""
+		kind := field.Type
 		if field.Password {
 			kind = "secret"
+		}
+		description := fctl.FirstSentence(field.Description)
+		if field.HasDefault {
+			description = strings.TrimSpace(description + " Default: " + defaultValue(field.Default) + ".")
 		}
 		place, grouped := placements[reference]
 		if !grouped {
 			place = placement{order: math.MaxInt}
 		}
-		fields = append(fields, schemaField{key: key, source: source, kind: kind, description: fctl.FirstSentence(field.Description), group: place.title, required: field.Required, advanced: place.advanced, order: place.order})
+		fields = append(fields, schemaField{key: key, source: source, kind: kind, description: description, group: place.title, required: field.Required, advanced: place.advanced, order: place.order})
 	}
 	return fields
 }

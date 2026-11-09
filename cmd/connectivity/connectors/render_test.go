@@ -129,7 +129,7 @@ func TestSchemaFieldsIncludesFieldsDeclaredThroughComposition(t *testing.T) {
 	schema := map[string]any{
 		"env": map[string]any{
 			"allOf": []any{
-				map[string]any{"required": []any{"API_KEY"}, "properties": map[string]any{"API_KEY": map[string]any{"type": "string", "format": "password"}}},
+				map[string]any{"required": []any{"API_KEY"}, "properties": map[string]any{"API_KEY": map[string]any{"type": "string", "format": "password"}, "RETRIES": map[string]any{"type": "integer", "default": 4}}},
 				map[string]any{"$ref": "#/$defs/region"},
 			},
 			// References resolve within the section, as install and configure do.
@@ -143,8 +143,10 @@ func TestSchemaFieldsIncludesFieldsDeclaredThroughComposition(t *testing.T) {
 	for _, field := range fields {
 		keys[field.key] = field
 	}
-	require.Len(t, fields, 2)
+	require.Len(t, fields, 3)
 	require.True(t, keys["API_KEY"].required)
+	require.Equal(t, "integer", keys["RETRIES"].kind, "composed fields keep their type")
+	require.Contains(t, keys["RETRIES"].description, "Default: 4")
 	require.Equal(t, "secret", keys["API_KEY"].kind)
 	require.Contains(t, keys, "REGION")
 }

@@ -22,12 +22,14 @@ func TestSchemaFieldsExtractsEnvironmentAndFileMetadata(t *testing.T) {
 		Required:    true,
 		Password:    true,
 		Description: "Authentication token",
+		Type:        "password",
 	}, fields["TOKEN"])
 	require.Equal(t, configuration.SchemaField{
 		Key:         "/etc/plugin/config.yaml",
 		Kind:        configuration.ConfigFile,
 		Required:    true,
 		Description: "Connector configuration",
+		Type:        "string",
 	}, fields["/etc/plugin/config.yaml"])
 	require.False(t, fields["TIMEOUT"].Required)
 	require.True(t, fields["/etc/plugin/ca.pem"].Password)

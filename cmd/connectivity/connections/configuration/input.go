@@ -31,6 +31,11 @@ type SchemaField struct {
 	Description string
 	// Enum lists the allowed values when the schema declares string enums.
 	Enum []string
+	// Type is the schema format, else its type, for display.
+	Type string
+	// Default is the schema default when HasDefault is true.
+	Default    any
+	HasDefault bool
 }
 
 type InputOptions struct {
@@ -64,6 +69,9 @@ type schemaFieldInfo struct {
 	// enumUnknown records that composed schemas declared enums the CLI cannot
 	// combine exactly; completion then offers no values.
 	enumUnknown bool
+	kind        string
+	defaultSet  bool
+	defaultVal  any
 }
 
 type sectionContract struct {
@@ -121,6 +129,9 @@ func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, 
 				Password:    definition.password,
 				Description: definition.description,
 				Enum:        knownEnum(definition),
+				Type:        definition.kind,
+				Default:     definition.defaultVal,
+				HasDefault:  definition.defaultSet,
 			}
 		}
 	}
@@ -245,7 +256,7 @@ func mergeAllSections(left, right sectionContract) sectionContract {
 			continue
 		}
 		enum, unknown := intersectEnums(current, value)
-		merged.fields[key] = schemaFieldInfo{required: current.required || value.required, password: current.password || value.password, description: firstDescription(current.description, value.description), enum: enum, enumUnknown: unknown}
+		merged.fields[key] = withDisplay(schemaFieldInfo{required: current.required || value.required, password: current.password || value.password, description: firstDescription(current.description, value.description), enum: enum, enumUnknown: unknown}, current, value)
 	}
 	return merged
 }
@@ -265,7 +276,7 @@ func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
 			current.password = current.password || value.password
 			current.description = firstDescription(current.description, value.description)
 			current.enum, current.enumUnknown = unionEnums(current, value)
-			merged.fields[key] = current
+			merged.fields[key] = withDisplay(current, current, value)
 		}
 		if index > 0 {
 			for key, value := range merged.fields {
@@ -293,6 +304,12 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 	}
 	result.description, _ = node["description"].(string)
 	result.enum = stringEnum(node["enum"])
+	if format, _ := node["format"].(string); format != "" {
+		result.kind = format
+	} else {
+		result.kind, _ = node["type"].(string)
+	}
+	result.defaultVal, result.defaultSet = node["default"]
 	for _, ref := range schemaLocalReferences(node) {
 		if refs[ref] {
 			continue // Recursive reference: leave the remaining validation to the API.
@@ -307,6 +324,7 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 			result.password = result.password || resolved.password
 			result.description = firstDescription(result.description, resolved.description)
 			result.enum, result.enumUnknown = sameEnums(result, resolved)
+			result = withDisplay(result, result, resolved)
 		}
 	}
 	for _, part := range appendSchemaCompositions(node) {
@@ -317,6 +335,7 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 		result.password = result.password || metadata.password
 		result.description = firstDescription(result.description, metadata.description)
 		result.enum, result.enumUnknown = sameEnums(result, metadata)
+		result = withDisplay(result, result, metadata)
 	}
 	return result, nil
 }
@@ -425,6 +444,20 @@ func stringEnum(raw any) []string {
 		result = append(result, text)
 	}
 	return result
+}
+
+// withDisplay keeps the first declared type and default across merged
+// metadata; they are informational and never constrain input.
+func withDisplay(target, left, right schemaFieldInfo) schemaFieldInfo {
+	target.kind = left.kind
+	if target.kind == "" {
+		target.kind = right.kind
+	}
+	target.defaultVal, target.defaultSet = left.defaultVal, left.defaultSet
+	if !target.defaultSet {
+		target.defaultVal, target.defaultSet = right.defaultVal, right.defaultSet
+	}
+	return target
 }
 
 func knownEnum(info schemaFieldInfo) []string {
