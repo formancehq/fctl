@@ -279,7 +279,7 @@ func appendComposedFields(schema map[string]any, fields []schemaField, placement
 	}
 	for key, field := range composed {
 		if index, found := known[key]; found {
-			fields[index].required = fields[index].required || field.Required
+			fields[index] = withResolvedMetadata(fields[index], field)
 			continue
 		}
 		source, reference := "environment", "env."+key
@@ -301,6 +301,25 @@ func appendComposedFields(schema map[string]any, fields []schemaField, placement
 		fields = append(fields, schemaField{key: key, source: source, kind: kind, description: description, group: place.title, required: field.Required, advanced: place.advanced, order: place.order})
 	}
 	return fields
+}
+
+// withResolvedMetadata completes a directly declared property with what its
+// local $ref or composition declares: required, secret, type, description and
+// default. Values written on the property itself win.
+func withResolvedMetadata(field schemaField, resolved configuration.SchemaField) schemaField {
+	field.required = field.required || resolved.Required
+	if resolved.Password {
+		field.kind = "secret"
+	} else if field.kind == "" {
+		field.kind = resolved.Type
+	}
+	if field.description == "" {
+		field.description = fctl.FirstSentence(resolved.Description)
+	}
+	if resolved.HasDefault && !strings.Contains(field.description, "Default: ") {
+		field.description = strings.TrimSpace(field.description + " Default: " + defaultValue(resolved.Default) + ".")
+	}
+	return field
 }
 
 func schemaGroups(fields []schemaField) []fctl.TableGroup {

@@ -150,3 +150,21 @@ func TestSchemaFieldsIncludesFieldsDeclaredThroughComposition(t *testing.T) {
 	require.Equal(t, "secret", keys["API_KEY"].kind)
 	require.Contains(t, keys, "REGION")
 }
+
+func TestSchemaFieldsUseResolvedMetadataForDirectlyDeclaredProperties(t *testing.T) {
+	schema := map[string]any{
+		"env": map[string]any{
+			"properties": map[string]any{"API_KEY": map[string]any{"$ref": "#/$defs/secret"}},
+			"$defs": map[string]any{"secret": map[string]any{
+				"type": "string", "format": "password", "description": "Platform key. Rotate yearly.", "default": "unset",
+			}},
+		},
+	}
+
+	fields := schemaFields(schema)
+
+	require.Len(t, fields, 1)
+	require.Equal(t, "secret", fields[0].kind)
+	require.Contains(t, fields[0].description, "Platform key.")
+	require.Contains(t, fields[0].description, "Default: unset")
+}
