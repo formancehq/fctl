@@ -70,6 +70,11 @@ func resolveChannelVersion(ctx context.Context, client *sdk.FormanceV1, connecto
 			if page == nil {
 				return nil, false, "", fmt.Errorf("list connectivity connector %q versions: empty response", connector)
 			}
+			// A missing data array is a malformed page, not an empty catalogue:
+			// accepting it could select a version from an incomplete list.
+			if page.Cursor.Data == nil {
+				return nil, false, "", fmt.Errorf("list connectivity connector %q versions: cursor.data must be an array", connector)
+			}
 			return page.Cursor.Data, page.Cursor.HasMore, fctl.StringPointerToString(page.Cursor.Next), nil
 		})
 	if err != nil {

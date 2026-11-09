@@ -105,3 +105,13 @@ func TestVersionDescriptionMarksLatestAndShortensTheDigest(t *testing.T) {
 	require.Equal(t, "latest · sha256:8f67ebd216c8…", versionDescription(summary, true))
 	require.Equal(t, "", versionDescription(connectivity.ConnectorVersionSummary{Version: "v1.0.0"}, false))
 }
+
+func TestResolveChannelVersionRejectsAPageWithoutData(t *testing.T) {
+	missingData := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		return jsonHTTPResponse(r, http.StatusOK, `{"cursor":{"pageSize":100,"hasMore":false}}`), nil
+	})
+
+	_, err := resolveChannelVersion(t.Context(), mockSDK(missingData), "ee-stripeconnect", "beta", "")
+
+	require.ErrorContains(t, err, "cursor.data must be an array")
+}
