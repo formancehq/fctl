@@ -2,7 +2,6 @@ package connections
 
 import (
 	"fmt"
-	"io"
 	"net/url"
 	"sort"
 	"strconv"
@@ -36,10 +35,11 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand(
 		"show <connection>",
 		fctl.WithAliases("get", "g", "sh", "s"),
-		fctl.WithShortDescription("Show a Connectivity connection"),
+		fctl.WithShortDescription("Show a connection's configuration and last recorded status"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectionNames()),
 		fctl.WithController[*ShowStore](controller),
+		fctl.WithExamples("fctl connectivity connections show stripeconnect-fpss"),
 	)
 }
 
@@ -77,61 +77,121 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *sdk.Form
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 	instance := c.store.Connection
+	config := instance.ConnectionConfiguration
 	out := cmd.OutOrStdout()
-	if err := renderInstanceSection(out, "Information", pterm.TableData{{"Name", instance.Name}}); err != nil {
-		return err
-	}
-	if err := renderInstanceSection(out, "Desired Configuration", pterm.TableData{
-		{"Connector", fctl.StringPointerToString(instance.ConnectionConfiguration.Connector)}, {"Version", fctl.StringPointerToString(instance.ConnectionConfiguration.Version)},
-		{"Channel", enumStringValue(instance.ConnectionConfiguration.Channel)}, {"Ledger", fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger)},
-		{"Poll Interval", fctl.StringPointerToString(instance.ConnectionConfiguration.PollInterval)}, {"Suspend", boolValue(instance.ConnectionConfiguration.Suspend)},
+
+	fctl.Section.WithWriter(out).Println("Connection")
+	if err := fctl.RenderKeyValues(out, [][]string{
+		{"Name", instance.Name},
+		{"Connector", dash(fctl.StringPointerToString(config.Connector))},
+		{"Ledger", dash(fctl.StringPointerToString(config.Ledger))},
+		{"Target", targetDescription(&config)},
+		{"Poll Interval", fallback(fctl.StringPointerToString(config.PollInterval), "service default")},
+		{"Suspend", suspendDescription(config.Suspend)},
+		{"Initial Cursor", initialCursorDescription(config.InitialCursor)},
 	}); err != nil {
 		return err
 	}
-	if err := renderInstanceSection(out, "Last Recorded Status", pterm.TableData{
-		{"Lifecycle", lifecycleValue(instance.ConnectionStatus)}, {"Applied Version", appliedChannelFloor(&instance)},
-		{"Ingestion State", ingestionState(instance.ConnectionStatus)}, {"Progress Current", ingestionProgress(instance.ConnectionStatus)},
-		{"Last Error (may be historical)", connectionLastError(instance.ConnectionStatus)},
-		{"Suspended by", instanceSuspensionSources(instance.ConnectionStatus)},
+
+	fctl.Section.WithWriter(out).Println("Last Recorded Status")
+	lastError := "none recorded"
+	if value := connectionLastError(instance.ConnectionStatus); value != "" {
+		lastError = "(may be historical) " + value
+	}
+	ingestion := dash(ingestionState(instance.ConnectionStatus))
+	if progress := ingestionProgress(instance.ConnectionStatus); progress != "" {
+		ingestion += " (progress " + progress + ")"
+	}
+	if err := fctl.RenderKeyValues(out, [][]string{
+		{"Lifecycle", lifecycleStyle(dash(lifecycleValue(instance.ConnectionStatus)))},
+		{"Applied Version", dash(appliedChannelFloor(&instance))},
+		{"Ingestion", ingestion},
+		{"Suspended By", dash(instanceSuspensionSources(instance.ConnectionStatus))},
+		{"Last Error", lastError},
 	}); err != nil {
 		return err
 	}
-	fctl.Section.WithWriter(out).Println("Configuration")
+
 	rows := configRows(&instance.ConnectionConfiguration)
 	if len(rows) == 0 {
+		fctl.Section.WithWriter(out).Println("Configuration")
 		_, err := fmt.Fprintln(out, "No configuration entries.")
 		return err
 	}
-	rows = fctl.Prepend(rows, []string{"Key", "Kind", "Source", "Value"})
-	return pterm.DefaultTable.WithHasHeader().WithWriter(out).WithData(rows).Render()
+	values := "values"
+	if len(rows) == 1 {
+		values = "value"
+	}
+	fctl.Section.WithWriter(out).Println(fmt.Sprintf("Configuration (%d %s)", len(rows), values))
+	columns := []fctl.TableColumn{{}, {}, {Fit: fctl.FitCut, Min: 12}}
+	if err := fctl.RenderTable(out, []string{"Key", "Kind", "Value"}, columns, rows); err != nil {
+		return err
+	}
+	return fctl.RenderText(out, pterm.Gray("Secret values (format: password) are never returned by the API."))
 }
 
-func renderInstanceSection(out io.Writer, title string, data pterm.TableData) error {
-	fctl.Section.WithWriter(out).Println(title)
-	return pterm.DefaultTable.WithWriter(out).WithData(data).Render()
-}
-
+// configRows lists returned values; multi-line file contents are summarized
+// by their first line, -o json carries them in full.
 func configRows(config *connectivity.ConnectionConfiguration) [][]string {
 	if config == nil {
 		return nil
 	}
 	rows := make([][]string, 0, len(config.Env)+len(config.Files))
 	for key, value := range config.Env {
-		rows = append(rows, []string{key, "environment", "literal", value})
+		rows = append(rows, []string{key, "env", value})
 	}
 	for key, value := range config.Files {
-		rows = append(rows, []string{key, "file", "literal", value})
+		lines := strings.Split(strings.TrimRight(value, "\n"), "\n")
+		if len(lines) > 1 {
+			value = fmt.Sprintf("%s … (%d lines)", lines[0], len(lines))
+		}
+		rows = append(rows, []string{key, "file", value})
 	}
 	sort.Slice(rows, func(i, j int) bool { return rows[i][0] < rows[j][0] })
 	return rows
 }
 
-func boolValue(value *bool) string {
-	if value == nil {
-		return ""
+func targetDescription(config *connectivity.ConnectionConfiguration) string {
+	if version := fctl.StringPointerToString(config.Version); version != "" {
+		return "version " + version
 	}
-	return strconv.FormatBool(*value)
+	if channel := enumStringValue(config.Channel); channel != "" {
+		return "channel " + channel
+	}
+	return "-"
 }
+
+func suspendDescription(suspend *bool) string {
+	if suspend != nil && *suspend {
+		return "requested"
+	}
+	return "not requested"
+}
+
+const initialCursorPreview = 32
+
+func initialCursorDescription(cursor *string) string {
+	value := fctl.StringPointerToString(cursor)
+	if value == "" {
+		return "from the beginning"
+	}
+	if len(value) <= initialCursorPreview {
+		return value
+	}
+	return fmt.Sprintf("%s (%d chars)", fctl.Truncate(value, initialCursorPreview), len(value))
+}
+
+func dash(value string) string {
+	return fallback(value, "-")
+}
+
+func fallback(value, empty string) string {
+	if value == "" {
+		return empty
+	}
+	return value
+}
+
 func instanceSuspensionSources(status *connectivity.ConnectionStatus) string {
 	if status == nil {
 		return ""

@@ -15,7 +15,7 @@ func NewCommand(read configuration.ReadFileFunc, paths PathCompleter) *cobra.Com
 	return fctl.NewCommand(
 		"connections",
 		fctl.WithAliases("connection"),
-		fctl.WithShortDescription("Manage Connectivity connections"),
+		fctl.WithShortDescription("Install and manage connections"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewShowCommand(),

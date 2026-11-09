@@ -82,8 +82,8 @@ func TestShowConnectorRendersPublicFieldsVersionCountAndLatestVersionSchema(t *t
 		"payments, webhooks", "Payments infrastructure",
 		"Latest Version", "2.0.0",
 		"Available Versions",
-		"Configuration Schema (2.0.0)", "API_KEY", "environment", "required", "password", "API credential",
-		"/etc/connector.yaml", "file", "Connector settings",
+		"Configuration (2.0.0) · 2 fields, 1 required", "API_KEY", "yes", "secret", "API credential",
+		"/etc/connector.yaml", "string", "Connector settings",
 	} {
 		if !strings.Contains(output, expected) {
 			t.Errorf("plain output missing %q:\n%s", expected, output)
@@ -282,7 +282,7 @@ func TestShowConnectorReturnsTransportAndEmptyResponseErrors(t *testing.T) {
 }
 
 func TestConnectorSummaryDoesNotAdaptFlatSchema(t *testing.T) {
-	rows := summarizeSchema(map[string]any{"properties": map[string]any{"OLD_TOKEN": map[string]any{"type": "string"}}})
+	rows := schemaFields(map[string]any{"properties": map[string]any{"OLD_TOKEN": map[string]any{"type": "string"}}})
 	if len(rows) != 0 {
 		t.Fatalf("flat schema must not become an environment section: %v", rows)
 	}

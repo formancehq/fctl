@@ -9,7 +9,9 @@ import (
 func NewCommand(update *cobra.Command) *cobra.Command {
 	return fctl.NewCommand("config",
 		fctl.WithAliases("configuration"),
-		fctl.WithShortDescription("Manage Connectivity connection configuration"),
+		fctl.WithShortDescription("Alias group for connections configure"),
+		// configure, and its update alias, already cover this group.
+		fctl.WithHidden(),
 		fctl.WithChildCommands(update),
 	)
 }

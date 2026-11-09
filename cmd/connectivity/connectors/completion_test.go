@@ -41,7 +41,7 @@ func TestCompleteConnectorNamesUsesBoundedCatalogQueryAndReturnsPrefixMatchesWit
 	if remaining <= 1500*time.Millisecond || remaining > 2*time.Second {
 		t.Fatalf("completion deadline remaining = %s, want approximately 2s", remaining)
 	}
-	if !reflect.DeepEqual(candidates, []string{"alpha\tConnector description"}) {
+	if !reflect.DeepEqual(candidates, []string{"alpha\tPayments infrastructure"}) {
 		t.Fatalf("candidates = %#v, want prefix match with description", candidates)
 	}
 	if directive != cobra.ShellCompDirectiveNoFileComp {
@@ -68,7 +68,7 @@ func TestCompleteConnectorNamesFollowsCursorPagination(t *testing.T) {
 	if !reflect.DeepEqual(gotCursors, []string{"", "page-two"}) {
 		t.Fatalf("list cursors = %#v, want the continuation to be followed", gotCursors)
 	}
-	want := []string{"alpha\tConnector description", "alpine\tConnector description"}
+	want := []string{"alpha\tPayments infrastructure", "alpine\tPayments infrastructure"}
 	if !reflect.DeepEqual(candidates, want) {
 		t.Fatalf("candidates = %#v, want both pages merged %#v", candidates, want)
 	}

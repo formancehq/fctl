@@ -37,9 +37,9 @@ func TestListConnectorsPassesPaginationAndRendersApprovedColumnsAndContinuation(
 		t.Fatalf("ListConnectors options = %#v, want %#v", gotOptions, wantOptions)
 	}
 	for _, expected := range []string{
-		"Name", "Display Name", "Latest Version",
-		"stripe", "Connector display name", "2.0.0",
-		"HasMore", "true", "PageSize", "7", "Next", "next-page",
+		"Name", "Latest Version", "Tagline",
+		"stripe", "2.0.0", "Payments infrastructure",
+		"Next page: --cursor next-page",
 	} {
 		if !strings.Contains(output, expected) {
 			t.Errorf("plain output missing %q:\n%s", expected, output)

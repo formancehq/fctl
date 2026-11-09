@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
 )
 
 const (
@@ -55,20 +57,30 @@ func NewInstallCommand(read configuration.ReadFileFunc, paths PathCompleter) *co
 	return fctl.NewCommand(
 		"install <connector>",
 		fctl.WithAliases("create", "in"),
-		fctl.WithShortDescription("Install a Connectivity connection"),
+		fctl.WithShortDescription("Install a connection from a connector"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(connectors.CompleteConnectorNames()),
-		fctl.WithStringFlag(nameFlag, "", "Connection name (defaults to the connector name)"),
-		fctl.WithStringFlag(ledgerFlag, "", "Ledger name"),
-		fctl.WithStringFlag(versionFlag, "", "Connector version"),
-		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha; defaults to stable when no version is pinned)"),
-		fctl.WithStringFlag(initialCursorFlag, "", "Initial ingestion cursor as base64 (opaque; does not reset a running cursor)"),
-		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
+		fctl.WithStringFlag(nameFlag, "", "Connection name. Defaults to the connector name"),
+		fctl.WithStringFlag(ledgerFlag, "", "(required) Target ledger. Immutable once set"),
+		fctl.WithStringFlag(versionFlag, "", "Exact connector version to pin, for example v0.5.0-beta.14. Cannot be combined with --channel"),
+		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track: stable, rc, beta or alpha. Defaults to stable when --version is not set"),
+		fctl.WithStringFlag(initialCursorFlag, "", "Base64 cursor ingestion starts from. Does not reset a running cursor"),
+		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval as a Go duration, for example 30s. Defaults to the service value"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
-		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE (repeatable)"),
+		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE, or KEY=@path to read a file (repeatable). Completion follows a --version or --channel typed before it"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*InstallStore](controller),
+		fctl.WithFlagUsage("confirm", "Skip the confirmation prompt"),
+		fctl.WithExamples(
+			"fctl connectivity connections install ee-stripeconnect \\",
+			"    --ledger payments --channel beta \\",
+			"    --set ENVIRONMENT=sandbox \\",
+			"    --set SECRET_KEY=@./stripe.key",
+			"fctl connectivity connections install ee-wise \\",
+			"    --ledger treasury --env-file wise.env",
+		),
+		fctl.WithoutFileCompletion(ledgerFlag, nameFlag, pollIntervalFlag, initialCursorFlag),
 		fctl.WithRequiredFlag(ledgerFlag),
 		fctl.WithFlagCompletion(versionFlag, CompleteVersions(installConnectorArgument)),
 		fctl.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
@@ -112,6 +124,10 @@ func installConnectorArgument(_ *cobra.Command, args []string) string {
 	return args[0]
 }
 
+// resolveInstallConnectorVersion drives --set completion. Without --version
+// or --channel it uses the stable release, and falls back to the catalogue's
+// latest version when the connector has no stable release yet, so completion
+// still lists the fields.
 func resolveInstallConnectorVersion(ctx context.Context, client *sdk.FormanceV1, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
@@ -119,7 +135,20 @@ func resolveInstallConnectorVersion(ctx context.Context, client *sdk.FormanceV1,
 	if len(args) == 0 {
 		return nil, nil
 	}
-	return resolveConnectorVersion(ctx, client, args[0], installVersionSelector(cmd))
+	selector := installVersionSelector(cmd)
+	version, err := resolveConnectorVersion(ctx, client, args[0], selector)
+	if err == nil || cmd.Flags().Changed(versionFlag) || cmd.Flags().Changed(channelFlag) {
+		return version, err
+	}
+	response, getErr := client.GetConnector(ctx, operations.GetConnectorRequest{Name: url.PathEscape(args[0])}, nil)
+	if getErr != nil || response == nil || response.Connector == nil {
+		return nil, err
+	}
+	latest := fctl.StringPointerToString(response.Connector.LatestVersion)
+	if latest == "" {
+		return nil, err
+	}
+	return resolveConnectorVersion(ctx, client, args[0], latest)
 }
 
 // installVersionSelector picks the {version} slot value governing the config
@@ -254,12 +283,7 @@ func configHasData(config *connectivity.ConnectionConfiguration) bool {
 
 func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
 	instance := c.store.Connection
-	_, err := fmt.Fprintf(
-		cmd.OutOrStdout(),
-		"Connection %q installed with connector %q for ledger %q.\n",
-		instance.Name,
+	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q installed with connector %q for ledger %q.", instance.Name,
 		fctl.StringPointerToString(instance.ConnectionConfiguration.Connector),
-		fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger),
-	)
-	return err
+		fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger)))
 }

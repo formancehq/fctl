@@ -25,7 +25,7 @@ func TestShowRendersPortableStatusAndConfigurationValues(t *testing.T) {
 	instance.ConnectionConfiguration.Files = map[string]string{"/etc/plugin/config.yaml": "also-must-not-leak"}
 	output, err := executeCommand(testNewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 	require.NoError(t, err)
-	for _, value := range []string{"stripe-eu", "stripe", "main", "Desired Configuration", "Applied Version", "2.0.0", "active", "running", "42", "Last Error (may be historical)", "source temporarily unavailable", "TOKEN", "/etc/plugin/config.yaml", "literal"} {
+	for _, value := range []string{"stripe-eu", "stripe", "main", "Connection", "Target", "version 2.0.0", "Applied Version", "active", "running (progress 42)", "(may be historical) source temporarily unavailable", "TOKEN", "env", "/etc/plugin/config.yaml", "file"} {
 		require.Contains(t, output, value)
 	}
 	require.Contains(t, output, "must-not-leak")
@@ -46,7 +46,7 @@ func TestShowPlainOutputShowsReturnedConfigValues(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Contains(t, output, "API_KEY")
-	require.Contains(t, output, "literal")
+	require.Contains(t, output, "env")
 	require.Contains(t, output, "must-not-leak")
 	require.Contains(t, output, "private config")
 }
@@ -103,9 +103,9 @@ func TestShowConnectionRendersSuspensionAndOrderedProvenance(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Contains(t, output, "Suspend")
-	require.Contains(t, output, "true")
+	require.Contains(t, output, "requested")
 	require.NotContains(t, output, "Replicas")
-	require.Contains(t, output, "Suspended by")
+	require.Contains(t, output, "Suspended By")
 	require.Contains(t, output, "request/stripe-eu, policy/maintenance")
 }
 
@@ -144,7 +144,7 @@ func TestShowRecordedErrorsDoNotTurnSuccessfulReadIntoFailure(t *testing.T) {
 		instance.ConnectionStatus.IngestionStatus.IngestionProgress = &connectivity.IngestionProgress{Current: 0}
 		output, err := executeCommand(testNewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 		require.NoError(t, err)
-		require.Contains(t, output, "Last Error (may be historical)")
+		require.Contains(t, output, "(may be historical)")
 		require.Contains(t, output, "source temporarily unavailable")
 		require.Equal(t, "0", ingestionProgress(instance.ConnectionStatus))
 		instance.ConnectionStatus.IngestionStatus.IngestionProgress = nil
@@ -171,7 +171,7 @@ func TestShowRawLastErrorWithoutIngestion(t *testing.T) {
 	instance.ConnectionStatus.LastError = stringPtr(rawError)
 	output, err := executeCommand(testNewShowCommand(factoryWithInstance(instance)), "stripe-eu")
 	require.NoError(t, err)
-	require.Contains(t, output, "Last Error (may be historical)")
+	require.Contains(t, output, "(may be historical)")
 	require.Contains(t, output, rawError)
 	require.NotContains(t, output, "Service Error")
 	command := testNewShowCommand(factoryWithInstance(instance))

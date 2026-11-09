@@ -28,6 +28,8 @@ type SchemaField struct {
 	Required    bool
 	Password    bool
 	Description string
+	// Enum lists the allowed values when the schema declares string enums.
+	Enum []string
 }
 
 type InputOptions struct {
@@ -57,6 +59,7 @@ type schemaFieldInfo struct {
 	required    bool
 	password    bool
 	description string
+	enum        []string
 }
 
 type sectionContract struct {
@@ -110,6 +113,7 @@ func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, 
 				Required:    definition.required,
 				Password:    definition.password,
 				Description: definition.description,
+				Enum:        definition.enum,
 			}
 		}
 	}
@@ -228,7 +232,7 @@ func mergeAllSections(left, right sectionContract) sectionContract {
 			merged.fields[key] = value
 			continue
 		}
-		merged.fields[key] = schemaFieldInfo{required: current.required || value.required, password: current.password || value.password, description: firstDescription(current.description, value.description)}
+		merged.fields[key] = schemaFieldInfo{required: current.required || value.required, password: current.password || value.password, description: firstDescription(current.description, value.description), enum: firstEnum(current.enum, value.enum)}
 	}
 	return merged
 }
@@ -247,6 +251,7 @@ func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
 			current.required = current.required && value.required
 			current.password = current.password || value.password
 			current.description = firstDescription(current.description, value.description)
+			current.enum = firstEnum(current.enum, value.enum)
 			merged.fields[key] = current
 		}
 		if index > 0 {
@@ -274,6 +279,7 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 		result.password = true
 	}
 	result.description, _ = node["description"].(string)
+	result.enum = stringEnum(node["enum"])
 	for _, ref := range schemaLocalReferences(node) {
 		if refs[ref] {
 			continue // Recursive reference: leave the remaining validation to the API.
@@ -287,6 +293,7 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 			}
 			result.password = result.password || resolved.password
 			result.description = firstDescription(result.description, resolved.description)
+			result.enum = firstEnum(result.enum, resolved.enum)
 		}
 	}
 	for _, part := range appendSchemaCompositions(node) {
@@ -296,6 +303,7 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 		}
 		result.password = result.password || metadata.password
 		result.description = firstDescription(result.description, metadata.description)
+		result.enum = firstEnum(result.enum, metadata.enum)
 	}
 	return result, nil
 }
@@ -386,6 +394,31 @@ func findSchemaAnchor(root map[string]any, anchor string) (any, bool) {
 		return nil, false
 	}
 	return find(root, 0)
+}
+
+// stringEnum returns the enum values when they are all strings; mixed or
+// non-string enums are left to API validation.
+func stringEnum(raw any) []string {
+	values, ok := raw.([]any)
+	if !ok || len(values) == 0 {
+		return nil
+	}
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		text, ok := value.(string)
+		if !ok {
+			return nil
+		}
+		result = append(result, text)
+	}
+	return result
+}
+
+func firstEnum(left, right []string) []string {
+	if len(left) > 0 {
+		return left
+	}
+	return right
 }
 
 func firstDescription(left, right string) string {

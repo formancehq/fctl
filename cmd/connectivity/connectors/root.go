@@ -10,7 +10,7 @@ func NewCommand() *cobra.Command {
 	return fctl.NewCommand(
 		"connectors",
 		fctl.WithAliases("connector", "c"),
-		fctl.WithShortDescription("Browse Connectivity connectors"),
+		fctl.WithShortDescription("Browse the connector catalog"),
 		fctl.WithChildCommands(
 			NewListCommand(),
 			NewShowCommand(),

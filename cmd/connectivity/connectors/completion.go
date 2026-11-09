@@ -55,7 +55,7 @@ func completeConnectorNames(completionCommand *cobra.Command, client *formance.F
 		if name == "" || !strings.HasPrefix(name, toComplete) {
 			continue
 		}
-		if description := fctl.StringPointerToString(connector.Description); description != "" {
+		if description := connectivityinternal.ConnectorSummary(connector); description != "" {
 			name += "\t" + description
 		}
 		candidates = append(candidates, name)

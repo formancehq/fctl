@@ -15,6 +15,8 @@ import (
 type SuspensionStore struct {
 	Name    string `json:"name"`
 	Suspend bool   `json:"suspend"`
+	// Connection is the connection returned by the PATCH.
+	Connection *connectivity.Connection `json:"connection,omitempty"`
 }
 
 type SuspensionController struct {
@@ -34,11 +36,11 @@ func NewSuspensionController(suspend bool) *SuspensionController {
 }
 
 func NewSuspendCommand() *cobra.Command {
-	return newSuspensionCommand("suspend", "Suspend a Connectivity connection", true)
+	return newSuspensionCommand("suspend", "Pause ingestion for a connection", true)
 }
 
 func NewUnsuspendCommand() *cobra.Command {
-	return newSuspensionCommand("unsuspend", "Resume a Connectivity connection", false)
+	return newSuspensionCommand("unsuspend", "Resume ingestion for a connection", false)
 }
 
 func newSuspensionCommand(name, description string, suspend bool) *cobra.Command {
@@ -50,6 +52,8 @@ func newSuspensionCommand(name, description string, suspend bool) *cobra.Command
 		fctl.WithValidArgsFunction(CompleteConnectionNames()),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*SuspensionStore](controller),
+		fctl.WithFlagUsage("confirm", "Skip the confirmation prompt"),
+		fctl.WithExamples("fctl connectivity connections "+name+" stripeconnect-fpss --confirm"),
 	)
 }
 
@@ -87,6 +91,7 @@ func (c *SuspensionController) run(cmd *cobra.Command, args []string, client *sd
 	}
 	c.store.Name = name
 	c.store.Suspend = c.suspend
+	c.store.Connection = response.Connection
 	return c, nil
 }
 
@@ -95,6 +100,5 @@ func (c *SuspensionController) Render(cmd *cobra.Command, _ []string) error {
 	if !c.store.Suspend {
 		request = "resumption"
 	}
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q %s requested.\n", c.store.Name, request)
-	return err
+	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q %s requested.", c.store.Name, request))
 }

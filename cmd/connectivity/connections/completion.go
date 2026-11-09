@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -122,20 +123,37 @@ func completeVersionsWithClient(client *sdk.FormanceV1, completionCommand *cobra
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
+	// Newest first: the shell keeps this order instead of sorting lexically,
+	// which would put alpha.10 before alpha.2.
+	sort.SliceStable(versions, func(i, j int) bool { return compareSemver(versions[i].Version, versions[j].Version) > 0 })
 	candidates := make([]string, 0, len(versions))
-	for _, version := range versions {
+	for index, version := range versions {
 		if version.Version == "" || !strings.HasPrefix(version.Version, toComplete) {
 			continue
 		}
 		candidate := version.Version
-		description := fctl.StringPointerToString(version.Digest)
-		if description != "" {
+		if description := versionDescription(version, index == 0); description != "" {
 			candidate += "\t" + description
 		}
 		candidates = append(candidates, candidate)
 	}
-	sort.Strings(candidates)
-	return candidates, cobra.ShellCompDirectiveNoFileComp
+	return candidates, cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveKeepOrder
+}
+
+const shortDigestLength = 19 // "sha256:" plus 12 hex characters
+
+func versionDescription(version connectivity.ConnectorVersionSummary, latest bool) string {
+	parts := make([]string, 0, 3)
+	if latest {
+		parts = append(parts, "latest")
+	}
+	if version.ReleaseDate != nil {
+		parts = append(parts, "released "+version.ReleaseDate.Format(time.DateOnly))
+	}
+	if digest := fctl.StringPointerToString(version.Digest); digest != "" {
+		parts = append(parts, fctl.Truncate(digest, shortDigestLength+1))
+	}
+	return strings.Join(parts, " · ")
 }
 
 func CompleteSetValues(
@@ -189,6 +207,9 @@ func completeSetValuesWithClient(client *sdk.FormanceV1, completionCommand *cobr
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
+	if key, prefix, found := strings.Cut(toComplete, "="); found {
+		return completeEnumValues(fields[key], prefix)
+	}
 	supplied := suppliedSetKeys(completionCommand, args)
 	ordered := make([]configuration.SchemaField, 0, len(fields))
 	for key, field := range fields {
@@ -210,14 +231,34 @@ func completeSetValuesWithClient(client *sdk.FormanceV1, completionCommand *cobr
 	return candidates, cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveNoSpace
 }
 
+// schemaFieldDescription is one line: required marker, first sentence and
+// allowed values. connectors show prints the full field list.
 func schemaFieldDescription(field configuration.SchemaField) string {
-	if field.Description != "" {
-		return field.Description
+	description := fctl.FirstSentence(field.Description)
+	if description == "" {
+		description = "environment configuration"
+		if field.Kind == configuration.ConfigFile {
+			description = "file configuration"
+		}
 	}
-	if field.Kind == configuration.ConfigFile {
-		return "file configuration"
+	if len(field.Enum) > 0 {
+		description += " [" + strings.Join(field.Enum, " | ") + "]"
 	}
-	return "environment configuration"
+	if field.Required {
+		description = "required · " + description
+	}
+	return description
+}
+
+// completeEnumValues offers KEY=value candidates for a field with an enum.
+func completeEnumValues(field configuration.SchemaField, prefix string) ([]string, cobra.ShellCompDirective) {
+	candidates := make([]string, 0, len(field.Enum))
+	for _, value := range field.Enum {
+		if strings.HasPrefix(value, prefix) {
+			candidates = append(candidates, field.Key+"="+value)
+		}
+	}
+	return candidates, cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveKeepOrder
 }
 
 func OSPathCompleter(prefix string) ([]string, error) {

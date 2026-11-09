@@ -2,6 +2,7 @@ package connections
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -38,7 +39,7 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
-		fctl.WithShortDescription("List Connectivity connections"),
+		fctl.WithShortDescription("List connections"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		fctl.WithStringFlag(connectorFlag, "", "Filter connections by connector"),
@@ -46,6 +47,11 @@ func NewListCommand() *cobra.Command {
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
 		fctl.WithController[*ListStore](controller),
+		fctl.WithExamples(
+			"fctl connectivity connections list --connector ee-stripeconnect",
+			"fctl connectivity connections list --filter lifecycle=failed",
+		),
+		fctl.WithoutFileCompletion(connectivityinternal.QueryFlag, "cursor", "page-size"),
 		fctl.WithFlagCompletion(connectorFlag, connectors.CompleteConnectorNames()),
 		fctl.WithFlagCompletion(connectivityinternal.FilterFlag, connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnections)),
 	)
@@ -108,20 +114,55 @@ func (c *ListController) run(cmd *cobra.Command, args []string, client *sdk.Form
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
+	out := cmd.OutOrStdout()
 	rows := fctl.Map(c.store.Connections, func(instance connectivity.Connection) []string {
-		return []string{instance.Name, fctl.StringPointerToString(instance.ConnectionConfiguration.Connector), fctl.StringPointerToString(instance.ConnectionConfiguration.Version),
-			enumStringValue(instance.ConnectionConfiguration.Channel), appliedChannelFloor(&instance), fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger),
-			lifecycleValue(instance.ConnectionStatus), ingestionState(instance.ConnectionStatus)}
+		return []string{instance.Name, fctl.StringPointerToString(instance.ConnectionConfiguration.Connector), fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger),
+			targetValue(&instance.ConnectionConfiguration), appliedChannelFloor(&instance), statusSummary(instance.ConnectionStatus)}
 	})
-	rows = fctl.Prepend(rows, []string{"Name", "Connector", "Version", "Channel", "Applied Version", "Ledger", "Lifecycle", "Ingestion State"})
-	if err := pterm.DefaultTable.
-		WithHasHeader().
-		WithWriter(cmd.OutOrStdout()).
-		WithData(rows).
-		Render(); err != nil {
+	columns := []fctl.TableColumn{{}, {Fit: fctl.FitCut, Min: 10}, {Fit: fctl.FitCut, Min: 10}, {}, {}, {Style: lifecycleStyle}}
+	if err := fctl.RenderTable(out, []string{"Name", "Connector", "Ledger", "Target", "Applied", "Status"}, columns, rows); err != nil {
 		return err
 	}
-	return fctl.RenderCursor(cmd.OutOrStdout(), c.store.Cursor)
+	return fctl.RenderNextPage(out, c.store.Cursor)
+}
+
+// targetValue is the requested version or channel; the API sets exactly one.
+func targetValue(config *connectivity.ConnectionConfiguration) string {
+	if version := fctl.StringPointerToString(config.Version); version != "" {
+		return version
+	}
+	return enumStringValue(config.Channel)
+}
+
+// expectedIngestion is the ingestion state that adds nothing to a lifecycle.
+var expectedIngestion = map[connectivity.Lifecycle]connectivity.State{
+	connectivity.LifecycleActive:    connectivity.StateRunning,
+	connectivity.LifecycleCompleted: connectivity.StateFinished,
+	connectivity.LifecycleSuspended: connectivity.StatePaused,
+}
+
+// statusSummary is the lifecycle, followed by the ingestion state only when
+// it is not the one the lifecycle implies.
+func statusSummary(status *connectivity.ConnectionStatus) string {
+	lifecycle := lifecycleValue(status)
+	state := ingestionState(status)
+	if state == "" || expectedIngestion[status.Lifecycle] == connectivity.State(state) {
+		return lifecycle
+	}
+	return lifecycle + " / " + state
+}
+
+func lifecycleStyle(value string) string {
+	lifecycle, _, _ := strings.Cut(strings.TrimSpace(value), " ")
+	switch {
+	case strings.Contains(value, "/"), lifecycle == string(connectivity.LifecycleFailed), lifecycle == string(connectivity.LifecycleUnknown):
+		return pterm.LightRed(value)
+	case lifecycle == string(connectivity.LifecyclePending), lifecycle == string(connectivity.LifecycleSuspended):
+		return pterm.Yellow(value)
+	case lifecycle == string(connectivity.LifecycleActive):
+		return pterm.LightGreen(value)
+	}
+	return value
 }
 
 func enumStringValue[T ~string](value *T) string {

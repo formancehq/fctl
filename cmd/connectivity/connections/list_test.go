@@ -46,9 +46,9 @@ func TestListConnectionsPassesFiltersAndPaginationAndRendersApprovedColumns(t *t
 	}
 	require.Equal(t, wantOptions, gotOptions)
 	for _, expected := range []string{
-		"Name", "Connector", "Version", "Channel", "Applied Version", "Ledger", "Lifecycle", "Ingestion State",
-		"stripe-eu", "stripe", "stable", "v1.3.0", "main", "active", "running",
-		"HasMore", "true", "PageSize", "7", "Next", "next-page",
+		"Name", "Connector", "Ledger", "Target", "Applied", "Status",
+		"stripe-eu", "stripe", "stable", "v1.3.0", "main", "active",
+		"Next page: --cursor next-page",
 	} {
 		require.Contains(t, output, expected)
 	}

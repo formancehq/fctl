@@ -41,18 +41,25 @@ func NewConfigureCommand(read configuration.ReadFileFunc, paths PathCompleter) *
 	return fctl.NewCommand(
 		"configure <connection>",
 		fctl.WithAliases("update", "c"),
-		fctl.WithShortDescription("Configure a Connectivity connection"),
+		fctl.WithShortDescription("Change a connection's version, channel or configuration"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectionNames()),
-		fctl.WithStringFlag(versionFlag, "", "Connector version"),
-		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track (stable, rc, beta, alpha) when no version is pinned"),
-		fctl.WithStringFlag(initialCursorFlag, "", "Initial ingestion cursor as base64 (opaque; does not reset a running cursor)"),
-		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval"),
+		fctl.WithStringFlag(versionFlag, "", "Exact connector version to pin, for example v0.5.0-beta.14. Cannot be combined with --channel"),
+		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track: stable, rc, beta or alpha. Cannot be combined with --version"),
+		fctl.WithStringFlag(initialCursorFlag, "", "Base64 cursor ingestion starts from. Does not reset a running cursor"),
+		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval as a Go duration, for example 30s. Defaults to the service value"),
 		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
 		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
-		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE (repeatable)"),
+		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE, or KEY=@path to read a file (repeatable). Completion follows a --version or --channel typed before it"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*ConfigureStore](controller),
+		fctl.WithFlagUsage("confirm", "Skip the confirmation prompt"),
+		fctl.WithExamples(
+			"fctl connectivity connections configure stripeconnect-fpss --channel beta",
+			"fctl connectivity connections configure stripeconnect-fpss \\",
+			"    --set HISTORY_START=2026-01-01T00:00:00Z",
+		),
+		fctl.WithoutFileCompletion(pollIntervalFlag, initialCursorFlag),
 		fctl.WithFlagCompletion(versionFlag, completeVersions(resolveConfigureConnector)),
 		fctl.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
 		fctl.WithFlagCompletion(setFlag, CompleteSetValues(resolveConfigureConnectorVersion, paths)),
@@ -252,6 +259,5 @@ func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk
 }
 
 func (c *ConfigureController) Render(cmd *cobra.Command, _ []string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q configured.\n", c.store.Connection.Name)
-	return err
+	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q configured.", c.store.Connection.Name))
 }

@@ -60,8 +60,10 @@ func (silentDialog) Info(string, ...any) {}
 // CompleteFilterExpressions completes `--filter` expressions from the
 // server's query allowlist: keys and operators come from
 // `GET /_query/capabilities`, values from the capability enum, from
-// `GET /connectors/_facets` for connector tags, and from the published
-// connector names for the instance `connector` key.
+// `GET /connectors/_facets` for connector tags, from the published connectors
+// for the connector `catalog` key, and from the published connector names for
+// the instance `connector` key. Connector tag and catalog counts honour the
+// `--filter` expressions already on the command line.
 func CompleteFilterExpressions(resource string) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		client, completionCommand, cancel, ok := CompletionClient(cmd)
@@ -69,12 +71,19 @@ func CompleteFilterExpressions(resource string) cobra.CompletionFunc {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 		defer cancel()
-		return completeFilterExpressions(completionCommand.Context(), client, resource, toComplete)
+		existing, _ := cmd.Flags().GetStringArray(FilterFlag)
+		return completeFilterExpressionsWithin(completionCommand.Context(), client, resource, toComplete, existing)
 
 	}
 }
 
 func completeFilterExpressions(ctx context.Context, client *sdk.FormanceV1, resource, toComplete string) ([]string, cobra.ShellCompDirective) {
+	return completeFilterExpressionsWithin(ctx, client, resource, toComplete, nil)
+}
+
+// completeFilterExpressionsWithin narrows value counts to the connectors the
+// existing filters already select; an invalid existing filter is ignored.
+func completeFilterExpressionsWithin(ctx context.Context, client *sdk.FormanceV1, resource, toComplete string, existing []string) ([]string, cobra.ShellCompDirective) {
 
 	capabilities, err := client.GetQueryCapabilities(ctx, nil)
 	if err != nil || capabilities == nil || capabilities.QueryCapabilities == nil {
@@ -94,7 +103,11 @@ func completeFilterExpressions(ctx context.Context, client *sdk.FormanceV1, reso
 	if !ok {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
-	values := filterValueCandidates(ctx, client, resource, key, capability)
+	scope, err := BuildListQuery("", existing)
+	if err != nil {
+		scope = ""
+	}
+	values := filterValueCandidates(ctx, client, resource, key, capability, scope)
 	candidates := make([]string, 0, len(values))
 	for _, value := range values {
 		if !strings.HasPrefix(value.value, valuePrefix) {
@@ -162,7 +175,7 @@ type filterValue struct {
 	description string
 }
 
-func filterValueCandidates(ctx context.Context, client *sdk.FormanceV1, resource, key string, capability connectivity.QueryFieldCapability) []filterValue {
+func filterValueCandidates(ctx context.Context, client *sdk.FormanceV1, resource, key string, capability connectivity.QueryFieldCapability, scope string) []filterValue {
 	if len(capability.Enum) > 0 {
 		values := make([]filterValue, 0, len(capability.Enum))
 		for _, value := range capability.Enum {
@@ -172,15 +185,17 @@ func filterValueCandidates(ctx context.Context, client *sdk.FormanceV1, resource
 	}
 	switch {
 	case resource == ResourceConnectors && key == "tags":
-		return facetFilterValues(ctx, client)
+		return facetFilterValues(ctx, client, scope)
+	case resource == ResourceConnectors && key == "catalog":
+		return catalogFilterValues(ctx, client, scope)
 	case resource == ResourceConnections && key == "connector":
 		return connectorFilterValues(ctx, client)
 	}
 	return nil
 }
 
-func facetFilterValues(ctx context.Context, client *sdk.FormanceV1) []filterValue {
-	facets, err := client.GetConnectorFacets(ctx, operations.GetConnectorFacetsRequest{}, nil)
+func facetFilterValues(ctx context.Context, client *sdk.FormanceV1, scope string) []filterValue {
+	facets, err := client.GetConnectorFacets(ctx, operations.GetConnectorFacetsRequest{Query: OptionalString(scope)}, nil)
 	if err != nil || facets == nil || facets.FacetDistribution == nil {
 		return nil
 	}
@@ -191,6 +206,9 @@ func facetFilterValues(ctx context.Context, client *sdk.FormanceV1) []filterValu
 			if count == 1 {
 				plural = ""
 			}
+			if count == 0 {
+				continue
+			}
 			values = append(values, filterValue{
 				value:       facet + ":" + value,
 				description: fmt.Sprintf("%d connector%s", count, plural),
@@ -200,11 +218,58 @@ func facetFilterValues(ctx context.Context, client *sdk.FormanceV1) []filterValu
 	return values
 }
 
+// catalogFilterValues counts the published connectors of each catalog.
+func catalogFilterValues(ctx context.Context, client *sdk.FormanceV1, scope string) []filterValue {
+	connectors, err := completionConnectors(ctx, client, scope)
+	if err != nil {
+		return nil
+	}
+	counts := map[string]int{}
+	for _, connector := range connectors {
+		if catalog := fctl.StringPointerToString(connector.Catalog); catalog != "" {
+			counts[catalog]++
+		}
+	}
+	values := make([]filterValue, 0, len(counts))
+	for catalog, count := range counts {
+		plural := "s"
+		if count == 1 {
+			plural = ""
+		}
+		values = append(values, filterValue{value: catalog, description: fmt.Sprintf("%d connector%s", count, plural)})
+	}
+	return values
+}
+
 func connectorFilterValues(ctx context.Context, client *sdk.FormanceV1) []filterValue {
-	connectors, err := CollectPagesBounded(CompletionPageSize, CompletionMaxPages,
+	connectors, err := completionConnectors(ctx, client, "")
+	if err != nil {
+		return nil
+	}
+	values := make([]filterValue, 0, len(connectors))
+	for _, connector := range connectors {
+		if connector.Name == "" {
+			continue
+		}
+		values = append(values, filterValue{value: connector.Name, description: ConnectorSummary(connector)})
+	}
+	return values
+}
+
+// ConnectorSummary is the one-line description shown next to a connector
+// name in completions: the tagline, else the display name.
+func ConnectorSummary(connector connectivity.Connector) string {
+	if tagline := fctl.StringPointerToString(connector.Tagline); tagline != "" {
+		return tagline
+	}
+	return fctl.StringPointerToString(connector.DisplayName)
+}
+
+func completionConnectors(ctx context.Context, client *sdk.FormanceV1, query string) ([]connectivity.Connector, error) {
+	return CollectPagesBounded(CompletionPageSize, CompletionMaxPages,
 		func(options ListOptions) ([]connectivity.Connector, bool, string, error) {
 			size := int(options.PageSize)
-			page, err := client.ListConnectors(ctx, operations.ListConnectorsRequest{PageSize: &size, Cursor: OptionalString(options.Cursor), Query: OptionalString(options.Query)}, nil)
+			page, err := client.ListConnectors(ctx, operations.ListConnectorsRequest{PageSize: &size, Cursor: OptionalString(options.Cursor), Query: OptionalString(query)}, nil)
 			if err != nil {
 				return nil, false, "", err
 			}
@@ -221,19 +286,4 @@ func connectorFilterValues(ctx context.Context, client *sdk.FormanceV1) []filter
 			}
 			return cursor.Data, cursor.HasMore, next, nil
 		})
-	if err != nil {
-		return nil
-	}
-	values := make([]filterValue, 0, len(connectors))
-	for _, connector := range connectors {
-		if connector.Name == "" {
-			continue
-		}
-		value := filterValue{value: connector.Name}
-		if connector.DisplayName != nil {
-			value.description = *connector.DisplayName
-		}
-		values = append(values, value)
-	}
-	return values
 }

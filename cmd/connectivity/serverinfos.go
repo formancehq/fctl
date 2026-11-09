@@ -13,24 +13,26 @@ import (
 	connectivitymodel "github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
-type StatusController struct {
+type ServerInfosController struct {
 	store *connectivitymodel.Info
 }
 
-var _ fctl.Controller[*connectivitymodel.Info] = (*StatusController)(nil)
+var _ fctl.Controller[*connectivitymodel.Info] = (*ServerInfosController)(nil)
 
-func NewStatusCommand() *cobra.Command {
-	controller := &StatusController{store: &connectivitymodel.Info{}}
-	return fctl.NewCommand("status",
-		fctl.WithShortDescription("Show Connectivity service build information"),
+func NewServerInfosCommand() *cobra.Command {
+	controller := &ServerInfosController{store: &connectivitymodel.Info{}}
+	return fctl.NewCommand("server-infos",
+		fctl.WithAliases("si"),
+		fctl.WithShortDescription("Show the Connectivity server version, commit and build date"),
+		fctl.WithExamples("fctl connectivity server-infos -o json"),
 		fctl.WithArgs(cobra.NoArgs),
 		fctl.WithController[*connectivitymodel.Info](controller),
 	)
 }
 
-func (c *StatusController) GetStore() *connectivitymodel.Info { return c.store }
+func (c *ServerInfosController) GetStore() *connectivitymodel.Info { return c.store }
 
-func (c *StatusController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
+func (c *ServerInfosController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable, error) {
 	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
 		return nil, err
@@ -42,7 +44,7 @@ func (c *StatusController) Run(cmd *cobra.Command, _ []string) (fctl.Renderable,
 	return c.run(cmd, stackClient.Connectivity.V1)
 }
 
-func (c *StatusController) run(cmd *cobra.Command, client *formance.FormanceV1) (fctl.Renderable, error) {
+func (c *ServerInfosController) run(cmd *cobra.Command, client *formance.FormanceV1) (fctl.Renderable, error) {
 	response, err := client.ConnectivityInfo(cmd.Context())
 	if err != nil {
 		return nil, err
@@ -76,7 +78,10 @@ func (c *StatusController) run(cmd *cobra.Command, client *formance.FormanceV1) 
 	return c, nil
 }
 
-func (c *StatusController) Render(cmd *cobra.Command, _ []string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Version: %s\nCommit: %s\nBuild Date: %s\n", c.store.Version, c.store.Commit, c.store.BuildDate)
-	return err
+func (c *ServerInfosController) Render(cmd *cobra.Command, _ []string) error {
+	return fctl.RenderKeyValues(cmd.OutOrStdout(), [][]string{
+		{"Version", c.store.Version},
+		{"Commit", c.store.Commit},
+		{"Build Date", c.store.BuildDate},
+	})
 }

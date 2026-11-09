@@ -3,7 +3,6 @@ package connectors
 import (
 	"fmt"
 
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
@@ -35,13 +34,18 @@ func NewListCommand() *cobra.Command {
 	return fctl.NewCommand(
 		"list",
 		fctl.WithAliases("ls", "l"),
-		fctl.WithShortDescription("List available Connectivity connectors"),
+		fctl.WithShortDescription("List catalog connectors"),
 		fctl.WithArgs(cobra.ExactArgs(0)),
 		fctl.WithValidArgsFunction(cobra.NoFileCompletions),
 		connectivityinternal.WithListQueryFlags(),
 		fctl.WithPageSizeFlag(),
 		fctl.WithCursorFlag(),
 		fctl.WithController[*ListStore](controller),
+		fctl.WithExamples(
+			"fctl connectivity connectors list --filter tags=provider:psp",
+			"fctl connectivity connectors list --filter 'name~%stripe%' --page-size 50",
+		),
+		fctl.WithoutFileCompletion(connectivityinternal.QueryFlag, "cursor", "page-size"),
 		fctl.WithFlagCompletion(connectivityinternal.FilterFlag, connectivityinternal.CompleteFilterExpressions(connectivityinternal.ResourceConnectors)),
 	)
 }
@@ -97,21 +101,15 @@ func (c *ListController) run(cmd *cobra.Command, _ []string, client *formance.Fo
 }
 
 func (c *ListController) Render(cmd *cobra.Command, _ []string) error {
+	out := cmd.OutOrStdout()
+	// Display names repeat the connector name, so the list shows the tagline
+	// instead; connectors show keeps every field.
 	rows := fctl.Map(c.store.Connectors, func(connector connectivity.Connector) []string {
-		return []string{
-			connector.Name,
-			fctl.StringPointerToString(connector.DisplayName),
-			fctl.StringPointerToString(connector.LatestVersion),
-		}
+		return []string{connector.Name, fctl.StringPointerToString(connector.LatestVersion), fctl.StringPointerToString(connector.Tagline)}
 	})
-	// Keep long descriptions and tag lists in connectors show.
-	rows = fctl.Prepend(rows, []string{"Name", "Display Name", "Latest Version"})
-	if err := pterm.DefaultTable.
-		WithHasHeader().
-		WithWriter(cmd.OutOrStdout()).
-		WithData(rows).
-		Render(); err != nil {
+	columns := []fctl.TableColumn{{}, {}, {Fit: fctl.FitCut, Min: 12}}
+	if err := fctl.RenderTable(out, []string{"Name", "Latest Version", "Tagline"}, columns, rows); err != nil {
 		return err
 	}
-	return fctl.RenderCursor(cmd.OutOrStdout(), c.store.Cursor)
+	return fctl.RenderNextPage(out, c.store.Cursor)
 }

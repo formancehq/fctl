@@ -10,9 +10,13 @@ import (
 
 func NewCommand() *cobra.Command {
 	return fctl.NewStackCommand("connectivity",
-		fctl.WithShortDescription("Manage Connectivity connectors and connections"),
+		fctl.WithShortDescription("Manage connectors and connections on the Connectivity service"),
+		fctl.WithExamples(
+			"fctl connectivity connectors list --filter tags=provider:psp",
+			"fctl connectivity connections show stripeconnect-fpss",
+		),
 		fctl.WithChildCommands(
-			NewStatusCommand(),
+			NewServerInfosCommand(),
 			connectors.NewCommand(),
 			connections.NewCommand(fctl.ReadFile, connections.OSPathCompleter),
 		),

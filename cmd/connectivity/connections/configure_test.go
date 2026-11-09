@@ -428,12 +428,12 @@ func TestConfigureCompletionUsesCurrentConnectionAndSchema(t *testing.T) {
 
 	versionCompletion := testcompleteVersions(factory, resolveConfigureConnector)
 	versions, directive := versionCompletion(command, []string{"stripe-eu"}, "2")
-	require.Equal(t, []string{"2.0.0"}, versions)
-	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
+	require.Equal(t, []string{"2.0.0\tlatest"}, versions)
+	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveKeepOrder, directive)
 
 	setCompletion := testCompleteSetValues(factory, resolveConfigureConnectorVersion, paths)
 	sets, directive := setCompletion(command, []string{"stripe-eu"}, "/etc")
-	require.Equal(t, []string{"/etc/a=\tPrimary config", "/etc/b=\tfile configuration"}, sets)
+	require.Equal(t, []string{"/etc/a=\trequired · Primary config", "/etc/b=\tfile configuration"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
 	sets, directive = setCompletion(command, []string{"stripe-eu"}, "/etc/a=@fixtures/t")
 	require.Equal(t, "fixtures/t", pathPrefix)

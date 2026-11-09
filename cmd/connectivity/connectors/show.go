@@ -1,14 +1,15 @@
 package connectors
 
 import (
+	"encoding/json"
 	"fmt"
+	"math"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
@@ -46,10 +47,15 @@ func NewShowCommand() *cobra.Command {
 	return fctl.NewCommand(
 		"show <connector>",
 		fctl.WithAliases("get", "g", "sh", "s"),
-		fctl.WithShortDescription("Show a Connectivity connector"),
+		fctl.WithShortDescription("Show a connector and its configuration fields"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectorNames()),
 		fctl.WithController[*ShowStore](controller),
+		fctl.WithExamples(
+			"fctl connectivity connectors show ee-stripeconnect",
+			"fctl connectivity connectors show ee-stripeconnect -o json \\",
+			"    | jq '.data.version.configSchema'",
+		),
 	)
 }
 
@@ -124,23 +130,22 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 	out := cmd.OutOrStdout()
 
 	fctl.Section.WithWriter(out).Println("Information")
-	information := pterm.TableData{
-		{pterm.LightCyan("Name"), connector.Name},
-		{pterm.LightCyan("Created At"), timeValue(connector.CreatedAt)},
-		{pterm.LightCyan("Display Name"), fctl.StringPointerToString(connector.DisplayName)},
-		{pterm.LightCyan("Description"), fctl.StringPointerToString(connector.Description)},
-		{pterm.LightCyan("Catalog"), fctl.StringPointerToString(connector.Catalog)},
-		{pterm.LightCyan("Tags"), strings.Join(connector.Tags, ", ")},
-		{pterm.LightCyan("Tagline"), fctl.StringPointerToString(connector.Tagline)},
-		{pterm.LightCyan("Latest Version"), fctl.StringPointerToString(connector.LatestVersion)},
-		{pterm.LightCyan("Available Versions"), strconv.Itoa(len(c.store.Versions))},
-	}
-	if err := pterm.DefaultTable.WithWriter(out).WithData(information).Render(); err != nil {
+	if err := fctl.RenderKeyValues(out, [][]string{
+		{"Name", connector.Name},
+		{"Display Name", orDash(fctl.StringPointerToString(connector.DisplayName))},
+		{"Tagline", orDash(fctl.StringPointerToString(connector.Tagline))},
+		{"Description", orDash(fctl.StringPointerToString(connector.Description))},
+		{"Tags", orDash(strings.Join(connector.Tags, ", "))},
+		{"Catalog", orDash(fctl.StringPointerToString(connector.Catalog))},
+		{"Created At", orDash(timeValue(connector.CreatedAt))},
+		{"Latest Version", orDash(latestVersionValue(fctl.StringPointerToString(connector.LatestVersion), c.store.Version))},
+		{"Available Versions", strconv.Itoa(len(c.store.Versions))},
+	}); err != nil {
 		return err
 	}
 
 	if c.store.Version == nil {
-		fctl.Section.WithWriter(out).Println("Configuration Schema")
+		fctl.Section.WithWriter(out).Println("Configuration")
 		message := "No published version."
 		if len(c.store.Versions) > 0 {
 			message = "No latest version schema available."
@@ -149,29 +154,74 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fctl.Section.WithWriter(out).Println("Configuration Schema (" + c.store.Version.Version + ")")
-	schemaRows := summarizeSchema(c.store.Version.ConfigSchema)
-	if len(schemaRows) == 0 {
+	fields := schemaFields(c.store.Version.ConfigSchema)
+	if len(fields) == 0 {
+		fctl.Section.WithWriter(out).Println("Configuration (" + c.store.Version.Version + ")")
 		_, err := fmt.Fprintln(out, "No configurable fields.")
 		return err
 	}
-	schemaRows = fctl.Prepend(schemaRows, []string{"Key", "Source", "Requirement", "Format", "Description"})
-	return pterm.DefaultTable.WithHasHeader().WithWriter(out).WithData(schemaRows).Render()
+	required := 0
+	for _, field := range fields {
+		if field.required {
+			required++
+		}
+	}
+	fctl.Section.WithWriter(out).Println(fmt.Sprintf("Configuration (%s) · %d fields, %d required", c.store.Version.Version, len(fields), required))
+	columns := []fctl.TableColumn{{}, {}, {Fit: fctl.FitCut, Min: 6}, {Fit: fctl.FitWrap, Min: 20, MaxLines: 3}}
+	if err := fctl.RenderGroupedTable(out, []string{"Key", "Req", "Type", "Description"}, columns, schemaGroups(fields)); err != nil {
+		return err
+	}
+
+	rules := schemaRules(c.store.Version.ConfigSchema)
+	if len(rules) == 0 {
+		return nil
+	}
+	fctl.Section.WithWriter(out).Println("Rules")
+	for _, rule := range rules {
+		if err := fctl.RenderBullet(out, rule); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func summarizeSchema(schema map[string]any) [][]string {
-	type field struct {
-		key, source, requirement, format, description string
+type schemaField struct {
+	key, source, kind, description, group string
+	required, advanced                    bool
+	order                                 int
+}
+
+// schemaFields lists the env and file properties of a configSchema in the
+// order the producer chose in presentation.groups. Properties outside every
+// group follow, sorted by source and key.
+func schemaFields(schema map[string]any) []schemaField {
+	type placement struct {
+		title    string
+		advanced bool
+		order    int
 	}
-	fields := make([]field, 0)
-	sections := []struct {
-		name   string
-		source string
-	}{
-		{name: "env", source: "environment"},
-		{name: "files", source: "file"},
+	placements := map[string]placement{}
+	presentation, _ := objectValue(schema["presentation"])
+	groups, _ := presentation["groups"].([]any)
+	order := 0
+	for _, raw := range groups {
+		group, _ := objectValue(raw)
+		title, _ := group["title"].(string)
+		advanced, _ := group["advanced"].(bool)
+		properties, _ := group["properties"].([]any)
+		for _, reference := range properties {
+			if name, ok := reference.(string); ok {
+				placements[name] = placement{title: title, advanced: advanced, order: order}
+				order++
+			}
+		}
 	}
 
+	fields := make([]schemaField, 0)
+	sections := []struct{ name, source, reference string }{
+		{name: "env", source: "environment", reference: "env."},
+		{name: "files", source: "file", reference: "files"},
+	}
 	for _, section := range sections {
 		sectionSchema, ok := objectValue(schema[section.name])
 		if !ok {
@@ -181,28 +231,111 @@ func summarizeSchema(schema map[string]any) [][]string {
 		required := requiredKeys(sectionSchema["required"])
 		for key, rawDefinition := range properties {
 			definition, _ := objectValue(rawDefinition)
-			format, _ := definition["format"].(string)
-			if format == "" {
-				format, _ = definition["type"].(string)
+			kind, _ := definition["format"].(string)
+			if kind == "" {
+				kind, _ = definition["type"].(string)
+			}
+			if kind == "password" || definition["writeOnly"] == true {
+				kind = "secret"
 			}
 			description, _ := definition["description"].(string)
-			requirement := "optional"
-			if required[key] {
-				requirement = "required"
+			description = fctl.FirstSentence(description)
+			if value, ok := definition["default"]; ok {
+				description = strings.TrimSpace(description + " Default: " + defaultValue(value) + ".")
 			}
-			fields = append(fields, field{key, section.source, requirement, format, description})
+			place, grouped := placements[section.reference+key]
+			if !grouped {
+				place = placement{order: math.MaxInt}
+			}
+			fields = append(fields, schemaField{key: key, source: section.source, kind: kind, description: description, group: place.title, required: required[key], advanced: place.advanced, order: place.order})
 		}
 	}
-
-	sort.Slice(fields, func(i, j int) bool {
-		if fields[i].source == fields[j].source {
-			return fields[i].key < fields[j].key
+	sort.SliceStable(fields, func(i, j int) bool {
+		if fields[i].order != fields[j].order {
+			return fields[i].order < fields[j].order
 		}
-		return fields[i].source < fields[j].source
+		if fields[i].source != fields[j].source {
+			return fields[i].source < fields[j].source
+		}
+		return fields[i].key < fields[j].key
 	})
-	return fctl.Map(fields, func(value field) []string {
-		return []string{value.key, value.source, value.requirement, value.format, value.description}
-	})
+	return fields
+}
+
+func schemaGroups(fields []schemaField) []fctl.TableGroup {
+	groups := make([]fctl.TableGroup, 0)
+	for i, field := range fields {
+		if i == 0 || field.group != fields[i-1].group {
+			title := ""
+			switch {
+			case field.group != "" && field.advanced:
+				title = "— " + field.group + " (advanced)"
+			case field.group != "":
+				title = "— " + field.group
+			case i > 0:
+				title = "— Other"
+			}
+			groups = append(groups, fctl.TableGroup{Title: title})
+		}
+		required := ""
+		if field.required {
+			required = "yes"
+		}
+		group := &groups[len(groups)-1]
+		group.Rows = append(group.Rows, []string{field.key, required, field.kind, field.description})
+	}
+	return groups
+}
+
+// schemaRules returns the distinct descriptions of the schema requirements.
+func schemaRules(schema map[string]any) []string {
+	requirements, _ := schema["requirements"].([]any)
+	seen := map[string]bool{}
+	rules := make([]string, 0)
+	for _, raw := range requirements {
+		requirement, _ := objectValue(raw)
+		description, _ := requirement["description"].(string)
+		if description != "" && !seen[description] {
+			seen[description] = true
+			rules = append(rules, description)
+		}
+	}
+	return rules
+}
+
+func defaultValue(value any) string {
+	if text, ok := value.(string); ok {
+		return text
+	}
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Sprint(value)
+	}
+	return string(encoded)
+}
+
+func latestVersionValue(latest string, version *connectivity.ConnectorVersion) string {
+	if latest == "" || version == nil || version.Version != latest {
+		return latest
+	}
+	details := make([]string, 0, 2)
+	if version.ReleaseDate != nil {
+		details = append(details, "released "+version.ReleaseDate.Format(time.DateOnly))
+	}
+	if digest := fctl.StringPointerToString(version.Digest); digest != "" {
+		details = append(details, fctl.Truncate(digest, 20))
+	}
+	if len(details) == 0 {
+		return latest
+	}
+	return latest + " (" + strings.Join(details, ", ") + ")"
+}
+
+func orDash(value string) string {
+	if value == "" {
+		return "-"
+	}
+	return value
 }
 
 func objectValue(value any) (map[string]any, bool) {

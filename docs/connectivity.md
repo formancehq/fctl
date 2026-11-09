@@ -16,7 +16,7 @@ installing a connection requires a connector, ledger and selector.
 
 ```text
 fctl connectivity
-├── status
+├── server-infos
 ├── connectors
 │   ├── list
 │   └── show <connector>
@@ -24,8 +24,7 @@ fctl connectivity
     ├── list
     ├── show <connection>
     ├── install <connector> --ledger <ledger>
-    ├── config
-    │   └── update <connection>
+    ├── configure <connection>
     ├── suspend <connection> --confirm
     ├── unsuspend <connection> --confirm
     └── uninstall <connection>
@@ -33,8 +32,9 @@ fctl connectivity
 
 `connection` is the singular alias of `connections`. `connectors ls`, `connectors l`,
 and `connections ls` (`l`) remain available.
-`install` also accepts `create` and `in`. `configuration` aliases the `config`
-group. `connections configure <connection>`, `connections update <connection>`,
+`server-infos` also accepts `si`. `install` also accepts `create` and `in`.
+The `config` group (alias `configuration`) is hidden from help and completion
+because `configure` covers it; `config update` keeps working. `connections configure <connection>`, `connections update <connection>`,
 and `connections c <connection>` remain compatible with earlier CLI builds.
 `config` is now a command group: replace the previous `connections config NAME`
 alias with `connections config update NAME` or `connections configure NAME`.
@@ -53,15 +53,15 @@ parsing. Commands call the generated Stack SDK in `pkg/client` directly.
 
 ## Service build information
 
-`fctl connectivity status` reads only `GET /api/connectivity/_info` for the selected
+`fctl connectivity server-infos` reads only `GET /api/connectivity/_info` for the selected
 stack, using the existing authenticated stack client. It prints Version, Commit
 and Build Date. Build Date is the source commit timestamp supplied by the API;
 the command does not interpret it as a deployment time or observation freshness.
 This reports build metadata, not service health or readiness.
 
 ```bash
-fctl connectivity status
-fctl connectivity status --output json
+fctl connectivity server-infos
+fctl connectivity server-infos --output json
 ```
 
 JSON output is a flat build-information object inside the usual data envelope:
@@ -175,7 +175,7 @@ fctl connectivity connections unsuspend stripe-prod --confirm
 
 A successful command means the request was accepted; reconciliation may still
 be in progress. Use `connections show <connection>` to compare desired
-`Suspend` with observed lifecycle, ingestion state and `Suspended by` provenance. A Policy
+`Suspend` with observed lifecycle, ingestion state and `Suspended By` provenance. A Policy
 can keep ingestion suspended after the tenant requests resumption. Workload
 resources, placement and other administrator settings belong to Policies;
 replica count is not a tenant setting.
@@ -184,12 +184,43 @@ replica count is not a tenant setting.
 until operator cleanup completes; command success does not prove that the
 source has disappeared from Core.
 
-`connectors list` displays Name, Display Name and Latest Version. Full tag lists
-remain available through `connectors show`, JSON output and filter completion.
+`suspend` and `unsuspend` JSON output includes the `connection` returned by the
+API next to `name` and `suspend`.
 
-`connections list` displays Name, Connector, Version, Channel, Applied Version,
-Ledger, Lifecycle and Ingestion State. Progress and last-error details are
-available through `connections show` and JSON output.
+## Terminal output
+
+Plain output fits the width of the terminal it is written to. Columns are never
+hidden. When a table is too wide, the widest column allowed to shrink loses one
+character at a time: identifiers such as names, keys and versions are never
+cut, catalogue text ends with `…`, and descriptions and long values wrap onto
+more lines. When the table still does not fit at those minimum widths, each row
+prints as a stacked block of labelled values. When output is piped or
+redirected, nothing is cut or wrapped. `--output json` always returns the
+complete API models.
+
+`connectors list` displays Name, Latest Version and Tagline. Display names
+repeat the connector name, so they appear only in `connectors show`. Full tag
+lists remain available through `connectors show`, JSON output and filter
+completion.
+
+`connections list` displays Name, Connector, Ledger, Target, Applied and
+Status. Target is the requested version or channel. Status is the lifecycle;
+the ingestion state is appended only when it differs from the expected one
+(`running` while active, `paused` while suspended, `finished` once completed).
+Progress and last-error details are available through `connections show` and
+JSON output.
+
+`connections show` summarizes multi-line file values by their first line and
+line count, and long initial cursors by their first characters and length.
+
+`connectors show` groups configuration fields by the schema's
+`presentation.groups`, in the publisher's order, and marks advanced groups.
+Each field shows its key, whether it is required, its type (`secret` for
+password fields) and the first sentence of its description followed by its
+default. Schema `requirements` are listed under Rules.
+
+A list prints `Next page: --cursor <token>` when more results exist. The token
+is never shortened.
 
 ## Filtering, pagination and catalogue metadata
 
@@ -205,7 +236,11 @@ and `KEY~PATTERN` uses SQL `%` and `_` wildcards. Use `--query '<JSON>'` for
 the full API query dialect; it cannot be combined with `--filter`. The CLI
 also accepts `--page-size` and the opaque `--cursor` from a previous response.
 Shell completion obtains supported keys, values and channels from the API.
-Connector facets supply tag suggestions for `connectors list --filter`.
+Connector facets supply tag suggestions for `connectors list --filter`, and the
+published connectors supply `catalog` values. Both counts apply the `--filter`
+expressions already typed on the command line, so `--filter tags=provider:psp
+--filter tags=region:<TAB>` counts only PSP connectors. Repeated `--filter`
+expressions combine with AND; use `--query` with `$or` or `$in` for OR.
 Use `lifecycle` and `appliedVersion` for status filters.
 Raw `--query` JSON passes through to the
 API, including supported `$match`, `$in`, `$exists` and range operators.
@@ -215,12 +250,27 @@ projected by the API for catalogue display. `connectors show` fetches the schema
 using that exact `latestVersion`; it does not resolve a `latest` alias or infer
 a version from the list. If the field is absent or empty, it skips the schema
 request and still displays the number of available versions. Plain output shows
-this count instead of the full version history, digests and optional release
-dates; JSON output retains all version summaries. These describe the version
+this count and the latest version's release date and shortened digest instead
+of the full version history; JSON output retains all version summaries. These describe the version
 selected for the catalogue card, not necessarily the version installed by a
 connection. Full `additionalMetadata` remains available in version detail;
 version lists contain summaries. Repository credentials and administrator
 configuration are not part of the tenant response.
+
+## Completion
+
+Connector names are described by their tagline. `--version` lists versions
+newest first, marks the latest and shortens digests. `--set <TAB>` lists the
+schema keys of the selected version, required keys first, each with the first
+sentence of its description and its allowed values; `--set KEY=<TAB>` offers
+those values. Completion reads only what is typed before the cursor, so type
+`--version` or `--channel` before `--set`. Without either, `install` completion
+uses the stable release and falls back to the connector's latest version when it
+has no stable release. Free-text flags such as `--ledger`, `--name`,
+`--poll-interval`, `--query` and `--cursor` never complete file names; only
+`--config`, `--env-file` and `--set KEY=@` do.
+
+Help text wraps flag descriptions to the terminal width and shows examples.
 
 ## Reading status
 

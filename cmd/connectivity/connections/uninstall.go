@@ -34,11 +34,13 @@ func NewUninstallCommand() *cobra.Command {
 	return fctl.NewCommand(
 		"uninstall <connection>",
 		fctl.WithAliases("delete", "remove", "rm", "u"),
-		fctl.WithShortDescription("Uninstall a Connectivity connection"),
+		fctl.WithShortDescription("Uninstall a connection"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectionNames()),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*UninstallStore](controller),
+		fctl.WithFlagUsage("confirm", "Skip the confirmation prompt"),
+		fctl.WithExamples("fctl connectivity connections uninstall stripeconnect-fpss --confirm"),
 	)
 }
 
@@ -75,6 +77,5 @@ func (c *UninstallController) run(cmd *cobra.Command, args []string, client *sdk
 }
 
 func (c *UninstallController) Render(cmd *cobra.Command, _ []string) error {
-	_, err := fmt.Fprintf(cmd.OutOrStdout(), "Connection %q uninstalled.\n", c.store.Name)
-	return err
+	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q uninstalled.", c.store.Name))
 }

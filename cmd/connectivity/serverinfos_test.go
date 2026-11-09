@@ -19,9 +19,9 @@ import (
 
 type statusContextKey struct{}
 
-func executeStatus(ctx context.Context, client *formance.FormanceV1, args ...string) (string, error) {
-	command := NewStatusCommand()
-	controller := &StatusController{store: &connectivitymodel.Info{}}
+func executeServerInfos(ctx context.Context, client *formance.FormanceV1, args ...string) (string, error) {
+	command := NewServerInfosCommand()
+	controller := &ServerInfosController{store: &connectivitymodel.Info{}}
 	command.RunE = func(cmd *cobra.Command, args []string) error {
 		renderable, err := controller.run(cmd, client)
 		if err != nil {
@@ -40,7 +40,7 @@ func executeStatus(ctx context.Context, client *formance.FormanceV1, args ...str
 	return out.String(), err
 }
 
-func TestStatusShowsBuildInformationInPlainAndFlatJSON(t *testing.T) {
+func TestServerInfosShowsBuildInformationInPlainAndFlatJSON(t *testing.T) {
 	for _, format := range []string{"plain", "json"} {
 		t.Run(format, func(t *testing.T) {
 			calls := 0
@@ -50,19 +50,19 @@ func TestStatusShowsBuildInformationInPlainAndFlatJSON(t *testing.T) {
 				require.Equal(t, "status caller", request.Context().Value(statusContextKey{}))
 				return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"version":"v1.2.3","commit":"abc123","buildDate":"2026-10-28T22:29:14Z"}`))}, nil
 			})}))
-			out, err := executeStatus(ctx, sdk.Connectivity.V1, "--output", format)
+			out, err := executeServerInfos(ctx, sdk.Connectivity.V1, "--output", format)
 			require.NoError(t, err)
 			require.Equal(t, 1, calls)
 			if format == "json" {
 				require.JSONEq(t, `{"data":{"version":"v1.2.3","commit":"abc123","buildDate":"2026-10-28T22:29:14Z"}}`, out)
 			} else {
-				require.Equal(t, "Version: v1.2.3\nCommit: abc123\nBuild Date: 2026-10-28T22:29:14Z\n", out)
+				require.Equal(t, "Version    | v1.2.3              \nCommit     | abc123              \nBuild Date | 2026-10-28T22:29:14Z\n\n", out)
 			}
 		})
 	}
 }
 
-func TestStatusReturnsTransportAndEmptyResponseErrors(t *testing.T) {
+func TestServerInfosReturnsTransportAndEmptyResponseErrors(t *testing.T) {
 	transportErr := errors.New("upstream unavailable")
 	for _, test := range []struct {
 		name         string
@@ -81,7 +81,7 @@ func TestStatusReturnsTransportAndEmptyResponseErrors(t *testing.T) {
 					}
 					return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(test.body))}, nil
 				})}))
-				out, err := executeStatus(t.Context(), sdk.Connectivity.V1, "--output", format)
+				out, err := executeServerInfos(t.Context(), sdk.Connectivity.V1, "--output", format)
 				require.ErrorContains(t, err, test.want)
 				require.Empty(t, out)
 				if test.transportErr != nil {
@@ -92,8 +92,8 @@ func TestStatusReturnsTransportAndEmptyResponseErrors(t *testing.T) {
 	}
 }
 
-func TestStatusRejectsPositionalArgumentsBeforeAuthentication(t *testing.T) {
-	command := NewStatusCommand()
+func TestServerInfosRejectsPositionalArgumentsBeforeAuthentication(t *testing.T) {
+	command := NewServerInfosCommand()
 	command.SetArgs([]string{"extra"})
 	command.SilenceErrors = true
 	command.SilenceUsage = true
@@ -110,7 +110,7 @@ func (f statusRoundTripper) RoundTrip(request *http.Request) (*http.Response, er
 	return f(request)
 }
 
-func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
+func TestServerInfosUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 	for _, status := range []int{http.StatusOK, http.StatusBadRequest, http.StatusUnauthorized} {
 		sdk := formance.New(formance.WithServerURL("https://stack.example.test"), formance.WithClient(&http.Client{Transport: statusRoundTripper(func(request *http.Request) (*http.Response, error) {
 			require.Equal(t, http.MethodGet, request.Method)
@@ -122,7 +122,7 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 			rawResponse := &http.Response{StatusCode: status, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(body))}
 			return rawResponse, nil
 		})}))
-		out, err := executeStatus(t.Context(), sdk.Connectivity.V1, "--output", "json")
+		out, err := executeServerInfos(t.Context(), sdk.Connectivity.V1, "--output", "json")
 		if status == http.StatusOK {
 			require.NoError(t, err)
 			require.JSONEq(t, `{"data":{"version":"v1","commit":"abc","buildDate":"today"}}`, out)
@@ -138,7 +138,7 @@ func TestStatusUsesGeneratedSDKAndRejectsErrorEnvelope(t *testing.T) {
 	}
 }
 
-func TestStatusRequiresStringBuildFieldsAndRetainsResponseBody(t *testing.T) {
+func TestServerInfosRequiresStringBuildFieldsAndRetainsResponseBody(t *testing.T) {
 	for _, test := range []struct {
 		body  string
 		valid bool
@@ -164,7 +164,7 @@ func TestStatusRequiresStringBuildFieldsAndRetainsResponseBody(t *testing.T) {
 					rawResponse = &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(strings.NewReader(test.body))}
 					return rawResponse, nil
 				})}))
-				out, err := executeStatus(t.Context(), sdk.Connectivity.V1, "--output", format)
+				out, err := executeServerInfos(t.Context(), sdk.Connectivity.V1, "--output", format)
 				if test.valid {
 					require.NoError(t, err)
 					require.NotEmpty(t, out)

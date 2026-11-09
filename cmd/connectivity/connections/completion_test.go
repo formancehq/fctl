@@ -95,11 +95,11 @@ func TestCompleteVersionsUsesSelectedConnectorAndReturnsSortedPrefixMatchesWithD
 	if gotName != "stripe" {
 		t.Fatalf("ListConnectorVersions connector = %q, want stripe", gotName)
 	}
-	want := []string{"2.0.0", "2.1.0\tsha256:two"}
+	want := []string{"2.1.0\tlatest · sha256:two", "2.0.0"}
 	if !reflect.DeepEqual(candidates, want) {
 		t.Fatalf("candidates = %#v, want %#v", candidates, want)
 	}
-	if directive != cobra.ShellCompDirectiveNoFileComp {
+	if directive != cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveKeepOrder {
 		t.Fatalf("directive = %v, want NoFileComp", directive)
 	}
 }
@@ -132,8 +132,8 @@ func TestCompleteSetValuesPrioritizesRequiredKeysDescribesAndOmitsSuppliedKeys(t
 		t.Fatal("resolver did not receive the factory client")
 	}
 	want := []string{
-		"/etc/plugin/config.yaml=\tConnector configuration",
-		"API_URL=\tAPI endpoint",
+		"/etc/plugin/config.yaml=\trequired · Connector configuration",
+		"API_URL=\trequired · API endpoint",
 		"/etc/plugin/ca.pem=\tfile configuration",
 		"TIMEOUT=\tenvironment configuration",
 	}

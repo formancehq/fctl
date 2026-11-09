@@ -330,12 +330,12 @@ func TestInstallCompletionReturnsVersionsSchemaKeysAndFileCandidates(t *testing.
 
 	versionCompletion := testCompleteVersions(factory, installConnectorArgument)
 	versions, directive := versionCompletion(command, []string{"stripe"}, "2")
-	require.Equal(t, []string{"2.0.0"}, versions)
-	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
+	require.Equal(t, []string{"2.0.0\tlatest"}, versions)
+	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveKeepOrder, directive)
 
 	setCompletion := testCompleteSetValues(factory, resolveInstallConnectorVersion, paths)
 	sets, directive := setCompletion(command, []string{"stripe"}, "API")
-	require.Equal(t, []string{"API_URL=\tAPI endpoint"}, sets)
+	require.Equal(t, []string{"API_URL=\trequired · API endpoint"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
 
 	sets, directive = setCompletion(command, []string{"stripe"}, "TOKEN=@fixtures/t")
