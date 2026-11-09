@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -91,4 +92,90 @@ func TestBuildInstallConfigRoutesInputForSectionsTheSchemaDoesNotDeclare(t *test
 	bareConfig, err := BuildInstallConfig(&cobra.Command{}, noSchema, InputOptions{SetValues: []string{"TOKEN=value"}}, nil)
 	require.NoError(t, err)
 	require.Contains(t, bareConfig.Env, "TOKEN")
+}
+
+func fieldOf(t *testing.T, section map[string]any, key string) SchemaField {
+	t.Helper()
+	fields, err := SchemaFields(&connectivity.ConnectorVersion{ConfigSchema: map[string]any{"env": section}})
+	require.NoError(t, err)
+	return fields[key]
+}
+
+func TestSchemaFieldsEnumAlgebra(t *testing.T) {
+	tests := map[string]struct {
+		field any
+		want  []string
+	}{
+		"oneOf drops values matched by two alternatives": {map[string]any{"oneOf": []any{map[string]any{"enum": []any{"a", "b"}}, map[string]any{"enum": []any{"b", "c"}}}}, []string{"a", "c"}},
+		"not makes listed values unknown":                {map[string]any{"enum": []any{"a", "b"}, "not": map[string]any{"enum": []any{"b"}}}, nil},
+		"maxLength makes listed values unknown":          {map[string]any{"enum": []any{"a", "bb"}, "maxLength": 1}, nil},
+		"const narrows the enum":                         {map[string]any{"enum": []any{"a", "b"}, "const": "a"}, []string{"a"}},
+		"const alone is completable":                     {map[string]any{"const": "a"}, []string{"a"}},
+		"a mixed enum constrains without completing":     {map[string]any{"allOf": []any{map[string]any{"enum": []any{"a", "b"}}, map[string]any{"enum": []any{"a", 1}}}}, nil},
+		"a false alternative adds nothing":               {map[string]any{"anyOf": []any{false, map[string]any{"enum": []any{"a"}}}}, []string{"a"}},
+		"an empty intersection adds nothing":             {map[string]any{"anyOf": []any{map[string]any{"allOf": []any{map[string]any{"enum": []any{"a"}}, map[string]any{"enum": []any{"b"}}}}, map[string]any{"enum": []any{"c"}}}}, []string{"c"}},
+		"$id starts a new reference resource":            {map[string]any{"$id": "https://example.test/mode", "$defs": map[string]any{"v": map[string]any{"enum": []any{"prod"}}}, "$ref": "#/$defs/v"}, []string{"prod"}},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			require.Equal(t, test.want, fieldOf(t, map[string]any{"properties": map[string]any{"MODE": test.field}}, "MODE").Enum)
+		})
+	}
+}
+
+func TestSchemaFieldsWildcardSchemasMakeDeclaredValuesUnknown(t *testing.T) {
+	declared := map[string]any{"properties": map[string]any{"MODE": map[string]any{"enum": []any{"a", "b"}}}}
+
+	require.Nil(t, fieldOf(t, map[string]any{"allOf": []any{declared, map[string]any{"additionalProperties": map[string]any{"enum": []any{"b"}}}}}, "MODE").Enum)
+	require.Nil(t, fieldOf(t, map[string]any{"properties": declared["properties"], "patternProperties": map[string]any{"^M": map[string]any{"enum": []any{"b"}}}}, "MODE").Enum)
+}
+
+func TestSchemaFieldsResolveReferencesThroughArraysAndIgnoreAnchorsInData(t *testing.T) {
+	section := map[string]any{
+		"allOf":      []any{map[string]any{"properties": map[string]any{"BASE": map[string]any{"enum": []any{"prod"}}}}},
+		"default":    map[string]any{"$anchor": "v", "enum": []any{"bogus"}},
+		"properties": map[string]any{"ALIAS": map[string]any{"$ref": "#/allOf/0/properties/BASE"}, "ANCHORED": map[string]any{"$ref": "#v"}, "TARGET": map[string]any{"$anchor": "v", "enum": []any{"prod"}}},
+	}
+
+	require.Equal(t, []string{"prod"}, fieldOf(t, section, "ALIAS").Enum)
+	require.Equal(t, []string{"prod"}, fieldOf(t, section, "ANCHORED").Enum)
+}
+
+func TestSchemaFieldsListConditionalFieldsAsOptional(t *testing.T) {
+	section := map[string]any{
+		"if":               map[string]any{"required": []any{"MODE"}},
+		"then":             map[string]any{"required": []any{"TOKEN"}, "properties": map[string]any{"TOKEN": map[string]any{"format": "password"}}},
+		"dependentSchemas": map[string]any{"MODE": map[string]any{"properties": map[string]any{"REGION": map[string]any{"type": "string"}}}},
+	}
+
+	token := fieldOf(t, section, "TOKEN")
+	require.True(t, token.Password)
+	require.False(t, token.Required, "a conditional requirement is not global")
+	require.Equal(t, "string", fieldOf(t, section, "REGION").Type)
+}
+
+func TestSchemaFieldsDisplayMetadata(t *testing.T) {
+	section := map[string]any{"properties": map[string]any{
+		"SECRET":   map[string]any{"allOf": []any{map[string]any{"type": "string", "writeOnly": true}}},
+		"NULLABLE": map[string]any{"type": []any{"string", "null"}},
+		"URL":      map[string]any{"type": "string", "allOf": []any{map[string]any{"format": "uri"}}},
+	}}
+
+	require.True(t, fieldOf(t, section, "SECRET").Password)
+	require.Equal(t, "string | null", fieldOf(t, section, "NULLABLE").Type)
+	require.Equal(t, "uri", fieldOf(t, section, "URL").Type)
+}
+
+func TestSchemaFieldsWalkSharedReferencesOnce(t *testing.T) {
+	defs := map[string]any{"d0": map[string]any{"enum": []any{"a"}}}
+	for index := 1; index <= 25; index++ {
+		previous := fmt.Sprintf("#/$defs/d%d", index-1)
+		defs[fmt.Sprintf("d%d", index)] = map[string]any{"allOf": []any{map[string]any{"$ref": previous}, map[string]any{"$ref": previous}}}
+	}
+
+	// 2^25 paths without caching, under the depth limit; this finishes because each
+	// definition is walked once.
+	field := fieldOf(t, map[string]any{"$defs": defs, "properties": map[string]any{"MODE": map[string]any{"$ref": "#/$defs/d25"}}}, "MODE")
+
+	require.Equal(t, []string{"a"}, field.Enum)
 }

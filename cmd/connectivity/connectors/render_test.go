@@ -227,3 +227,18 @@ func TestSchemaFieldsKeepAReferencedDescriptionBesideADirectDefault(t *testing.T
 	require.Len(t, fields, 1)
 	require.Equal(t, "Data residency region. Default: eu.", fields[0].description)
 }
+
+func TestSchemaGroupsKeepGroupsWithTheSameTitleApart(t *testing.T) {
+	schema := map[string]any{
+		"env": map[string]any{"properties": map[string]any{"A": map[string]any{}, "B": map[string]any{}}},
+		"presentation": map[string]any{"groups": []any{
+			map[string]any{"title": "Settings", "properties": []any{"env.A"}},
+			map[string]any{"title": "Settings", "advanced": true, "properties": []any{"env.B"}},
+		}},
+	}
+
+	groups := schemaGroups(schemaFields(schema))
+
+	require.Len(t, groups, 2)
+	require.NotEqual(t, groups[0].Title, groups[1].Title, "the advanced group keeps its marker")
+}

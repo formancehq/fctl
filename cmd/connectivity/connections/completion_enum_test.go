@@ -116,3 +116,9 @@ func TestResolveChannelVersionRejectsAPageWithoutData(t *testing.T) {
 
 	require.ErrorContains(t, err, "cursor.data must be an array")
 }
+
+func TestIsFileAssignmentOnlyAfterTheFirstEquals(t *testing.T) {
+	require.True(t, isFileAssignment("KEY=@./secret"))
+	require.False(t, isFileAssignment("MODE=x=@"), "an @ inside a literal value is not a file reference")
+	require.False(t, isFileAssignment("KEY"))
+}

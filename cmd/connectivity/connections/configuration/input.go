@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -60,22 +62,58 @@ type schemaContract struct {
 	open   map[ConfigKind]bool
 }
 
+// schemaFieldInfo is display and completion metadata. The API remains the
+// authority on validity; when the CLI cannot derive the exact allowed values
+// it offers none rather than a wrong list.
 type schemaFieldInfo struct {
 	required    bool
 	password    bool
 	description string
 	enum        []string
-	// enumUnknown records that composed schemas declared enums the CLI cannot
-	// combine exactly; completion then offers no values.
+	// enumUnknown: the allowed values cannot be derived exactly.
 	enumUnknown bool
-	kind        string
-	defaultSet  bool
-	defaultVal  any
+	// never: no value satisfies the schema (false, or an empty intersection).
+	never      bool
+	format     string
+	typ        string
+	defaultSet bool
+	defaultVal any
+}
+
+// schemaWalk carries the recursion guard and a per-reference cache, so a
+// schema that references the same definitions many times is walked once per
+// definition instead of once per path.
+type schemaWalk struct {
+	active   map[string]bool
+	fields   map[string]schemaFieldInfo
+	sections map[string]sectionContract
+}
+
+func newSchemaWalk() *schemaWalk {
+	return &schemaWalk{active: map[string]bool{}, fields: map[string]schemaFieldInfo{}, sections: map[string]sectionContract{}}
+}
+
+func refKey(root map[string]any, ref string) string {
+	return fmt.Sprintf("%p%s", root, ref)
+}
+
+// schemaRoot is the resource references resolve against: a node with $id
+// starts a new resource.
+func schemaRoot(node, root map[string]any) map[string]any {
+	if id, _ := node["$id"].(string); id != "" {
+		return node
+	}
+	return root
 }
 
 type sectionContract struct {
 	fields map[string]schemaFieldInfo
 	open   bool
+	// never: the section accepts nothing (false), so it adds no alternative.
+	never bool
+	// wildcard: additionalProperties or patternProperties schemas also apply
+	// to declared fields, so their allowed values are not derived.
+	wildcard bool
 }
 
 func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, error) {
@@ -112,7 +150,7 @@ func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, 
 		if !ok {
 			return schemaContract{}, fmt.Errorf("connector config schema %s must be an object", section.name)
 		}
-		collected, err := collectSectionSchema(sectionSchema, sectionSchema, 0, map[string]bool{})
+		collected, err := collectSectionSchema(sectionSchema, sectionSchema, 0, newSchemaWalk())
 		if err != nil {
 			return schemaContract{}, fmt.Errorf("connector config schema %s: %w", section.name, err)
 		}
@@ -128,7 +166,7 @@ func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, 
 				Password:    definition.password,
 				Description: definition.description,
 				Enum:        knownEnum(definition),
-				Type:        definition.kind,
+				Type:        displayType(definition),
 				Default:     definition.defaultVal,
 				HasDefault:  definition.defaultSet,
 			}
@@ -140,20 +178,20 @@ func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, 
 
 const maxSchemaCollectionDepth = 64
 
-func collectSectionSchema(raw any, root map[string]any, depth int, refs map[string]bool) (sectionContract, error) {
+func collectSectionSchema(raw any, root map[string]any, depth int, walk *schemaWalk) (sectionContract, error) {
 	if depth > maxSchemaCollectionDepth {
 		return sectionContract{}, fmt.Errorf("schema nesting exceeds %d", maxSchemaCollectionDepth)
 	}
-	if _, boolean := raw.(bool); boolean {
-		// true accepts anything and false is left to API validation; neither
-		// carries field metadata.
-		return sectionContract{fields: map[string]schemaFieldInfo{}, open: true}, nil
+	if accepts, boolean := raw.(bool); boolean {
+		// Neither carries field metadata; false contributes no alternative.
+		return sectionContract{fields: map[string]schemaFieldInfo{}, open: accepts, never: !accepts}, nil
 	}
 	node, ok := stringMap(raw)
 	if !ok {
 		return sectionContract{}, fmt.Errorf("schema must be an object")
 	}
-	result := sectionContract{fields: map[string]schemaFieldInfo{}, open: sectionOpen(node)}
+	root = schemaRoot(node, root)
+	result := sectionContract{fields: map[string]schemaFieldInfo{}, open: sectionOpen(node), wildcard: sectionWildcard(node)}
 	properties, ok := stringMap(node["properties"])
 	if !ok && node["properties"] != nil {
 		return sectionContract{}, fmt.Errorf("properties must be an object")
@@ -163,7 +201,7 @@ func collectSectionSchema(raw any, root map[string]any, depth int, refs map[stri
 		return sectionContract{}, err
 	}
 	for key, definition := range properties {
-		metadata, err := collectFieldMetadata(definition, root, depth+1, refs)
+		metadata, err := collectFieldMetadata(definition, root, depth+1, walk)
 		if err != nil {
 			return sectionContract{}, fmt.Errorf("field %q: %w", key, err)
 		}
@@ -176,31 +214,36 @@ func collectSectionSchema(raw any, root map[string]any, depth int, refs map[stri
 		}
 	}
 	for _, ref := range schemaLocalReferences(node) {
-		if refs[ref] {
+		key := refKey(root, ref)
+		if walk.active[key] {
 			continue // The API accepts recursive schemas; metadata is best effort.
 		}
-		if target, resolved := resolveLocalSchemaRef(root, ref); resolved {
-			refs[ref] = true
-			referenced, err := collectSectionSchema(target, root, depth+1, refs)
-			delete(refs, ref)
+		referenced, cached := walk.sections[key]
+		if !cached {
+			target, resolved := resolveLocalSchemaRef(root, ref)
+			if !resolved {
+				continue
+			}
+			walk.active[key] = true
+			referenced, err = collectSectionSchema(target, root, depth+1, walk)
+			delete(walk.active, key)
 			if err != nil {
 				return sectionContract{}, err
 			}
-			result = mergeAllSections(result, referenced)
+			walk.sections[key] = referenced
 		}
+		result = mergeAllSections(result, referenced)
 	}
-	for _, keyword := range []string{"allOf"} {
-		parts, err := schemaArray(node[keyword])
+	parts, err := schemaArray(node["allOf"])
+	if err != nil {
+		return sectionContract{}, fmt.Errorf("allOf: %w", err)
+	}
+	for _, part := range parts {
+		collected, err := collectSectionSchema(part, root, depth+1, walk)
 		if err != nil {
-			return sectionContract{}, fmt.Errorf("%s: %w", keyword, err)
+			return sectionContract{}, err
 		}
-		for _, part := range parts {
-			collected, err := collectSectionSchema(part, root, depth+1, refs)
-			if err != nil {
-				return sectionContract{}, err
-			}
-			result = mergeAllSections(result, collected)
-		}
+		result = mergeAllSections(result, collected)
 	}
 	for _, keyword := range []string{"anyOf", "oneOf"} {
 		parts, err := schemaArray(node[keyword])
@@ -212,13 +255,43 @@ func collectSectionSchema(raw any, root map[string]any, depth int, refs map[stri
 		}
 		alternatives := make([]sectionContract, 0, len(parts))
 		for _, part := range parts {
-			collected, err := collectSectionSchema(part, root, depth+1, refs)
+			collected, err := collectSectionSchema(part, root, depth+1, walk)
 			if err != nil {
 				return sectionContract{}, err
 			}
 			alternatives = append(alternatives, collected)
 		}
 		result = mergeAllSections(result, mergeAlternativeSections(alternatives))
+	}
+	// Conditional schemas apply only sometimes: their fields are listed as
+	// optional, and their allowed values are not derived.
+	conditional := []sectionContract{{fields: map[string]schemaFieldInfo{}, open: true}}
+	for _, keyword := range []string{"then", "else"} {
+		if branch, present := node[keyword]; present {
+			collected, err := collectSectionSchema(branch, root, depth+1, walk)
+			if err != nil {
+				return sectionContract{}, fmt.Errorf("%s: %w", keyword, err)
+			}
+			conditional = append(conditional, collected)
+		}
+	}
+	if dependent, ok := stringMap(node["dependentSchemas"]); ok {
+		for _, name := range sortedSchemaKeys(dependent) {
+			collected, err := collectSectionSchema(dependent[name], root, depth+1, walk)
+			if err != nil {
+				return sectionContract{}, fmt.Errorf("dependentSchemas %q: %w", name, err)
+			}
+			conditional = append(conditional, collected)
+		}
+	}
+	if len(conditional) > 1 {
+		result = mergeAllSections(result, mergeAlternativeSections(conditional))
+	}
+	if result.wildcard {
+		for key, field := range result.fields {
+			field.enum, field.enumUnknown = nil, true
+			result.fields[key] = field
+		}
 	}
 	return result, nil
 }
@@ -234,6 +307,25 @@ func schemaArray(raw any) ([]any, error) {
 	return values, nil
 }
 
+// sectionWildcard reports schemas that constrain properties by name pattern
+// or as "any other property", which also apply to declared fields.
+func sectionWildcard(node map[string]any) bool {
+	if _, schema := stringMap(node["additionalProperties"]); schema {
+		return true
+	}
+	patterns, ok := stringMap(node["patternProperties"])
+	return ok && len(patterns) > 0
+}
+
+func sortedSchemaKeys(values map[string]any) []string {
+	keys := make([]string, 0, len(values))
+	for key := range values {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 func sectionOpen(node map[string]any) bool {
 	additional, present := node["additionalProperties"]
 	open := !present || additional != false
@@ -244,7 +336,7 @@ func sectionOpen(node map[string]any) bool {
 }
 
 func mergeAllSections(left, right sectionContract) sectionContract {
-	merged := sectionContract{fields: make(map[string]schemaFieldInfo), open: left.open && right.open}
+	merged := sectionContract{fields: make(map[string]schemaFieldInfo), open: left.open && right.open, never: left.never || right.never, wildcard: left.wildcard || right.wildcard}
 	for key, value := range left.fields {
 		merged.fields[key] = value
 	}
@@ -254,16 +346,35 @@ func mergeAllSections(left, right sectionContract) sectionContract {
 			merged.fields[key] = value
 			continue
 		}
-		enum, unknown := intersectEnums(current, value)
-		merged.fields[key] = withDisplay(schemaFieldInfo{required: current.required || value.required, password: current.password || value.password, description: firstDescription(current.description, value.description), enum: enum, enumUnknown: unknown}, current, value)
+		combined := mergeFieldMetadata(current, value, intersectEnums)
+		combined.required = current.required || value.required
+		merged.fields[key] = combined
+	}
+	if merged.wildcard {
+		for key, field := range merged.fields {
+			field.enum, field.enumUnknown = nil, true
+			merged.fields[key] = field
+		}
 	}
 	return merged
 }
 
-func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
+func mergeAlternativeSections(all []sectionContract) sectionContract {
+	// A false alternative accepts nothing, so it neither adds fields nor makes
+	// other alternatives' fields optional.
+	alternatives := make([]sectionContract, 0, len(all))
+	for _, alternative := range all {
+		if !alternative.never {
+			alternatives = append(alternatives, alternative)
+		}
+	}
+	if len(alternatives) == 0 {
+		return sectionContract{fields: map[string]schemaFieldInfo{}, never: true}
+	}
 	merged := sectionContract{fields: make(map[string]schemaFieldInfo)}
 	for index, alternative := range alternatives {
 		merged.open = merged.open || alternative.open
+		merged.wildcard = merged.wildcard || alternative.wildcard
 		for key, value := range alternative.fields {
 			current, exists := merged.fields[key]
 			if !exists {
@@ -271,11 +382,9 @@ func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
 				merged.fields[key] = value
 				continue
 			}
-			current.required = current.required && value.required
-			current.password = current.password || value.password
-			current.description = firstDescription(current.description, value.description)
-			current.enum, current.enumUnknown = unionEnums(current, value)
-			merged.fields[key] = withDisplay(current, current, value)
+			combined := mergeFieldMetadata(current, value, unionEnums)
+			combined.required = current.required && value.required
+			merged.fields[key] = combined
 		}
 		if index > 0 {
 			for key, value := range merged.fields {
@@ -300,47 +409,54 @@ func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
 	return merged
 }
 
-func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[string]bool) (schemaFieldInfo, error) {
+func collectFieldMetadata(raw any, root map[string]any, depth int, walk *schemaWalk) (schemaFieldInfo, error) {
 	if depth > maxSchemaCollectionDepth {
 		return schemaFieldInfo{}, fmt.Errorf("schema nesting exceeds %d", maxSchemaCollectionDepth)
 	}
+	if accepts, boolean := raw.(bool); boolean {
+		return schemaFieldInfo{never: !accepts}, nil
+	}
 	node, ok := stringMap(raw)
 	if !ok {
-		return schemaFieldInfo{}, nil // Boolean schemas are delegated to the API.
+		return schemaFieldInfo{}, nil // Other non-object schemas are delegated to the API.
 	}
+	root = schemaRoot(node, root)
 	result := schemaFieldInfo{}
-	if format, _ := node["format"].(string); format == "password" {
-		result.password = true
-	}
+	result.format, _ = node["format"].(string)
+	result.password = result.format == "password" || node["writeOnly"] == true
+	result.typ = schemaType(node["type"])
 	result.description, _ = node["description"].(string)
-	result.enum = stringEnum(node["enum"])
-	if format, _ := node["format"].(string); format != "" {
-		result.kind = format
-	} else {
-		result.kind, _ = node["type"].(string)
-	}
 	result.defaultVal, result.defaultSet = node["default"]
+	result.enum, result.enumUnknown = nodeEnum(node)
 	for _, ref := range schemaLocalReferences(node) {
-		if refs[ref] {
+		key := refKey(root, ref)
+		if walk.active[key] {
 			continue // Recursive reference: leave the remaining validation to the API.
 		}
-		if target, found := resolveLocalSchemaRef(root, ref); found {
-			refs[ref] = true
-			resolved, err := collectFieldMetadata(target, root, depth+1, refs)
-			delete(refs, ref)
+		resolved, cached := walk.fields[key]
+		if !cached {
+			target, found := resolveLocalSchemaRef(root, ref)
+			if !found {
+				continue
+			}
+			walk.active[key] = true
+			var err error
+			resolved, err = collectFieldMetadata(target, root, depth+1, walk)
+			delete(walk.active, key)
 			if err != nil {
 				return schemaFieldInfo{}, err
 			}
-			// A reference applies its constraints in addition to the node's.
-			result = mergeFieldMetadata(result, resolved, intersectEnums)
+			walk.fields[key] = resolved
 		}
+		// A reference applies its constraints in addition to the node's.
+		result = mergeFieldMetadata(result, resolved, intersectEnums)
 	}
 	allOf, err := schemaArray(node["allOf"])
 	if err != nil {
 		return schemaFieldInfo{}, fmt.Errorf("allOf: %w", err)
 	}
 	for _, part := range allOf {
-		metadata, err := collectFieldMetadata(part, root, depth+1, refs)
+		metadata, err := collectFieldMetadata(part, root, depth+1, walk)
 		if err != nil {
 			return schemaFieldInfo{}, err
 		}
@@ -354,32 +470,124 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 		if len(parts) == 0 {
 			continue
 		}
-		// Alternatives combine as a union: an alternative without an enum,
-		// including an empty or boolean schema, accepts any value.
-		var alternatives schemaFieldInfo
-		for index, part := range parts {
-			metadata, err := collectFieldMetadata(part, root, depth+1, refs)
+		alternatives := make([]schemaFieldInfo, 0, len(parts))
+		for _, part := range parts {
+			metadata, err := collectFieldMetadata(part, root, depth+1, walk)
 			if err != nil {
 				return schemaFieldInfo{}, err
 			}
-			if index == 0 {
-				alternatives = metadata
-				continue
-			}
-			alternatives = mergeFieldMetadata(alternatives, metadata, unionEnums)
+			alternatives = append(alternatives, metadata)
 		}
-		result = mergeFieldMetadata(result, alternatives, intersectEnums)
+		combined := combineAlternatives(alternatives, keyword == "oneOf")
+		result = mergeFieldMetadata(result, combined, intersectEnums)
+	}
+	// not, if/then/else and string length or pattern constraints can exclude
+	// listed values in ways the CLI does not evaluate.
+	if len(result.enum) > 0 && hasAny(node, "not", "if", "then", "else", "pattern", "minLength", "maxLength") {
+		result.enum, result.enumUnknown = nil, true
 	}
 	return result, nil
 }
 
+func hasAny(node map[string]any, keywords ...string) bool {
+	for _, keyword := range keywords {
+		if _, present := node[keyword]; present {
+			return true
+		}
+	}
+	return false
+}
+
+// schemaType renders a type or a type array, for example "string | null".
+func schemaType(raw any) string {
+	switch value := raw.(type) {
+	case string:
+		return value
+	case []any:
+		names := make([]string, 0, len(value))
+		for _, item := range value {
+			if name, ok := item.(string); ok {
+				names = append(names, name)
+			}
+		}
+		return strings.Join(names, " | ")
+	}
+	return ""
+}
+
+// nodeEnum reads enum and const. A const narrows the enum to one value; a
+// non-string enum member or const cannot be completed and makes the allowed
+// values unknown rather than unconstrained.
+func nodeEnum(node map[string]any) ([]string, bool) {
+	var enum []string
+	if raw, present := node["enum"]; present {
+		values, exact := stringEnum(raw)
+		if !exact {
+			return nil, true
+		}
+		enum = values
+	}
+	if raw, present := node["const"]; present {
+		value, ok := raw.(string)
+		if !ok {
+			return nil, true
+		}
+		if enum == nil {
+			return []string{value}, false
+		}
+		if !slices.Contains(enum, value) {
+			return nil, true
+		}
+		return []string{value}, false
+	}
+	return enum, false
+}
+
+// combineAlternatives folds anyOf/oneOf alternatives. A false alternative
+// matches nothing and is skipped. For oneOf, a value listed by two
+// alternatives matches both and is therefore rejected.
+func combineAlternatives(alternatives []schemaFieldInfo, exclusive bool) schemaFieldInfo {
+	var combined schemaFieldInfo
+	started := false
+	counts := map[string]int{}
+	for _, alternative := range alternatives {
+		if alternative.never {
+			continue
+		}
+		for _, value := range alternative.enum {
+			counts[value]++
+		}
+		if !started {
+			combined, started = alternative, true
+			continue
+		}
+		combined = mergeFieldMetadata(combined, alternative, unionEnums)
+	}
+	if !started {
+		return schemaFieldInfo{never: true}
+	}
+	if exclusive && !combined.enumUnknown && len(combined.enum) > 0 {
+		unique := make([]string, 0, len(combined.enum))
+		for _, value := range combined.enum {
+			if counts[value] == 1 {
+				unique = append(unique, value)
+			}
+		}
+		combined.enum = unique
+		if len(unique) == 0 {
+			combined.enum, combined.never = nil, true
+		}
+	}
+	return combined
+}
+
 // mergeFieldMetadata combines two descriptions of the same field; combineEnums
 // states whether both apply (intersection) or either may (union).
-func mergeFieldMetadata(left, right schemaFieldInfo, combineEnums func(schemaFieldInfo, schemaFieldInfo) ([]string, bool)) schemaFieldInfo {
+func mergeFieldMetadata(left, right schemaFieldInfo, combineEnums func(schemaFieldInfo, schemaFieldInfo) ([]string, bool, bool)) schemaFieldInfo {
 	merged := left
 	merged.password = left.password || right.password
 	merged.description = firstDescription(left.description, right.description)
-	merged.enum, merged.enumUnknown = combineEnums(left, right)
+	merged.enum, merged.enumUnknown, merged.never = combineEnums(left, right)
 	return withDisplay(merged, left, right)
 }
 
@@ -410,12 +618,21 @@ func resolveLocalSchemaRef(root map[string]any, ref string) (any, bool) {
 	if strings.HasPrefix(fragment, "/") {
 		var current any = root
 		for _, token := range strings.Split(strings.TrimPrefix(fragment, "/"), "/") {
-			object, ok := stringMap(current)
-			if !ok {
-				return nil, false
-			}
-			current, ok = object[strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")]
-			if !ok {
+			token = strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
+			switch container := current.(type) {
+			case map[string]any:
+				next, ok := container[token]
+				if !ok {
+					return nil, false
+				}
+				current = next
+			case []any:
+				index, err := strconv.Atoi(token)
+				if err != nil || index < 0 || index >= len(container) || strconv.Itoa(index) != token {
+					return nil, false
+				}
+				current = container[index]
+			default:
 				return nil, false
 			}
 		}
@@ -423,6 +640,10 @@ func resolveLocalSchemaRef(root map[string]any, ref string) (any, bool) {
 	}
 	return findSchemaAnchor(root, fragment)
 }
+
+// annotationKeyword lists keywords whose values are instance data, never
+// subschemas.
+var annotationKeyword = map[string]bool{"default": true, "examples": true, "const": true, "enum": true}
 
 func findSchemaAnchor(root map[string]any, anchor string) (any, bool) {
 	remaining := 100000
@@ -434,17 +655,18 @@ func findSchemaAnchor(root map[string]any, anchor string) (any, bool) {
 		remaining--
 		switch node := node.(type) {
 		case map[string]any:
+			if id, _ := node["$id"].(string); id != "" && depth > 0 {
+				return nil, false // A nested resource has its own anchors.
+			}
 			for _, keyword := range []string{"$anchor", "$dynamicAnchor"} {
 				if declared, _ := node[keyword].(string); declared == anchor {
 					return node, true
 				}
 			}
-			keys := make([]string, 0, len(node))
-			for key := range node {
-				keys = append(keys, key)
-			}
-			sort.Strings(keys)
-			for _, key := range keys {
+			for _, key := range sortedSchemaKeys(node) {
+				if annotationKeyword[key] {
+					continue // Data, not subschemas: anchors there are not schema anchors.
+				}
 				if target, found := find(node[key], depth+1); found {
 					return target, true
 				}
@@ -461,31 +683,30 @@ func findSchemaAnchor(root map[string]any, anchor string) (any, bool) {
 	return find(root, 0)
 }
 
-// stringEnum returns the enum values when they are all strings; mixed or
-// non-string enums are left to API validation.
-func stringEnum(raw any) []string {
+// stringEnum returns the enum values and whether they are all strings; a
+// mixed or non-string enum cannot be completed.
+func stringEnum(raw any) ([]string, bool) {
 	values, ok := raw.([]any)
-	if !ok || len(values) == 0 {
-		return nil
+	if !ok {
+		return nil, false
 	}
 	result := make([]string, 0, len(values))
 	for _, value := range values {
 		text, ok := value.(string)
 		if !ok {
-			return nil
+			return nil, false
 		}
 		result = append(result, text)
 	}
-	return result
+	return result, true
 }
 
-// withDisplay keeps the first declared type and default across merged
-// metadata; they are informational and never constrain input.
+// withDisplay keeps the first declared format, type and default across merged
+// metadata; they are informational and never constrain input. Format and type
+// are kept apart so a format found anywhere wins over a plain type.
 func withDisplay(target, left, right schemaFieldInfo) schemaFieldInfo {
-	target.kind = left.kind
-	if target.kind == "" {
-		target.kind = right.kind
-	}
+	target.format = firstDescription(left.format, right.format)
+	target.typ = firstDescription(left.typ, right.typ)
 	target.defaultVal, target.defaultSet = left.defaultVal, left.defaultSet
 	if !target.defaultSet {
 		target.defaultVal, target.defaultSet = right.defaultVal, right.defaultSet
@@ -493,23 +714,34 @@ func withDisplay(target, left, right schemaFieldInfo) schemaFieldInfo {
 	return target
 }
 
+func displayType(info schemaFieldInfo) string {
+	if info.format != "" {
+		return info.format
+	}
+	return info.typ
+}
+
 func knownEnum(info schemaFieldInfo) []string {
-	if info.enumUnknown {
+	if info.enumUnknown || info.never {
 		return nil
 	}
 	return info.enum
 }
 
-// intersectEnums combines allOf branches: a value must satisfy both.
-func intersectEnums(left, right schemaFieldInfo) ([]string, bool) {
+// intersectEnums combines constraints that all apply. An empty intersection
+// means no value is valid.
+func intersectEnums(left, right schemaFieldInfo) ([]string, bool, bool) {
+	if left.never || right.never {
+		return nil, false, true
+	}
 	if left.enumUnknown || right.enumUnknown {
-		return nil, true
+		return nil, true, false
 	}
 	if len(left.enum) == 0 {
-		return right.enum, false
+		return right.enum, false, false
 	}
 	if len(right.enum) == 0 {
-		return left.enum, false
+		return left.enum, false, false
 	}
 	allowed := make(map[string]bool, len(right.enum))
 	for _, value := range right.enum {
@@ -521,14 +753,26 @@ func intersectEnums(left, right schemaFieldInfo) ([]string, bool) {
 			result = append(result, value)
 		}
 	}
-	return result, len(result) == 0
+	if len(result) == 0 {
+		return nil, false, true
+	}
+	return result, false, false
 }
 
-// unionEnums combines anyOf/oneOf alternatives: a value may satisfy either.
-// An alternative without an enum accepts any value, so no list is exact.
-func unionEnums(left, right schemaFieldInfo) ([]string, bool) {
+// unionEnums combines alternatives: a value may satisfy either. An
+// alternative without an enum accepts any value, so no list is exact; an
+// alternative that accepts nothing adds nothing.
+func unionEnums(left, right schemaFieldInfo) ([]string, bool, bool) {
+	switch {
+	case left.never && right.never:
+		return nil, false, true
+	case left.never:
+		return right.enum, right.enumUnknown, false
+	case right.never:
+		return left.enum, left.enumUnknown, false
+	}
 	if left.enumUnknown || right.enumUnknown || len(left.enum) == 0 || len(right.enum) == 0 {
-		return nil, left.enumUnknown || right.enumUnknown || len(left.enum) > 0 || len(right.enum) > 0
+		return nil, left.enumUnknown || right.enumUnknown || len(left.enum) > 0 || len(right.enum) > 0, false
 	}
 	seen := make(map[string]bool, len(left.enum)+len(right.enum))
 	result := make([]string, 0, len(left.enum)+len(right.enum))
@@ -538,7 +782,7 @@ func unionEnums(left, right schemaFieldInfo) ([]string, bool) {
 			result = append(result, value)
 		}
 	}
-	return result, false
+	return result, false, false
 }
 
 func firstDescription(left, right string) string {

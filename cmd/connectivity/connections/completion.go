@@ -109,12 +109,19 @@ func completeVersionsWithClient(client *sdk.FormanceV1, completionCommand *cobra
 	return connectivityinternal.CompleteConnectorVersions(completionCommand.Context(), client, connector, toComplete)
 }
 
+// isFileAssignment reports KEY=@path: only an @ right after the first = reads
+// a file, as input parsing does; an @ later in a literal value does not.
+func isFileAssignment(toComplete string) bool {
+	_, value, found := strings.Cut(toComplete, "=")
+	return found && strings.HasPrefix(value, "@")
+}
+
 func CompleteSetValues(
 	resolveVersion ConnectorVersionResolver,
 	paths PathCompleter,
 ) cobra.CompletionFunc {
 	return func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		if strings.Contains(toComplete, "=@") || resolveVersion == nil {
+		if isFileAssignment(toComplete) || resolveVersion == nil {
 			return completeSetValuesWithClient(nil, cmd, args, toComplete, resolveVersion, paths)
 		}
 
@@ -129,7 +136,8 @@ func CompleteSetValues(
 }
 
 func completeSetValuesWithClient(client *sdk.FormanceV1, completionCommand *cobra.Command, args []string, toComplete string, resolveVersion ConnectorVersionResolver, paths PathCompleter) ([]string, cobra.ShellCompDirective) {
-	if marker := strings.Index(toComplete, "=@"); marker >= 0 {
+	if isFileAssignment(toComplete) {
+		marker := strings.Index(toComplete, "=@")
 		if paths == nil {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}

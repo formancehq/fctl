@@ -237,6 +237,7 @@ type schemaField struct {
 	// description once every source of metadata has been merged.
 	summary, defaultText string
 	hasDefault           bool
+	groupIndex           int
 }
 
 func (field schemaField) withDescription() schemaField {
@@ -254,6 +255,9 @@ type placement struct {
 	title    string
 	advanced bool
 	order    int
+	// group identifies the presentation group, so two groups that share a
+	// title stay apart. Ungrouped fields use -1.
+	group int
 }
 
 func schemaFields(schema map[string]any) []schemaField {
@@ -261,14 +265,14 @@ func schemaFields(schema map[string]any) []schemaField {
 	presentation, _ := objectValue(schema["presentation"])
 	groups, _ := presentation["groups"].([]any)
 	order := 0
-	for _, raw := range groups {
+	for groupIndex, raw := range groups {
 		group, _ := objectValue(raw)
 		title, _ := group["title"].(string)
 		advanced, _ := group["advanced"].(bool)
 		properties, _ := group["properties"].([]any)
 		for _, reference := range properties {
 			if name, ok := reference.(string); ok {
-				placements[name] = placement{title: title, advanced: advanced, order: order}
+				placements[name] = placement{title: title, advanced: advanced, order: order, group: groupIndex}
 				order++
 			}
 		}
@@ -302,9 +306,9 @@ func schemaFields(schema map[string]any) []schemaField {
 			}
 			place, grouped := placements[section.reference+key]
 			if !grouped {
-				place = placement{order: math.MaxInt}
+				place = placement{order: math.MaxInt, group: -1}
 			}
-			field.group, field.advanced, field.order = place.title, place.advanced, place.order
+			field.group, field.advanced, field.order, field.groupIndex = place.title, place.advanced, place.order, place.group
 			fields = append(fields, field)
 		}
 	}
@@ -355,9 +359,9 @@ func appendComposedFields(schema map[string]any, fields []schemaField, placement
 		}
 		place, grouped := placements[reference]
 		if !grouped {
-			place = placement{order: math.MaxInt}
+			place = placement{order: math.MaxInt, group: -1}
 		}
-		composed.group, composed.advanced, composed.order = place.title, place.advanced, place.order
+		composed.group, composed.advanced, composed.order, composed.groupIndex = place.title, place.advanced, place.order, place.group
 		fields = append(fields, composed)
 	}
 	return fields
@@ -368,9 +372,11 @@ func appendComposedFields(schema map[string]any, fields []schemaField, placement
 // default. Values written on the property itself win.
 func withResolvedMetadata(field schemaField, resolved configuration.SchemaField) schemaField {
 	field.required = field.required || resolved.Required
+	// The collector sees the property and everything it references, so its
+	// format-else-type wins over the bare property's type.
 	if resolved.Password {
 		field.kind = "secret"
-	} else if field.kind == "" {
+	} else if resolved.Type != "" && field.kind != "secret" {
 		field.kind = resolved.Type
 	}
 	if field.summary == "" {
@@ -385,7 +391,7 @@ func withResolvedMetadata(field schemaField, resolved configuration.SchemaField)
 func schemaGroups(fields []schemaField) []fctl.TableGroup {
 	groups := make([]fctl.TableGroup, 0)
 	for i, field := range fields {
-		if i == 0 || field.group != fields[i-1].group {
+		if i == 0 || field.groupIndex != fields[i-1].groupIndex {
 			title := ""
 			switch {
 			case field.group != "" && field.advanced:
