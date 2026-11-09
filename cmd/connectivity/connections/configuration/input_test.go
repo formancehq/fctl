@@ -3,6 +3,7 @@ package configuration
 import (
 	"testing"
 
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/require"
 
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
@@ -60,4 +61,29 @@ func TestSchemaFieldsCombineEnumsAcrossSectionCompositions(t *testing.T) {
 func TestApplyDoubleQuoteEscapesKeepsUnknownEscapesLiteral(t *testing.T) {
 	require.Equal(t, `abc\qdef`, applyDoubleQuoteEscapes(`abc\qdef`))
 	require.Equal(t, "a\nb\t\"\\", applyDoubleQuoteEscapes(`a\nb\t\"\\`))
+}
+
+func TestSchemaFieldsAcceptBooleanSubschemas(t *testing.T) {
+	fields, err := SchemaFields(&connectivity.ConnectorVersion{ConfigSchema: map[string]any{
+		"env":   map[string]any{"allOf": []any{true, map[string]any{"properties": map[string]any{"TOKEN": map[string]any{"type": "string"}}}}},
+		"files": false,
+	}})
+
+	require.NoError(t, err)
+	require.Contains(t, fields, "TOKEN")
+}
+
+func TestBuildInstallConfigRoutesInputForSectionsTheSchemaDoesNotDeclare(t *testing.T) {
+	envOnly := &connectivity.ConnectorVersion{ConfigSchema: map[string]any{
+		"env": map[string]any{"properties": map[string]any{"TOKEN": map[string]any{"type": "string"}}},
+	}}
+	noSchema := &connectivity.ConnectorVersion{}
+
+	envConfig, err := BuildInstallConfig(&cobra.Command{}, envOnly, InputOptions{SetValues: []string{"/etc/plugin/config.yaml=content"}}, nil)
+	require.NoError(t, err)
+	require.Contains(t, envConfig.Files, "/etc/plugin/config.yaml")
+
+	bareConfig, err := BuildInstallConfig(&cobra.Command{}, noSchema, InputOptions{SetValues: []string{"TOKEN=value"}}, nil)
+	require.NoError(t, err)
+	require.Contains(t, bareConfig.Env, "TOKEN")
 }

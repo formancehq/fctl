@@ -12,6 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
@@ -194,12 +195,13 @@ type schemaField struct {
 // schemaFields lists the env and file properties of a configSchema in the
 // order the producer chose in presentation.groups. Properties outside every
 // group follow, sorted by source and key.
+type placement struct {
+	title    string
+	advanced bool
+	order    int
+}
+
 func schemaFields(schema map[string]any) []schemaField {
-	type placement struct {
-		title    string
-		advanced bool
-		order    int
-	}
 	placements := map[string]placement{}
 	presentation, _ := objectValue(schema["presentation"])
 	groups, _ := presentation["groups"].([]any)
@@ -250,6 +252,7 @@ func schemaFields(schema map[string]any) []schemaField {
 			fields = append(fields, schemaField{key: key, source: section.source, kind: kind, description: description, group: place.title, required: required[key], advanced: place.advanced, order: place.order})
 		}
 	}
+	fields = appendComposedFields(schema, fields, placements)
 	sort.SliceStable(fields, func(i, j int) bool {
 		if fields[i].order != fields[j].order {
 			return fields[i].order < fields[j].order
@@ -259,6 +262,40 @@ func schemaFields(schema map[string]any) []schemaField {
 		}
 		return fields[i].key < fields[j].key
 	})
+	return fields
+}
+
+// appendComposedFields adds the fields only reachable through allOf, anyOf,
+// oneOf or local $ref, found by the same collector install and configure use,
+// and marks fields that composition makes required.
+func appendComposedFields(schema map[string]any, fields []schemaField, placements map[string]placement) []schemaField {
+	composed, err := configuration.SchemaFields(&connectivity.ConnectorVersion{ConfigSchema: schema})
+	if err != nil {
+		return fields
+	}
+	known := make(map[string]int, len(fields))
+	for index, field := range fields {
+		known[field.key] = index
+	}
+	for key, field := range composed {
+		if index, found := known[key]; found {
+			fields[index].required = fields[index].required || field.Required
+			continue
+		}
+		source, reference := "environment", "env."+key
+		if field.Kind == configuration.ConfigFile {
+			source, reference = "file", "files"+key
+		}
+		kind := ""
+		if field.Password {
+			kind = "secret"
+		}
+		place, grouped := placements[reference]
+		if !grouped {
+			place = placement{order: math.MaxInt}
+		}
+		fields = append(fields, schemaField{key: key, source: source, kind: kind, description: fctl.FirstSentence(field.Description), group: place.title, required: field.Required, advanced: place.advanced, order: place.order})
+	}
 	return fields
 }
 

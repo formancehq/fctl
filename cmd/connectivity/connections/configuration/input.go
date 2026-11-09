@@ -76,7 +76,8 @@ func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, 
 		return schemaContract{}, fmt.Errorf("connector version is required")
 	}
 	if len(version.ConfigSchema) == 0 {
-		return schemaContract{fields: map[string]SchemaField{}, open: map[ConfigKind]bool{}}, nil
+		// No declared constraint: route literal input and let the API validate.
+		return schemaContract{fields: map[string]SchemaField{}, open: map[ConfigKind]bool{ConfigEnv: true, ConfigFile: true}}, nil
 	}
 
 	if _, flat := version.ConfigSchema["properties"]; flat {
@@ -94,8 +95,10 @@ func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, 
 
 	for _, section := range sections {
 		rawSection := section.raw
-		exists := rawSection != nil
-		if !exists {
+		if _, boolean := rawSection.(bool); rawSection == nil || boolean {
+			// An absent or boolean section declares no field metadata; the
+			// API remains the authority on what it accepts.
+			contract.open[section.kind] = true
 			continue
 		}
 		sectionSchema, ok := stringMap(rawSection)
@@ -130,6 +133,11 @@ const maxSchemaCollectionDepth = 64
 func collectSectionSchema(raw any, root map[string]any, depth int, refs map[string]bool) (sectionContract, error) {
 	if depth > maxSchemaCollectionDepth {
 		return sectionContract{}, fmt.Errorf("schema nesting exceeds %d", maxSchemaCollectionDepth)
+	}
+	if _, boolean := raw.(bool); boolean {
+		// true accepts anything and false is left to API validation; neither
+		// carries field metadata.
+		return sectionContract{fields: map[string]schemaFieldInfo{}, open: true}, nil
 	}
 	node, ok := stringMap(raw)
 	if !ok {

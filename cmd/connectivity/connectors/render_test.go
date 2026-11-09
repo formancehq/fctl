@@ -124,3 +124,27 @@ func TestListConnectorsCutsOnlyTheTaglineToFit(t *testing.T) {
 	require.Contains(t, output, "ee-adyenplatforms | v0.5.0-beta.7  | Platform and…")
 	require.NotContains(t, output, "Next page", "no cursor line without more results")
 }
+
+func TestSchemaFieldsIncludesFieldsDeclaredThroughComposition(t *testing.T) {
+	schema := map[string]any{
+		"env": map[string]any{
+			"allOf": []any{
+				map[string]any{"required": []any{"API_KEY"}, "properties": map[string]any{"API_KEY": map[string]any{"type": "string", "format": "password"}}},
+				map[string]any{"$ref": "#/$defs/region"},
+			},
+			// References resolve within the section, as install and configure do.
+			"$defs": map[string]any{"region": map[string]any{"properties": map[string]any{"REGION": map[string]any{"type": "string"}}}},
+		},
+	}
+
+	fields := schemaFields(schema)
+
+	keys := map[string]schemaField{}
+	for _, field := range fields {
+		keys[field.key] = field
+	}
+	require.Len(t, fields, 2)
+	require.True(t, keys["API_KEY"].required)
+	require.Equal(t, "secret", keys["API_KEY"].kind)
+	require.Contains(t, keys, "REGION")
+}
