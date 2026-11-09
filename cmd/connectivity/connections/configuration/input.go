@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
-	"slices"
 	"sort"
 	"strings"
 
@@ -332,33 +331,56 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 			if err != nil {
 				return schemaFieldInfo{}, err
 			}
-			result.password = result.password || resolved.password
-			result.description = firstDescription(result.description, resolved.description)
-			result.enum, result.enumUnknown = sameEnums(result, resolved)
-			result = withDisplay(result, result, resolved)
+			// A reference applies its constraints in addition to the node's.
+			result = mergeFieldMetadata(result, resolved, intersectEnums)
 		}
 	}
-	for _, part := range appendSchemaCompositions(node) {
+	allOf, err := schemaArray(node["allOf"])
+	if err != nil {
+		return schemaFieldInfo{}, fmt.Errorf("allOf: %w", err)
+	}
+	for _, part := range allOf {
 		metadata, err := collectFieldMetadata(part, root, depth+1, refs)
 		if err != nil {
 			return schemaFieldInfo{}, err
 		}
-		result.password = result.password || metadata.password
-		result.description = firstDescription(result.description, metadata.description)
-		result.enum, result.enumUnknown = sameEnums(result, metadata)
-		result = withDisplay(result, result, metadata)
+		result = mergeFieldMetadata(result, metadata, intersectEnums)
+	}
+	for _, keyword := range []string{"anyOf", "oneOf"} {
+		parts, err := schemaArray(node[keyword])
+		if err != nil {
+			return schemaFieldInfo{}, fmt.Errorf("%s: %w", keyword, err)
+		}
+		if len(parts) == 0 {
+			continue
+		}
+		// Alternatives combine as a union: an alternative without an enum,
+		// including an empty or boolean schema, accepts any value.
+		var alternatives schemaFieldInfo
+		for index, part := range parts {
+			metadata, err := collectFieldMetadata(part, root, depth+1, refs)
+			if err != nil {
+				return schemaFieldInfo{}, err
+			}
+			if index == 0 {
+				alternatives = metadata
+				continue
+			}
+			alternatives = mergeFieldMetadata(alternatives, metadata, unionEnums)
+		}
+		result = mergeFieldMetadata(result, alternatives, intersectEnums)
 	}
 	return result, nil
 }
 
-func appendSchemaCompositions(node map[string]any) []any {
-	parts := make([]any, 0)
-	for _, keyword := range []string{"allOf", "anyOf", "oneOf"} {
-		if values, ok := node[keyword].([]any); ok {
-			parts = append(parts, values...)
-		}
-	}
-	return parts
+// mergeFieldMetadata combines two descriptions of the same field; combineEnums
+// states whether both apply (intersection) or either may (union).
+func mergeFieldMetadata(left, right schemaFieldInfo, combineEnums func(schemaFieldInfo, schemaFieldInfo) ([]string, bool)) schemaFieldInfo {
+	merged := left
+	merged.password = left.password || right.password
+	merged.description = firstDescription(left.description, right.description)
+	merged.enum, merged.enumUnknown = combineEnums(left, right)
+	return withDisplay(merged, left, right)
 }
 
 func schemaLocalReferences(node map[string]any) []string {
@@ -517,23 +539,6 @@ func unionEnums(left, right schemaFieldInfo) ([]string, bool) {
 		}
 	}
 	return result, false
-}
-
-// sameEnums combines metadata whose composition operator is not tracked
-// (references and nested compositions): only identical or one-sided enums
-// stay exact.
-func sameEnums(left, right schemaFieldInfo) ([]string, bool) {
-	switch {
-	case left.enumUnknown || right.enumUnknown:
-		return nil, true
-	case len(right.enum) == 0:
-		return left.enum, false
-	case len(left.enum) == 0:
-		return right.enum, false
-	case slices.Equal(left.enum, right.enum):
-		return left.enum, false
-	}
-	return nil, true
 }
 
 func firstDescription(left, right string) string {

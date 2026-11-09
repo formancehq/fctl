@@ -36,11 +36,14 @@ func TestSchemaFieldsCombineEnumsPerComposition(t *testing.T) {
 	sandbox := map[string]any{"enum": []any{"sandbox"}}
 	production := map[string]any{"enum": []any{"production"}}
 	both := map[string]any{"enum": []any{"sandbox", "production"}}
+	unconstrained := map[string]any{}
 
-	require.Equal(t, []string{"sandbox", "production"}, enumOf(t, map[string]any{"enum": []any{"sandbox", "production"}}))
-	require.Nil(t, enumOf(t, map[string]any{"anyOf": []any{sandbox, production}}), "alternatives are not merged by keeping the first enum")
-	require.Nil(t, enumOf(t, map[string]any{"allOf": []any{both, production}}), "an untracked composition with different enums offers nothing")
-	require.Equal(t, []string{"sandbox"}, enumOf(t, map[string]any{"allOf": []any{sandbox, sandbox}}))
+	require.Equal(t, []string{"sandbox", "production"}, enumOf(t, both))
+	require.Equal(t, []string{"sandbox", "production"}, enumOf(t, map[string]any{"anyOf": []any{sandbox, production}}), "alternatives combine as a union")
+	require.Equal(t, []string{"production"}, enumOf(t, map[string]any{"allOf": []any{both, production}}), "allOf intersects")
+	require.Nil(t, enumOf(t, map[string]any{"anyOf": []any{sandbox, unconstrained}}), "an unconstrained alternative accepts any value")
+	require.Nil(t, enumOf(t, map[string]any{"oneOf": []any{unconstrained, sandbox}}), "in either order")
+	require.Nil(t, enumOf(t, map[string]any{"anyOf": []any{sandbox, true}}), "a boolean alternative is unconstrained")
 	require.Nil(t, enumOf(t, map[string]any{"enum": []any{"a", 1}}), "non-string enums are left to the API")
 }
 

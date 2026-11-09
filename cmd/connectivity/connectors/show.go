@@ -233,6 +233,18 @@ type schemaField struct {
 	key, source, kind, description, group string
 	required, advanced                    bool
 	order                                 int
+	// summary and defaultText are resolved independently, then joined into
+	// description once every source of metadata has been merged.
+	summary, defaultText string
+	hasDefault           bool
+}
+
+func (field schemaField) withDescription() schemaField {
+	field.description = field.summary
+	if field.hasDefault {
+		field.description = strings.TrimSpace(field.description + " Default: " + field.defaultText + ".")
+	}
+	return field
 }
 
 // schemaFields lists the env and file properties of a configSchema in the
@@ -284,18 +296,22 @@ func schemaFields(schema map[string]any) []schemaField {
 				kind = "secret"
 			}
 			description, _ := definition["description"].(string)
-			description = fctl.FirstSentence(description)
+			field := schemaField{key: key, source: section.source, kind: kind, summary: fctl.FirstSentence(description), required: required[key]}
 			if value, ok := definition["default"]; ok {
-				description = strings.TrimSpace(description + " Default: " + defaultValue(value) + ".")
+				field.defaultText, field.hasDefault = defaultValue(value), true
 			}
 			place, grouped := placements[section.reference+key]
 			if !grouped {
 				place = placement{order: math.MaxInt}
 			}
-			fields = append(fields, schemaField{key: key, source: section.source, kind: kind, description: description, group: place.title, required: required[key], advanced: place.advanced, order: place.order})
+			field.group, field.advanced, field.order = place.title, place.advanced, place.order
+			fields = append(fields, field)
 		}
 	}
 	fields = appendComposedFields(schema, fields, placements)
+	for index := range fields {
+		fields[index] = fields[index].withDescription()
+	}
 	sort.SliceStable(fields, func(i, j int) bool {
 		if fields[i].order != fields[j].order {
 			return fields[i].order < fields[j].order
@@ -333,15 +349,16 @@ func appendComposedFields(schema map[string]any, fields []schemaField, placement
 		if field.Password {
 			kind = "secret"
 		}
-		description := fctl.FirstSentence(field.Description)
+		composed := schemaField{key: key, source: source, kind: kind, summary: fctl.FirstSentence(field.Description), required: field.Required}
 		if field.HasDefault {
-			description = strings.TrimSpace(description + " Default: " + defaultValue(field.Default) + ".")
+			composed.defaultText, composed.hasDefault = defaultValue(field.Default), true
 		}
 		place, grouped := placements[reference]
 		if !grouped {
 			place = placement{order: math.MaxInt}
 		}
-		fields = append(fields, schemaField{key: key, source: source, kind: kind, description: description, group: place.title, required: field.Required, advanced: place.advanced, order: place.order})
+		composed.group, composed.advanced, composed.order = place.title, place.advanced, place.order
+		fields = append(fields, composed)
 	}
 	return fields
 }
@@ -356,11 +373,11 @@ func withResolvedMetadata(field schemaField, resolved configuration.SchemaField)
 	} else if field.kind == "" {
 		field.kind = resolved.Type
 	}
-	if field.description == "" {
-		field.description = fctl.FirstSentence(resolved.Description)
+	if field.summary == "" {
+		field.summary = fctl.FirstSentence(resolved.Description)
 	}
-	if resolved.HasDefault && !strings.Contains(field.description, "Default: ") {
-		field.description = strings.TrimSpace(field.description + " Default: " + defaultValue(resolved.Default) + ".")
+	if !field.hasDefault && resolved.HasDefault {
+		field.defaultText, field.hasDefault = defaultValue(resolved.Default), true
 	}
 	return field
 }

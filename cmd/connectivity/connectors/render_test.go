@@ -213,3 +213,17 @@ func TestShowConnectorRejectsVersionWithChannelBeforeAnyRequest(t *testing.T) {
 	require.EqualError(t, err, "--version and --channel cannot be combined")
 	require.Zero(t, calls)
 }
+
+func TestSchemaFieldsKeepAReferencedDescriptionBesideADirectDefault(t *testing.T) {
+	schema := map[string]any{
+		"env": map[string]any{
+			"properties": map[string]any{"REGION": map[string]any{"$ref": "#/$defs/region", "default": "eu"}},
+			"$defs":      map[string]any{"region": map[string]any{"type": "string", "description": "Data residency region. Changing it moves history."}},
+		},
+	}
+
+	fields := schemaFields(schema)
+
+	require.Len(t, fields, 1)
+	require.Equal(t, "Data residency region. Default: eu.", fields[0].description)
+}
