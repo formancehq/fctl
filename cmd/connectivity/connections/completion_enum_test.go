@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
+	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
@@ -102,8 +103,8 @@ func TestSchemaFieldDescriptionFallsBackToTheFieldKind(t *testing.T) {
 func TestVersionDescriptionMarksLatestAndShortensTheDigest(t *testing.T) {
 	summary := connectivity.ConnectorVersionSummary{Version: "v1.0.0", Digest: stringPtr("sha256:8f67ebd216c89fb955e70a80c1f4bb462d6fd89ed3b1b9a0f432a51f3b589930")}
 
-	require.Equal(t, "latest · sha256:8f67ebd216c8…", versionDescription(summary, true))
-	require.Equal(t, "", versionDescription(connectivity.ConnectorVersionSummary{Version: "v1.0.0"}, false))
+	require.Equal(t, "latest · sha256:8f67ebd216c8…", connectivityinternal.VersionDescription(summary, true))
+	require.Equal(t, "", connectivityinternal.VersionDescription(connectivity.ConnectorVersionSummary{Version: "v1.0.0"}, false))
 }
 
 func TestResolveChannelVersionRejectsAPageWithoutData(t *testing.T) {

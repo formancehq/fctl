@@ -150,15 +150,9 @@ func isStrictSemver(version string) bool {
 }
 
 func normalizeSemver(version string) string {
-	if strings.HasPrefix(version, "v") {
-		return version
-	}
-	return "v" + version
+	return connectivityinternal.NormalizeSemver(version)
 }
 
 func compareSemver(left, right string) int {
-	if result := xmodsemver.Compare(normalizeSemver(left), normalizeSemver(right)); result != 0 {
-		return result
-	}
-	return strings.Compare(left, right)
+	return connectivityinternal.CompareSemver(left, right)
 }

@@ -168,3 +168,48 @@ func TestSchemaFieldsUseResolvedMetadataForDirectlyDeclaredProperties(t *testing
 	require.Contains(t, fields[0].description, "Platform key.")
 	require.Contains(t, fields[0].description, "Default: unset")
 }
+
+func TestShowConnectorRequestsTheSelectedVersionOrChannel(t *testing.T) {
+	tests := map[string]struct {
+		flags []string
+		want  string
+	}{
+		"latest by default": {want: "2.0.0"},
+		"exact version":     {flags: []string{"--version", "1.0.0"}, want: "1.0.0"},
+		"channel":           {flags: []string{"--channel", "beta"}, want: "beta"},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			var requested []string
+			connector := connectorFixture("ee-stripeconnect")
+			client := connectorTransportMock{
+				get: func(context.Context, string) (*connectivity.Connector, error) { return &connector, nil },
+				listVersions: func(context.Context, string, connectivityinternal.ListOptions) (*connectorVersionPage, error) {
+					return versionsFixture(), nil
+				},
+				getVersion: func(_ context.Context, _, version string) (*connectivity.ConnectorVersion, error) {
+					requested = append(requested, version)
+					return &connectivity.ConnectorVersion{Version: version}, nil
+				},
+			}
+
+			_, err := executeCommand(testNewShowCommand(sdkFor(client)), append([]string{"ee-stripeconnect"}, test.flags...)...)
+
+			require.NoError(t, err)
+			require.Equal(t, []string{test.want}, requested)
+		})
+	}
+}
+
+func TestShowConnectorRejectsVersionWithChannelBeforeAnyRequest(t *testing.T) {
+	calls := 0
+	client := connectorTransportMock{get: func(context.Context, string) (*connectivity.Connector, error) {
+		calls++
+		return nil, nil
+	}}
+
+	_, err := executeCommand(testNewShowCommand(sdkFor(client)), "ee-stripeconnect", "--version", "1.0.0", "--channel", "beta")
+
+	require.EqualError(t, err, "--version and --channel cannot be combined")
+	require.Zero(t, calls)
+}

@@ -21,6 +21,9 @@ import (
 )
 
 const (
+	showVersionFlag = "version"
+	showChannelFlag = "channel"
+
 	showVersionsPageSize = int32(100)
 	showVersionsMaxPages = 20
 )
@@ -51,9 +54,15 @@ func NewShowCommand() *cobra.Command {
 		fctl.WithShortDescription("Show a connector and its configuration fields"),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectorNames()),
+		fctl.WithStringFlag(showVersionFlag, "", "Show this exact version's schema, for example v0.5.0-beta.14. Defaults to the latest version"),
+		fctl.WithStringFlag(showChannelFlag, "", "Show the schema of the newest version on this channel: stable, rc, beta or alpha"),
 		fctl.WithController[*ShowStore](controller),
+		fctl.WithFlagCompletion(showVersionFlag, completeShowVersions),
+		fctl.WithFlagCompletion(showChannelFlag, connectivityinternal.CompleteChannels()),
 		fctl.WithExamples(
 			"fctl connectivity connectors show ee-stripeconnect",
+			"fctl connectivity connectors show ee-stripeconnect --version v0.1.0-alpha.1",
+			"fctl connectivity connectors show ee-stripeconnect --channel beta",
 			"fctl connectivity connectors show ee-stripeconnect -o json \\",
 			"    | jq '.data.version.configSchema'",
 		),
@@ -78,6 +87,10 @@ func (c *ShowController) Run(cmd *cobra.Command, args []string) (fctl.Renderable
 
 func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance.FormanceV1) (fctl.Renderable, error) {
 	name := args[0]
+	selected, err := showVersionSelector(cmd)
+	if err != nil {
+		return nil, err
+	}
 	response, err := client.GetConnector(cmd.Context(), operations.GetConnectorRequest{Name: url.PathEscape(name)}, nil)
 	if err != nil {
 		return nil, err
@@ -112,18 +125,48 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 	}
 	c.store.Versions = versions
 
-	// Fetch the exact release projected by the catalogue.
-	if version := fctl.StringPointerToString(c.store.Connector.LatestVersion); version != "" {
+	// Fetch the requested version or channel, else the exact release projected
+	// by the catalogue.
+	version := selected
+	if version == "" {
+		version = fctl.StringPointerToString(c.store.Connector.LatestVersion)
+	}
+	if version != "" {
 		response, err := client.GetConnectorVersion(cmd.Context(), operations.GetConnectorVersionRequest{Name: url.PathEscape(name), Version: url.PathEscape(version)}, nil)
 		if err != nil {
 			return nil, err
 		}
 		if response == nil || response.ConnectorVersion == nil {
-			return nil, fmt.Errorf("show connectivity connector %q: empty latest version response", name)
+			return nil, fmt.Errorf("show connectivity connector %q: empty version %q response", name, version)
 		}
 		c.store.Version = response.ConnectorVersion
 	}
 	return c, nil
+}
+
+// showVersionSelector returns the --version or --channel value; at most one
+// may be set. The API resolves a channel name to its newest version.
+func showVersionSelector(cmd *cobra.Command) (string, error) {
+	version, channel := fctl.GetString(cmd, showVersionFlag), fctl.GetString(cmd, showChannelFlag)
+	if version != "" && channel != "" {
+		return "", fmt.Errorf("--version and --channel cannot be combined")
+	}
+	if version != "" {
+		return version, nil
+	}
+	return channel, nil
+}
+
+func completeShowVersions(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	if len(args) == 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	client, completionCommand, cancel, ok := connectivityinternal.CompletionClient(cmd)
+	if !ok {
+		return nil, cobra.ShellCompDirectiveNoFileComp
+	}
+	defer cancel()
+	return connectivityinternal.CompleteConnectorVersions(completionCommand.Context(), client, args[0], toComplete)
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {

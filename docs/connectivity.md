@@ -19,7 +19,7 @@ fctl connectivity
 ├── server-infos
 ├── connectors
 │   ├── list
-│   └── show <connector>
+│   └── show <connector> [--version <version> | --channel <channel>]
 └── connections
     ├── list
     ├── show <connection>
@@ -248,7 +248,11 @@ API, including supported `$match`, `$in`, `$exists` and range operators.
 The flat Connector response keeps its name, branding, tagline, tags and `latestVersion`
 projected by the API for catalogue display. `connectors show` fetches the schema
 using that exact `latestVersion`; it does not resolve a `latest` alias or infer
-a version from the list. If the field is absent or empty, it skips the schema
+a version from the list. `--version <version>` shows the schema of an exact
+version instead, for example the one a connection runs, and `--channel
+<channel>` shows the newest version on that channel as the API resolves it;
+the two flags cannot be combined, and `--version` completion lists published
+versions newest first. If the field is absent or empty, it skips the schema
 request and still displays the number of available versions. Plain output shows
 this count and the latest version's release date and shortened digest instead
 of the full version history; JSON output retains all version summaries. These describe the version

@@ -2,12 +2,10 @@ package connections
 
 import (
 	"context"
-	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -105,55 +103,10 @@ func completeVersionsWithClient(client *sdk.FormanceV1, completionCommand *cobra
 	}
 
 	connector, err := resolveConnector(completionCommand.Context(), client, completionCommand, args)
-	if err != nil || connector == "" {
-		return nil, cobra.ShellCompDirectiveNoFileComp
-	}
-	versions, err := connectivityinternal.CollectPagesBounded(connectivityinternal.CompletionPageSize, instanceCompletionMaxPages,
-		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
-			response, err := client.ListConnectorVersions(completionCommand.Context(), operations.ListConnectorVersionsRequest{Name: url.PathEscape(connector), Cursor: connectivityinternal.OptionalString(options.Cursor), PageSize: fctl.Ptr(int(options.PageSize)), Query: connectivityinternal.OptionalString(options.Query)}, nil)
-			var page *connectivity.ConnectorVersionCursor
-			if response != nil {
-				page = response.ConnectorVersionCursor
-			}
-			if err != nil || page == nil {
-				return nil, false, "", err
-			}
-			return page.Cursor.Data, page.Cursor.HasMore, fctl.StringPointerToString(page.Cursor.Next), nil
-		})
 	if err != nil {
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
-	// Newest first: the shell keeps this order instead of sorting lexically,
-	// which would put alpha.10 before alpha.2.
-	sort.SliceStable(versions, func(i, j int) bool { return compareSemver(versions[i].Version, versions[j].Version) > 0 })
-	candidates := make([]string, 0, len(versions))
-	for index, version := range versions {
-		if version.Version == "" || !strings.HasPrefix(version.Version, toComplete) {
-			continue
-		}
-		candidate := version.Version
-		if description := versionDescription(version, index == 0); description != "" {
-			candidate += "\t" + description
-		}
-		candidates = append(candidates, candidate)
-	}
-	return candidates, cobra.ShellCompDirectiveNoFileComp | cobra.ShellCompDirectiveKeepOrder
-}
-
-const shortDigestLength = 19 // "sha256:" plus 12 hex characters
-
-func versionDescription(version connectivity.ConnectorVersionSummary, latest bool) string {
-	parts := make([]string, 0, 3)
-	if latest {
-		parts = append(parts, "latest")
-	}
-	if version.ReleaseDate != nil {
-		parts = append(parts, "released "+version.ReleaseDate.Format(time.DateOnly))
-	}
-	if digest := fctl.StringPointerToString(version.Digest); digest != "" {
-		parts = append(parts, fctl.Truncate(digest, shortDigestLength+1))
-	}
-	return strings.Join(parts, " · ")
+	return connectivityinternal.CompleteConnectorVersions(completionCommand.Context(), client, connector, toComplete)
 }
 
 func CompleteSetValues(
