@@ -28,7 +28,22 @@ var (
 // styledHelp reports whether help may carry colours: only on an interactive
 // stdout, and never when NO_COLOR is set.
 func styledHelp() bool {
-	return TerminalWidth(os.Stdout) > 0 && os.Getenv("NO_COLOR") == ""
+	return helpWidth() > 0 && os.Getenv("NO_COLOR") == ""
+}
+
+// helpWidth is the width usage text may fill. Cobra prints usage to stdout for
+// --help and to stderr after an error, and the template cannot tell which, so
+// help is fitted only when both are terminals.
+func helpWidth() int {
+	if !terminalForced && !isCharDevice(os.Stderr) {
+		return 0
+	}
+	return TerminalWidth(os.Stdout)
+}
+
+func isCharDevice(file *os.File) bool {
+	info, err := file.Stat()
+	return err == nil && info.Mode()&os.ModeCharDevice != 0
 }
 
 func helpStyle(style *pterm.Style) func(string) string {
@@ -54,7 +69,7 @@ func init() {
 		"fctlFlagUsages": func(flags flagUsages) string {
 			// Help is written to stdout; zero keeps each description on one
 			// line when stdout is not a terminal.
-			usages := flags.FlagUsagesWrapped(TerminalWidth(os.Stdout))
+			usages := flags.FlagUsagesWrapped(helpWidth())
 			if styledHelp() {
 				usages = strings.ReplaceAll(usages, requiredFlagMarker, helpMarkerStyle.Sprint(requiredFlagMarker))
 			}

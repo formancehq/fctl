@@ -5,8 +5,8 @@ import (
 	"io"
 	"os"
 	"strings"
-	"unicode/utf8"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/pterm/pterm"
 )
 
@@ -60,10 +60,15 @@ var terminalWidth = func(out io.Writer) int {
 // SetTerminalWidth forces the width used for every writer and returns a
 // function restoring detection. Zero simulates piped output.
 func SetTerminalWidth(width int) (restore func()) {
-	previous := terminalWidth
+	previous, previousForced := terminalWidth, terminalForced
 	terminalWidth = func(io.Writer) int { return width }
-	return func() { terminalWidth = previous }
+	terminalForced = true
+	return func() { terminalWidth, terminalForced = previous, previousForced }
 }
+
+// terminalForced reports that SetTerminalWidth replaced detection, so help
+// also skips its stderr check.
+var terminalForced bool
 
 // TerminalWidth returns the width output written to out must fit, or 0 when it
 // must not be fitted.
@@ -136,7 +141,10 @@ func RenderGroupedTable(out io.Writer, header []string, columns []TableColumn, g
 func RenderKeyValues(out io.Writer, rows [][]string) error {
 	columns := []TableColumn{{Style: lightCyan}, {Fit: FitWrap, Min: 16, MaxLines: 6}}
 	width := TerminalWidth(out)
-	widths, _ := fitWidths(rows, columns, width)
+	widths, fits := fitWidths(rows, columns, width)
+	if !fits {
+		return renderStackedKeyValues(out, rows, columns[1], width)
+	}
 	data := make(pterm.TableData, 0, len(rows))
 	for _, row := range rows {
 		data = append(data, fitRow(row, columns, widths, width, false, true))
@@ -145,6 +153,28 @@ func RenderKeyValues(out io.Writer, rows [][]string) error {
 		return err
 	}
 	return endBlock(out)
+}
+
+// renderStackedKeyValues prints each label on its own line with the value
+// wrapped and indented below it, for terminals too narrow for two columns.
+func renderStackedKeyValues(out io.Writer, rows [][]string, value TableColumn, width int) error {
+	valueWidth := max(1, width-2)
+	var builder strings.Builder
+	for _, row := range rows {
+		if len(row) == 0 {
+			continue
+		}
+		builder.WriteString(lightCyan(row[0]) + "\n")
+		if len(row) < 2 {
+			continue
+		}
+		for _, line := range clampLines(Wrap(row[1], valueWidth), value.MaxLines, valueWidth) {
+			builder.WriteString("  " + line + "\n")
+		}
+	}
+	builder.WriteString("\n")
+	_, err := io.WriteString(out, builder.String())
+	return err
 }
 
 // RenderText writes text wrapped to the terminal width.
@@ -177,15 +207,15 @@ func RenderNextPage(out io.Writer, cursor Cursor) error {
 	return err
 }
 
-// Truncate shortens s to width display cells, ending with an ellipsis.
+// Truncate shortens s to width display cells, ending with an ellipsis. Wide
+// runes such as CJK count as two cells.
 func Truncate(s string, width int) string {
 	if width <= 0 || textWidth(s) <= width {
 		return s
 	}
-	if width == 1 {
-		return ellipsis
-	}
-	return string([]rune(s)[:width-1]) + ellipsis
+	// Cutting through an escape sequence would corrupt the terminal, so
+	// coloured input loses its colours when it has to be shortened.
+	return runewidth.Truncate(pterm.RemoveColorFromString(s), width, ellipsis)
 }
 
 // Wrap splits s into lines of at most width cells on word boundaries,
@@ -193,6 +223,9 @@ func Truncate(s string, width int) string {
 func Wrap(s string, width int) []string {
 	if width <= 0 {
 		return strings.Split(s, "\n")
+	}
+	if textWidth(s) != runewidth.StringWidth(s) {
+		s = pterm.RemoveColorFromString(s) // see Truncate
 	}
 	lines := make([]string, 0)
 	for _, paragraph := range strings.Split(s, "\n") {
@@ -203,9 +236,14 @@ func Wrap(s string, width int) []string {
 					lines = append(lines, line)
 					line = ""
 				}
-				runes := []rune(word)
-				lines = append(lines, string(runes[:width]))
-				word = string(runes[width:])
+				head, rest := splitAtWidth(word, width)
+				if rest == "" {
+					// A single rune wider than the line: keep it as the word.
+					word = head
+					break
+				}
+				lines = append(lines, head)
+				word = rest
 			}
 			switch {
 			case word == "":
@@ -223,8 +261,28 @@ func Wrap(s string, width int) []string {
 	return lines
 }
 
+// textWidth is the number of terminal cells s occupies once colours are
+// removed, the same measure pterm uses to align columns.
 func textWidth(s string) int {
-	return utf8.RuneCountInString(pterm.RemoveColorFromString(s))
+	return runewidth.StringWidth(pterm.RemoveColorFromString(s))
+}
+
+// splitAtWidth cuts s after at most width cells, always keeping at least one
+// rune in the head so a rune wider than width still makes progress.
+func splitAtWidth(s string, width int) (string, string) {
+	cells := 0
+	for index, r := range s {
+		next := runewidth.RuneWidth(r)
+		if cells+next > width {
+			if index == 0 {
+				size := len(string(r))
+				return s[:size], s[size:]
+			}
+			return s[:index], s[index:]
+		}
+		cells += next
+	}
+	return s, ""
 }
 
 func clip(s string, width int) string {
@@ -374,6 +432,9 @@ func renderStacked(out io.Writer, header []string, columns []TableColumn, groups
 			first = true
 		}
 		for _, row := range group.Rows {
+			if len(row) == 0 {
+				continue
+			}
 			if !first {
 				builder.WriteString("\n")
 			}
@@ -384,7 +445,13 @@ func renderStacked(out io.Writer, header []string, columns []TableColumn, groups
 					continue
 				}
 				c := tableColumn(columns, i)
-				for j, line := range clampLines(Wrap(row[i], valueWidth), c.MaxLines, valueWidth) {
+				// Identifiers stay whole so they can be copied, even if the
+				// terminal soft-wraps them.
+				lines := strings.Split(row[i], "\n")
+				if c.Fit != FitNone {
+					lines = clampLines(Wrap(row[i], valueWidth), c.MaxLines, valueWidth)
+				}
+				for j, line := range lines {
 					label := strings.Repeat(" ", labelWidth)
 					if j == 0 {
 						label = pterm.LightCyan(header[i] + strings.Repeat(" ", labelWidth-textWidth(header[i])))

@@ -179,3 +179,61 @@ func trimRight(lines []string) []string {
 	}
 	return out
 }
+
+func TestTruncateAndWrapCountWideRunesAsTwoCells(t *testing.T) {
+	require.Equal(t, "日本…", Truncate("日本語の説明", 5))
+	require.Equal(t, []string{"日本", "語"}, Wrap("日本語", 4))
+	require.Equal(t, []string{"日", "本"}, Wrap("日本", 1), "a rune wider than the line still makes progress")
+}
+
+func TestRenderTableWithWideRunesFitsTheTerminal(t *testing.T) {
+	withWidth(t, 30)
+	var out bytes.Buffer
+
+	require.NoError(t, RenderTable(&out, []string{"Name", "Tagline"}, []TableColumn{{}, {Fit: FitCut, Min: 6}}, [][]string{{"ee-jp", "日本の銀行口座の入出金を取り込みます"}}))
+
+	for _, line := range plainLines(t, out.String()) {
+		require.LessOrEqual(t, textWidth(strings.TrimRight(line, " ")), 30, "line %q", line)
+	}
+}
+
+func TestRenderKeyValuesGivenTooNarrowTerminalThenStacksLabelsAndValues(t *testing.T) {
+	withWidth(t, 24)
+	var out bytes.Buffer
+
+	require.NoError(t, RenderKeyValues(&out, [][]string{{"Available Versions", "37"}, {"Description", "Ingest connected-account topology."}}))
+
+	lines := plainLines(t, out.String())
+	require.Equal(t, []string{"Available Versions", "  37", "Description", "  Ingest", "  connected-account", "  topology."}, lines)
+}
+
+func TestRenderTableStackedKeepsIdentifierColumnsWhole(t *testing.T) {
+	withWidth(t, 24)
+	var out bytes.Buffer
+	version := "v0.5.0-beta.14+build.20261109"
+
+	require.NoError(t, RenderTable(&out, []string{"Name", "Applied", "Tagline"}, []TableColumn{{}, {}, {Fit: FitWrap, Min: 30}}, [][]string{{"stripeconnect-fpss", version, "Stripe marketplace payments"}}))
+
+	require.Contains(t, plainLines(t, out.String()), "  Applied  "+version)
+}
+
+func TestTruncateAndWrapNeverCutThroughColourCodes(t *testing.T) {
+	coloured := "\x1b[31mabcdef\x1b[0m"
+
+	require.Equal(t, "abc…", Truncate(coloured, 4))
+	require.Equal(t, []string{"abc", "def"}, Wrap(coloured, 3))
+}
+
+func TestRenderTableStackedSkipsEmptyRows(t *testing.T) {
+	withWidth(t, 10)
+	var out bytes.Buffer
+
+	require.NotPanics(t, func() {
+		require.NoError(t, RenderTable(&out, []string{"Name", "Value"}, nil, [][]string{{}, {"a-very-long-name", "value"}}))
+	})
+	require.Contains(t, out.String(), "a-very-long-name")
+}
+
+func TestHelpWidthIsZeroWhenStderrIsNotATerminal(t *testing.T) {
+	require.Zero(t, helpWidth(), "go test does not attach stderr to a terminal")
+}
