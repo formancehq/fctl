@@ -237,3 +237,14 @@ func TestRenderTableStackedSkipsEmptyRows(t *testing.T) {
 func TestHelpWidthIsZeroWhenStderrIsNotATerminal(t *testing.T) {
 	require.Zero(t, helpWidth(), "go test does not attach stderr to a terminal")
 }
+
+func TestRenderTableStackedGivenLongLabelsOnANarrowTerminalThenValuesStillFit(t *testing.T) {
+	withWidth(t, 20)
+	var out bytes.Buffer
+
+	require.NoError(t, RenderTable(&out, []string{"Name", "Description"}, []TableColumn{{}, {Fit: FitWrap}}, [][]string{{"ee-base", strings.Repeat("word ", 12)}}))
+
+	for _, line := range plainLines(t, out.String()) {
+		require.LessOrEqual(t, textWidth(strings.TrimRight(line, " ")), 20, "line %q", line)
+	}
+}

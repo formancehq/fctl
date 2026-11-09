@@ -420,7 +420,14 @@ func renderStacked(out io.Writer, header []string, columns []TableColumn, groups
 	for _, label := range header[1:] {
 		labelWidth = max(labelWidth, textWidth(label))
 	}
-	valueWidth := max(10, width-4-labelWidth)
+	// Labels sit beside their value when that leaves a readable value column;
+	// otherwise each label gets its own line and the value wraps below it.
+	const minimumStackedValue = 10
+	inline := width-4-labelWidth >= minimumStackedValue
+	valueWidth, valueIndent := width-4-labelWidth, "  "+strings.Repeat(" ", labelWidth)+"  "
+	if !inline {
+		valueWidth, valueIndent = max(1, width-4), "    "
+	}
 	var builder strings.Builder
 	first := true
 	for _, group := range groups {
@@ -451,15 +458,18 @@ func renderStacked(out io.Writer, header []string, columns []TableColumn, groups
 				if c.Fit != FitNone {
 					lines = clampLines(Wrap(row[i], valueWidth), c.MaxLines, valueWidth)
 				}
+				if !inline {
+					builder.WriteString("  " + pterm.LightCyan(header[i]) + "\n")
+				}
 				for j, line := range lines {
-					label := strings.Repeat(" ", labelWidth)
-					if j == 0 {
-						label = pterm.LightCyan(header[i] + strings.Repeat(" ", labelWidth-textWidth(header[i])))
-					}
 					if c.Style != nil {
 						line = c.Style(line)
 					}
-					builder.WriteString("  " + label + "  " + line + "\n")
+					prefix := valueIndent
+					if inline && j == 0 {
+						prefix = "  " + pterm.LightCyan(header[i]+strings.Repeat(" ", labelWidth-textWidth(header[i]))) + "  "
+					}
+					builder.WriteString(prefix + line + "\n")
 				}
 			}
 		}
