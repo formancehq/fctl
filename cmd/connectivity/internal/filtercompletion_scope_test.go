@@ -40,3 +40,23 @@ func TestCatalogAndTagCompletionHonourFiltersAlreadyTyped(t *testing.T) {
 	require.Equal(t, []string{`{"$match":{"tags":"provider:psp"}}`}, facetQueries)
 	require.Equal(t, []string{`{"$match":{"tags":"provider:psp"}}`}, listQueries)
 }
+
+func TestCatalogCompletionQualifiesCountsBeyondThePageBound(t *testing.T) {
+	page := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/connectivity/_query/capabilities":
+			_, _ = fmt.Fprint(w, `{"resources":{"connectors":{"catalog":{"operators":["$match"]}}}}`)
+		case "/api/connectivity/connectors":
+			page++
+			_, _ = fmt.Fprintf(w, `{"cursor":{"pageSize":1,"hasMore":true,"next":"page-%d","data":[{"name":"ee-%d","catalog":"ee"}]}}`, page, page)
+		}
+	}))
+	defer server.Close()
+	api := sdk.New(sdk.WithServerURL(server.URL), sdk.WithClient(server.Client())).Connectivity.V1
+
+	catalogs, _ := completeFilterExpressionsWithin(t.Context(), api, ResourceConnectors, "catalog=", nil)
+
+	require.Equal(t, []string{fmt.Sprintf("catalog=ee\tat least %d connectors", CompletionMaxPages)}, catalogs)
+}

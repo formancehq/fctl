@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 
@@ -60,6 +61,9 @@ type schemaFieldInfo struct {
 	password    bool
 	description string
 	enum        []string
+	// enumUnknown records that composed schemas declared enums the CLI cannot
+	// combine exactly; completion then offers no values.
+	enumUnknown bool
 }
 
 type sectionContract struct {
@@ -113,7 +117,7 @@ func schemaContractFor(version *connectivity.ConnectorVersion) (schemaContract, 
 				Required:    definition.required,
 				Password:    definition.password,
 				Description: definition.description,
-				Enum:        definition.enum,
+				Enum:        knownEnum(definition),
 			}
 		}
 	}
@@ -232,7 +236,8 @@ func mergeAllSections(left, right sectionContract) sectionContract {
 			merged.fields[key] = value
 			continue
 		}
-		merged.fields[key] = schemaFieldInfo{required: current.required || value.required, password: current.password || value.password, description: firstDescription(current.description, value.description), enum: firstEnum(current.enum, value.enum)}
+		enum, unknown := intersectEnums(current, value)
+		merged.fields[key] = schemaFieldInfo{required: current.required || value.required, password: current.password || value.password, description: firstDescription(current.description, value.description), enum: enum, enumUnknown: unknown}
 	}
 	return merged
 }
@@ -251,7 +256,7 @@ func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
 			current.required = current.required && value.required
 			current.password = current.password || value.password
 			current.description = firstDescription(current.description, value.description)
-			current.enum = firstEnum(current.enum, value.enum)
+			current.enum, current.enumUnknown = unionEnums(current, value)
 			merged.fields[key] = current
 		}
 		if index > 0 {
@@ -293,7 +298,7 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 			}
 			result.password = result.password || resolved.password
 			result.description = firstDescription(result.description, resolved.description)
-			result.enum = firstEnum(result.enum, resolved.enum)
+			result.enum, result.enumUnknown = sameEnums(result, resolved)
 		}
 	}
 	for _, part := range appendSchemaCompositions(node) {
@@ -303,7 +308,7 @@ func collectFieldMetadata(raw any, root map[string]any, depth int, refs map[stri
 		}
 		result.password = result.password || metadata.password
 		result.description = firstDescription(result.description, metadata.description)
-		result.enum = firstEnum(result.enum, metadata.enum)
+		result.enum, result.enumUnknown = sameEnums(result, metadata)
 	}
 	return result, nil
 }
@@ -414,11 +419,69 @@ func stringEnum(raw any) []string {
 	return result
 }
 
-func firstEnum(left, right []string) []string {
-	if len(left) > 0 {
-		return left
+func knownEnum(info schemaFieldInfo) []string {
+	if info.enumUnknown {
+		return nil
 	}
-	return right
+	return info.enum
+}
+
+// intersectEnums combines allOf branches: a value must satisfy both.
+func intersectEnums(left, right schemaFieldInfo) ([]string, bool) {
+	if left.enumUnknown || right.enumUnknown {
+		return nil, true
+	}
+	if len(left.enum) == 0 {
+		return right.enum, false
+	}
+	if len(right.enum) == 0 {
+		return left.enum, false
+	}
+	allowed := make(map[string]bool, len(right.enum))
+	for _, value := range right.enum {
+		allowed[value] = true
+	}
+	result := make([]string, 0, len(left.enum))
+	for _, value := range left.enum {
+		if allowed[value] {
+			result = append(result, value)
+		}
+	}
+	return result, len(result) == 0
+}
+
+// unionEnums combines anyOf/oneOf alternatives: a value may satisfy either.
+// An alternative without an enum accepts any value, so no list is exact.
+func unionEnums(left, right schemaFieldInfo) ([]string, bool) {
+	if left.enumUnknown || right.enumUnknown || len(left.enum) == 0 || len(right.enum) == 0 {
+		return nil, left.enumUnknown || right.enumUnknown || len(left.enum) > 0 || len(right.enum) > 0
+	}
+	seen := make(map[string]bool, len(left.enum)+len(right.enum))
+	result := make([]string, 0, len(left.enum)+len(right.enum))
+	for _, value := range append(append([]string{}, left.enum...), right.enum...) {
+		if !seen[value] {
+			seen[value] = true
+			result = append(result, value)
+		}
+	}
+	return result, false
+}
+
+// sameEnums combines metadata whose composition operator is not tracked
+// (references and nested compositions): only identical or one-sided enums
+// stay exact.
+func sameEnums(left, right schemaFieldInfo) ([]string, bool) {
+	switch {
+	case left.enumUnknown || right.enumUnknown:
+		return nil, true
+	case len(right.enum) == 0:
+		return left.enum, false
+	case len(left.enum) == 0:
+		return right.enum, false
+	case slices.Equal(left.enum, right.enum):
+		return left.enum, false
+	}
+	return nil, true
 }
 
 func firstDescription(left, right string) string {
@@ -656,6 +719,9 @@ func applyDoubleQuoteEscapes(value string) string {
 			case '"':
 				decoded.WriteByte('"')
 			default:
+				// Unknown escapes stay literal so credentials and paths are
+				// sent exactly as written.
+				decoded.WriteByte('\\')
 				decoded.WriteByte(value[index])
 			}
 			continue

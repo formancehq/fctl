@@ -3,7 +3,9 @@ package connections
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -16,6 +18,7 @@ import (
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/operations"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 const (
@@ -137,7 +140,9 @@ func resolveInstallConnectorVersion(ctx context.Context, client *sdk.FormanceV1,
 	}
 	selector := installVersionSelector(cmd)
 	version, err := resolveConnectorVersion(ctx, client, args[0], selector)
-	if err == nil || cmd.Flags().Changed(versionFlag) || cmd.Flags().Changed(channelFlag) {
+	if err == nil || cmd.Flags().Changed(versionFlag) || cmd.Flags().Changed(channelFlag) || !isNotFound(err) {
+		// Any other failure keeps the stable selection install would use,
+		// so completion never suggests keys from a different schema.
 		return version, err
 	}
 	response, getErr := client.GetConnector(ctx, operations.GetConnectorRequest{Name: url.PathEscape(args[0])}, nil)
@@ -162,6 +167,17 @@ func installVersionSelector(cmd *cobra.Command) string {
 		return channel
 	}
 	return "stable"
+}
+
+// isNotFound reports a missing resource: the API's not_found error code, or
+// a bare 404 the SDK could not decode.
+func isNotFound(err error) bool {
+	var apiErr *connectivity.Error
+	if errors.As(err, &apiErr) {
+		return strings.EqualFold(fctl.StringPointerToString(apiErr.ErrorCode), "not_found")
+	}
+	var sdkErr *sdkerrors.SDKError
+	return errors.As(err, &sdkErr) && sdkErr.StatusCode == http.StatusNotFound
 }
 
 func (c *InstallController) GetStore() *InstallStore {

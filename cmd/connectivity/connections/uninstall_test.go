@@ -31,7 +31,7 @@ func TestUninstallDeletesConfirmedConnectionAndRendersSuccess(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, "stripe-eu", deletedName)
-	require.Equal(t, `Connection "stripe-eu" uninstalled.`, strings.TrimSpace(output))
+	require.Equal(t, `Connection "stripe-eu" uninstall requested.`, strings.TrimSpace(output))
 }
 
 func TestUninstallConfirmationRejectionPreventsDelete(t *testing.T) {

@@ -220,9 +220,15 @@ func facetFilterValues(ctx context.Context, client *sdk.FormanceV1, scope string
 
 // catalogFilterValues counts the published connectors of each catalog.
 func catalogFilterValues(ctx context.Context, client *sdk.FormanceV1, scope string) []filterValue {
-	connectors, err := completionConnectors(ctx, client, scope)
+	connectors, truncated, err := completionConnectorsWithin(ctx, client, scope)
 	if err != nil {
 		return nil
+	}
+	// Completion reads a bounded number of pages; say so rather than present
+	// a partial count as the total.
+	atLeast := ""
+	if truncated {
+		atLeast = "at least "
 	}
 	counts := map[string]int{}
 	for _, connector := range connectors {
@@ -236,7 +242,7 @@ func catalogFilterValues(ctx context.Context, client *sdk.FormanceV1, scope stri
 		if count == 1 {
 			plural = ""
 		}
-		values = append(values, filterValue{value: catalog, description: fmt.Sprintf("%d connector%s", count, plural)})
+		values = append(values, filterValue{value: catalog, description: fmt.Sprintf("%s%d connector%s", atLeast, count, plural)})
 	}
 	return values
 }
@@ -266,7 +272,15 @@ func ConnectorSummary(connector connectivity.Connector) string {
 }
 
 func completionConnectors(ctx context.Context, client *sdk.FormanceV1, query string) ([]connectivity.Connector, error) {
-	return CollectPagesBounded(CompletionPageSize, CompletionMaxPages,
+	connectors, _, err := completionConnectorsWithin(ctx, client, query)
+	return connectors, err
+}
+
+// completionConnectorsWithin also reports whether more pages remained after
+// the completion page bound.
+func completionConnectorsWithin(ctx context.Context, client *sdk.FormanceV1, query string) ([]connectivity.Connector, bool, error) {
+	more := false
+	connectors, err := CollectPagesBounded(CompletionPageSize, CompletionMaxPages,
 		func(options ListOptions) ([]connectivity.Connector, bool, string, error) {
 			size := int(options.PageSize)
 			page, err := client.ListConnectors(ctx, operations.ListConnectorsRequest{PageSize: &size, Cursor: OptionalString(options.Cursor), Query: OptionalString(query)}, nil)
@@ -284,6 +298,8 @@ func completionConnectors(ctx context.Context, client *sdk.FormanceV1, query str
 			if cursor.Next != nil {
 				next = *cursor.Next
 			}
+			more = cursor.HasMore
 			return cursor.Data, cursor.HasMore, next, nil
 		})
+	return connectors, more, err
 }

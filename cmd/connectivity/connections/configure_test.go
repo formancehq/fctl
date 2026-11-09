@@ -456,3 +456,22 @@ func TestConfigureRejectsBindingFlagsBeforeClientUse(t *testing.T) {
 		})
 	}
 }
+
+func TestConfigureGivenAnEmptyConfigFileThenRejectsTheNoOpPatch(t *testing.T) {
+	current := instanceFixture("stripe-eu")
+	setInstanceConfig(&current, nil)
+	patched := false
+	client := configureClientMock{
+		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
+		patch: func(context.Context, string, map[string]any) (*connectivity.Connection, error) {
+			patched = true
+			return nil, errors.New("PatchConnection must not be called")
+		},
+	}
+	command := testNewConfigureCommand(factoryReturning(client), mockReadFile(map[string]string{"empty.yaml": ""}), mockPathCompleter(nil))
+
+	_, err := executeCommand(command, "stripe-eu", "--config", "empty.yaml", "--confirm")
+
+	require.EqualError(t, err, "no configuration changes requested")
+	require.False(t, patched)
+}

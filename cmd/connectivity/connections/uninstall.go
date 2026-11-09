@@ -77,5 +77,5 @@ func (c *UninstallController) run(cmd *cobra.Command, args []string, client *sdk
 }
 
 func (c *UninstallController) Render(cmd *cobra.Command, _ []string) error {
-	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q uninstalled.", c.store.Name))
+	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q uninstall requested.", c.store.Name))
 }

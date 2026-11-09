@@ -21,7 +21,7 @@ func (c *prereleaseCatalog) RoundTrip(r *http.Request) (*http.Response, error) {
 	c.requested = append(c.requested, r.URL.Path)
 	switch r.URL.Path {
 	case "/api/connectivity/connectors/ee-stripeconnect/versions/stable":
-		return jsonHTTPResponse(r, http.StatusNotFound, `{"errorCode":"NOT_FOUND","errorMessage":"no stable version"}`), nil
+		return jsonHTTPResponse(r, http.StatusNotFound, `{"errorCode":"not_found","errorMessage":"no stable version"}`), nil
 	case "/api/connectivity/connectors/ee-stripeconnect":
 		return mockHTTPResponse(r, http.StatusOK, connectivity.Connector{Name: "ee-stripeconnect", LatestVersion: stringPtr("v0.5.0-beta.14")}, nil)
 	case "/api/connectivity/connectors/ee-stripeconnect/versions/v0.5.0-beta.14":
@@ -55,6 +55,24 @@ func TestInstallSetCompletionGivenNoStableReleaseThenUsesTheLatestVersionSchema(
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace, directive)
 	require.Contains(t, catalog.requested, "/api/connectivity/connectors/ee-stripeconnect")
 }
+
+func TestInstallSetCompletionGivenAServerErrorThenKeepsTheStableSelection(t *testing.T) {
+	failing := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Path == "/api/connectivity/connectors/ee-stripeconnect/versions/stable" {
+			return jsonHTTPResponse(r, http.StatusInternalServerError, `{"errorCode":"internal","errorMessage":"unavailable"}`), nil
+		}
+		t.Errorf("unexpected fallback request %s", r.URL.Path)
+		return jsonHTTPResponse(r, http.StatusNotFound, `{}`), nil
+	})
+
+	candidates, _ := completeSetValuesWithClient(mockSDK(failing), installCompletionCommand(t), []string{"ee-stripeconnect"}, "", resolveInstallConnectorVersion, nil)
+
+	require.Empty(t, candidates, "a transient error must not switch completion to another schema")
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
 
 func TestInstallSetCompletionGivenAnExplicitChannelThenDoesNotFallBack(t *testing.T) {
 	catalog := &prereleaseCatalog{}
