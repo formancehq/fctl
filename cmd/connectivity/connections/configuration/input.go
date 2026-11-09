@@ -287,6 +287,17 @@ func mergeAlternativeSections(alternatives []sectionContract) sectionContract {
 			}
 		}
 	}
+	// An open alternative that does not declare a field accepts any value for
+	// it, so no enum from the other alternatives is exact.
+	for key, value := range merged.fields {
+		for _, alternative := range alternatives {
+			if _, declared := alternative.fields[key]; !declared && alternative.open {
+				value.enum, value.enumUnknown = nil, true
+				merged.fields[key] = value
+				break
+			}
+		}
+	}
 	return merged
 }
 

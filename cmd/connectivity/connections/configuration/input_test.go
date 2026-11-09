@@ -56,6 +56,8 @@ func TestSchemaFieldsCombineEnumsAcrossSectionCompositions(t *testing.T) {
 
 	require.Equal(t, []string{"sandbox", "production"}, fieldsFor(map[string]any{"anyOf": []any{branch("sandbox"), branch("production")}}))
 	require.Equal(t, []string{"production"}, fieldsFor(map[string]any{"allOf": []any{branch("sandbox", "production"), branch("production")}}))
+	require.Nil(t, fieldsFor(map[string]any{"anyOf": []any{branch("sandbox"), map[string]any{}}}), "an open alternative without the field accepts any value")
+	require.Nil(t, fieldsFor(map[string]any{"anyOf": []any{map[string]any{}, branch("sandbox")}}), "order of alternatives does not matter")
 }
 
 func TestApplyDoubleQuoteEscapesKeepsUnknownEscapesLiteral(t *testing.T) {
