@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	xmodsemver "golang.org/x/mod/semver"
 
@@ -36,11 +35,7 @@ const (
 )
 
 type InstallStore struct {
-	// Connection is omitted when nothing was installed.
-	Connection *connectivity.Connection `json:"connection,omitempty"`
-	// Guided reports that nothing was installed because a selector must be
-	// chosen; the guidance is on stderr.
-	Guided bool `json:"guided,omitempty"`
+	Connection connectivity.Connection `json:"connection"`
 }
 
 type approvalFunc func(*cobra.Command, string, ...any) bool
@@ -281,11 +276,9 @@ func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.F
 		if guidance == "" {
 			return nil, err
 		}
-		// Nothing is chosen on the user's behalf: guide them and stop
-		// without installing.
-		pterm.Info.WithWriter(cmd.ErrOrStderr()).Println(guidance)
-		c.store.Guided = true
-		return c, nil
+		// The guidance replaces the API error rather than wrapping it: the
+		// error printer walks the chain and would repeat the same facts.
+		return nil, errors.New(guidance)
 	}
 
 	envFiles, err := cmd.Flags().GetStringArray(envFileFlag)
@@ -353,7 +346,7 @@ func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.F
 	if instance == nil || instance.Name == "" {
 		return nil, fmt.Errorf("install connectivity connection %q: empty response", name)
 	}
-	c.store.Connection = instance
+	c.store.Connection = *instance
 	return c, nil
 }
 
@@ -362,9 +355,6 @@ func configHasData(config *connectivity.ConnectionConfiguration) bool {
 }
 
 func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
-	if c.store.Guided {
-		return nil
-	}
 	instance := c.store.Connection
 	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q installed with connector %q for ledger %q.", instance.Name,
 		fctl.StringPointerToString(instance.ConnectionConfiguration.Connector),

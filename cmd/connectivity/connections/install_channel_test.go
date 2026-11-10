@@ -1,15 +1,13 @@
 package connections
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	fctl "github.com/formancehq/fctl/v3/pkg"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
 )
 
@@ -41,38 +39,16 @@ func (c *betaOnlyCatalog) RoundTrip(r *http.Request) (*http.Response, error) {
 	return jsonHTTPResponse(r, http.StatusNotFound, `{"errorCode":"not_found"}`), nil
 }
 
-func TestInstallGivenNoStableReleaseWhenNoSelectorThenGuidesWithoutInstalling(t *testing.T) {
+func TestInstallGivenNoStableReleaseWhenNoSelectorThenFailsWithTheSelectorsToPass(t *testing.T) {
 	catalog := &betaOnlyCatalog{latest: "v0.5.0-beta.14"}
-	command := testNewInstallCommand(factoryReturning(catalog), mockReadFile(nil), mockPathCompleter(nil))
-	var stdout, stderr bytes.Buffer
-	command.SetOut(&stdout)
-	command.SetErr(&stderr)
-	command.SetArgs([]string{"ee-synthetic", "--ledger=demo", "--confirm"})
 
-	err := command.Execute()
+	_, err := executeCommand(testNewInstallCommand(factoryReturning(catalog), mockReadFile(nil), mockPathCompleter(nil)), "ee-synthetic", "--ledger=demo", "--confirm")
 
-	require.NoError(t, err)
+	require.Error(t, err, "a script must see that nothing was installed")
 	require.Nil(t, catalog.created, "install must not pick a prerelease on the user's behalf")
-	require.Empty(t, stdout.String(), "nothing installed, nothing on stdout")
-	require.Len(t, strings.Split(strings.TrimSpace(stderr.String()), "\n"), 1, "one guidance line, no repeated API message")
-}
-
-func TestInstallGivenNoStableReleaseWhenJSONThenReportsGuidedWithoutAConnection(t *testing.T) {
-	catalog := &betaOnlyCatalog{latest: "v0.5.0-beta.14"}
-	command := testNewInstallCommand(factoryReturning(catalog), mockReadFile(nil), mockPathCompleter(nil))
-	command.Flags().String(fctl.OutputFlag, "plain", "")
-	var stdout, stderr bytes.Buffer
-	command.SetOut(&stdout)
-	command.SetErr(&stderr)
-	command.SetArgs([]string{"ee-synthetic", "--ledger=demo", "--confirm", "--output=json"})
-
-	require.NoError(t, command.Execute())
-
-	var envelope struct {
-		Data map[string]any `json:"data"`
-	}
-	require.NoError(t, json.Unmarshal(stdout.Bytes(), &envelope))
-	require.Equal(t, map[string]any{"guided": true}, envelope.Data)
+	require.Contains(t, err.Error(), "--channel beta")
+	var native *connectivity.Error
+	require.False(t, errors.As(err, &native), "the API error is replaced, not repeated")
 }
 
 func TestInstallGivenNoStableReleaseWhenChannelIsExplicitThenKeepsTheNativeError(t *testing.T) {

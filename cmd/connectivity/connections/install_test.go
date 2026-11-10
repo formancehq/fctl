@@ -290,7 +290,7 @@ func TestInstallJSONStoresCompleteReturnedConnection(t *testing.T) {
 		Data InstallStore `json:"data"`
 	}
 	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
-	require.Equal(t, &returned, envelope.Data.Connection)
+	require.Equal(t, returned, envelope.Data.Connection)
 }
 
 func TestInstallCompletionReturnsVersionsSchemaKeysAndFileCandidates(t *testing.T) {

@@ -80,11 +80,10 @@ or use one as a fallback.
 
 An install without `--version` or `--channel` explicitly sends `channel:
 stable`. When the connector has no stable release yet, the API answers
-`channel_empty` and install does not choose another version. It prints one
-information line on stderr naming the `--channel` and `--version` values that
-select the latest version, installs nothing and exits with status 0.
-JSON output is then `{"data": {"guided": true}}`, without a `connection`. An explicit `--channel stable`
-returns the API error instead. `--version` selects a ConnectorVersion by its exact name, including
+`channel_empty` and install does not choose another version. It fails with a
+single message naming the `--channel` and `--version` values that select the
+latest version, and installs nothing. An explicit `--channel stable` returns
+the API error instead. `--version` selects a ConnectorVersion by its exact name, including
 an administrator-created opaque OCI tag; it does not select a maturity
 channel. An opaque tag can follow newly verified artifacts under the operator’s
 version rules; selecting its name does not pin its content digest.
