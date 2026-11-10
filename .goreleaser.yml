@@ -48,12 +48,8 @@ brews:
     repository:
       owner: formancehq
       name: homebrew-tap
-      pull_request:
-        enabled: true
-        base:
-          owner: formancehq
-          name: homebrew-tap
-          branch: main
+      # Publish every formula before just release opens a single PR.
+      branch: 'fctl-{{ .Version }}'
     directory: Formula
     homepage: https://formance.com
     skip_upload: 'false'

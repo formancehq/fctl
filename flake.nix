@@ -148,8 +148,10 @@
             go-tools
             goperf
             gotools
+            gh
             jq
             just
+            python3
             yq-go
           ];
           unstablePackages = with pkgs-unstable; [
