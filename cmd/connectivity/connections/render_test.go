@@ -88,17 +88,15 @@ func TestListConnectionsGivenNarrowTerminalThenRowsAreStacked(t *testing.T) {
 	requireLinesFit(t, output, 50)
 }
 
-func TestShowConnectionSummarizesFilesAndLongInitialCursors(t *testing.T) {
+func TestShowConnectionSummarizesFiles(t *testing.T) {
 	instance := catalogConnection()
-	instance.ConnectionConfiguration.InitialCursor = stringPtr(strings.Repeat("A", 88))
 	instance.ConnectionConfiguration.Files = map[string]string{"/etc/modulr/client.pem": "-----BEGIN CERTIFICATE-----\nMIIB\nMIIC\n-----END CERTIFICATE-----\n"}
 
 	output, err := executeCommand(testNewShowCommand(factoryWithInstance(instance)), instance.Name)
 
 	require.NoError(t, err)
 	plain := pterm.RemoveColorFromString(output)
-	require.Contains(t, plain, "Target         | channel beta")
-	require.Contains(t, plain, strings.Repeat("A", 31)+"… (88 chars)")
+	require.Contains(t, plain, "channel beta")
 	require.Contains(t, plain, "-----BEGIN CERTIFICATE----- … (4 lines)")
 	require.NotContains(t, plain, "MIIB")
 	require.Contains(t, plain, "# Configuration (1 value)\n")

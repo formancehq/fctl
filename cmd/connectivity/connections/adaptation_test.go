@@ -142,50 +142,12 @@ func TestConnectionChannelSelectionContract(t *testing.T) {
 	}
 }
 
-func TestConnectionInitialCursorValidatedBeforeClient(t *testing.T) {
-	for _, value := range []string{"not-base64", "YQ", "YR==", "YQ==\n", ""} {
-		for _, install := range []bool{true, false} {
-			used := false
-			factory := func(*cobra.Command) (*sdk.FormanceV1, error) {
-				used = true
-				return nil, errors.New("unexpected client")
-			}
-			command := testNewConfigureCommand(factory, nil, nil)
-			args := []string{"stripe-eu", "--initial-cursor=" + value, "--confirm"}
-			if install {
-				command = testNewInstallCommand(factory, nil, nil)
-				args = append(args, "--ledger=main")
-			}
-			_, err := executeCommand(command, args...)
-			require.ErrorContains(t, err, "initial-cursor")
-			require.False(t, used)
+func TestRemovedFlagsAreGone(t *testing.T) {
+	for _, command := range []*cobra.Command{testNewInstallCommand(nil, nil, nil), testNewConfigureCommand(nil, nil, nil)} {
+		for _, flag := range []string{"initial-cursor", "env-file"} {
+			require.Nil(t, command.Flags().Lookup(flag), command.Name()+" --"+flag)
 		}
 	}
-}
-
-func TestConnectionInitialCursorWireIsOpaque(t *testing.T) {
-	client := mutationClientMock{create: func(_ context.Context, body connectivity.ConnectionCreate) (*connectivity.Connection, error) {
-		wire, err := json.Marshal(body)
-		require.NoError(t, err)
-		require.Contains(t, string(wire), `"initialCursor":"AP9h"`)
-		require.NotContains(t, string(wire), "startSequence")
-		return &connectivity.Connection{Name: body.Name, ConnectionConfiguration: createdConfiguration(body.ConnectionConfiguration)}, nil
-	}}
-	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), nil, nil), "stripe", "--ledger=main", "--initial-cursor=AP9h", "--confirm")
-	require.NoError(t, err)
-	current := instanceFixture("stripe-eu")
-	configure := configureClientMock{
-		getInstance: func(context.Context, string) (*connectivity.Connection, error) { return &current, nil },
-		patch: func(_ context.Context, _ string, patch map[string]any) (*connectivity.Connection, error) {
-			wire, err := json.Marshal(patch)
-			require.NoError(t, err)
-			require.JSONEq(t, `{"configuration":{"initialCursor":"AP9h"}}`, string(wire))
-			return &current, nil
-		},
-	}
-	output, err := executeCommand(testNewConfigureCommand(factoryReturning(configure), nil, nil), "stripe-eu", "--initial-cursor=AP9h", "--confirm")
-	require.NoError(t, err)
-	require.NotContains(t, output, "reset")
 }
 
 func TestConnectionConfigPatchCarriesIntentForRedactedValues(t *testing.T) {

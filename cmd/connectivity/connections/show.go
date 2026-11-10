@@ -143,7 +143,6 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		{"Target", targetDescription(&config)},
 		{"Poll Interval", fallback(fctl.StringPointerToString(config.PollInterval), "service default")},
 		{"Suspend", suspendValue(config.Suspend)},
-		{"Initial Cursor", initialCursorDescription(config.InitialCursor)},
 	}); err != nil {
 		return err
 	}
@@ -226,19 +225,6 @@ func suspendValue(suspend *bool) string {
 		return "-"
 	}
 	return strconv.FormatBool(*suspend)
-}
-
-const initialCursorPreview = 32
-
-func initialCursorDescription(cursor *string) string {
-	value := fctl.StringPointerToString(cursor)
-	if value == "" {
-		return "from the beginning"
-	}
-	if len(value) <= initialCursorPreview {
-		return value
-	}
-	return fmt.Sprintf("%s (%d chars)", fctl.Truncate(value, initialCursorPreview), len(value))
 }
 
 func dash(value string) string {

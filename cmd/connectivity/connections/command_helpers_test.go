@@ -21,9 +21,6 @@ func testRunCommand[T any](cmd *cobra.Command, controller fctl.Controller[T], ru
 			if err := validateSelectors(cmd); err != nil {
 				return err
 			}
-			if _, err := initialCursor(cmd); err != nil {
-				return err
-			}
 		}
 		if cmd.Name() == "install" && strings.TrimSpace(fctl.GetString(cmd, ledgerFlag)) == "" {
 			return fmt.Errorf("--ledger cannot be empty")

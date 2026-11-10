@@ -25,7 +25,6 @@ func TestConfigureUsesSDKRouteAndPreservesMergePatchIntent(t *testing.T) {
 		{name: "delete one entry", flags: []string{"--config=config.yaml"}, config: "env:\n  TOKEN: null\n  API_URL: replacement\n", want: `{"configuration":{"env":{"TOKEN":null,"API_URL":"replacement"}}}`},
 		{name: "delete entire map", flags: []string{"--config=config.yaml"}, config: "env: null\nfiles: null\n", want: `{"configuration":{"env":null,"files":null}}`},
 		{name: "empty map preserves values", flags: []string{"--config=config.yaml", "--poll-interval=1m"}, config: "env: {}\n", want: `{"configuration":{"pollInterval":"1m"}}`},
-		{name: "opaque cursor", flags: []string{"--initial-cursor=AP9h"}, want: `{"configuration":{"initialCursor":"AP9h"}}`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			instance := instanceFixture("source/name?x")
