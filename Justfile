@@ -32,12 +32,8 @@ install:
     go install -v .
 
 tests:
-    just tests-release
     go test ./...
     cd pkg/client && go test ./...
-
-tests-release:
-    python3 -B -m unittest discover -s scripts -p 'test_*.py'
 
 release-local:
     @goreleaser release --nightly --skip=publish --clean
@@ -47,10 +43,6 @@ release-ci:
 
 release:
     @goreleaser release --clean
-    @just release-homebrew-pr
-
-release-homebrew-pr:
-    @python3 -B scripts/homebrew_pr.py
 
 completions: generate
     mkdir -p ./completions
