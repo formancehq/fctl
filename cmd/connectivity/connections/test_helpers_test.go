@@ -272,6 +272,12 @@ func (m listInstanceClientMock) RoundTrip(r *http.Request) (*http.Response, erro
 	return mockConnectionPage(r, data, err)
 }
 func (m showInstanceClientMock) RoundTrip(r *http.Request) (*http.Response, error) {
+	if strings.HasPrefix(r.URL.Path, "/api/connectivity/connectors/") {
+		if m.versions == nil {
+			return jsonHTTPResponse(r, http.StatusNotFound, `{"errorCode":"not_found"}`), nil
+		}
+		return m.versions.RoundTrip(r)
+	}
 	data, err := m.get(r.Context(), requestConnectionName(r))
 	return mockHTTPResponse(r, 200, data, err)
 }

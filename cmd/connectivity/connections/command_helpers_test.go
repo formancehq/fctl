@@ -67,9 +67,9 @@ func testNewSuspendCommand(load testSDKFactory) *cobra.Command {
 	cmd.ValidArgsFunction = testCompleteConnectionNames(load)
 	return cmd
 }
-func testNewUnsuspendCommand(load testSDKFactory) *cobra.Command {
+func testNewResumeCommand(load testSDKFactory) *cobra.Command {
 	c := NewSuspensionController(false)
-	cmd := testRunCommand(NewUnsuspendCommand(), c, c.run, load)
+	cmd := testRunCommand(NewResumeCommand(), c, c.run, load)
 	cmd.ValidArgsFunction = testCompleteConnectionNames(load)
 	return cmd
 }

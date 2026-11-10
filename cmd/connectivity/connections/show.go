@@ -1,6 +1,8 @@
 package connections
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
@@ -10,6 +12,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
@@ -18,6 +21,9 @@ import (
 
 type ShowStore struct {
 	Connection connectivity.Connection `json:"connection"`
+	// Defaults lists the schema defaults of the applied version for keys the
+	// connection does not set. Omitted when the schema cannot be read.
+	Defaults map[string]string `json:"defaults,omitempty"`
 }
 
 type ShowController struct {
@@ -72,7 +78,56 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *sdk.Form
 		return nil, fmt.Errorf("show connectivity connection %q: empty response", args[0])
 	}
 	c.store.Connection = *instance
+	c.store.Defaults = schemaDefaults(cmd.Context(), client, instance)
 	return c, nil
+}
+
+// schemaDefaults reads the applied version's schema, else the pinned one.
+// It is best effort: show still renders the connection when the catalogue
+// cannot be read, it only loses the default rows.
+func schemaDefaults(ctx context.Context, client *sdk.FormanceV1, instance *connectivity.Connection) map[string]string {
+	config := instance.ConnectionConfiguration
+	connector := fctl.StringPointerToString(config.Connector)
+	selector := fallback(appliedChannelFloor(instance), fctl.StringPointerToString(config.Version))
+	if connector == "" || selector == "" {
+		return nil
+	}
+	version, err := resolveConnectorVersion(ctx, client, connector, selector)
+	if err != nil {
+		return nil
+	}
+	fields, err := configuration.SchemaFields(version)
+	if err != nil {
+		return nil
+	}
+	defaults := make(map[string]string)
+	for key, field := range fields {
+		if !field.HasDefault {
+			continue
+		}
+		if _, set := config.Env[key]; set {
+			continue
+		}
+		if _, set := config.Files[key]; set {
+			continue
+		}
+		defaults[key] = defaultText(field.Default)
+	}
+	if len(defaults) == 0 {
+		return nil
+	}
+	return defaults
+}
+
+func defaultText(value any) string {
+	if text, ok := value.(string); ok {
+		return text
+	}
+	encoded, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Sprint(value)
+	}
+	return string(encoded)
 }
 
 func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
@@ -87,7 +142,7 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		{"Ledger", dash(fctl.StringPointerToString(config.Ledger))},
 		{"Target", targetDescription(&config)},
 		{"Poll Interval", fallback(fctl.StringPointerToString(config.PollInterval), "service default")},
-		{"Suspend", suspendDescription(config.Suspend)},
+		{"Suspend", suspendValue(config.Suspend)},
 		{"Initial Cursor", initialCursorDescription(config.InitialCursor)},
 	}); err != nil {
 		return err
@@ -112,7 +167,7 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	rows := configRows(&instance.ConnectionConfiguration)
+	rows := configRows(&instance.ConnectionConfiguration, c.store.Defaults)
 	if len(rows) == 0 {
 		fctl.Section.WithWriter(out).Println("Configuration")
 		_, err := fmt.Fprintln(out, "No configuration entries.")
@@ -132,11 +187,14 @@ func (c *ShowController) Render(cmd *cobra.Command, _ []string) error {
 
 // configRows lists returned values; multi-line file contents are summarized
 // by their first line, -o json carries them in full.
-func configRows(config *connectivity.ConnectionConfiguration) [][]string {
+func configRows(config *connectivity.ConnectionConfiguration, defaults map[string]string) [][]string {
 	if config == nil {
 		return nil
 	}
-	rows := make([][]string, 0, len(config.Env)+len(config.Files))
+	rows := make([][]string, 0, len(config.Env)+len(config.Files)+len(defaults))
+	for key, value := range defaults {
+		rows = append(rows, []string{key, "default", value})
+	}
 	for key, value := range config.Env {
 		rows = append(rows, []string{key, "env", value})
 	}
@@ -161,11 +219,13 @@ func targetDescription(config *connectivity.ConnectionConfiguration) string {
 	return "-"
 }
 
-func suspendDescription(suspend *bool) string {
-	if suspend != nil && *suspend {
-		return "requested"
+// suspendValue shows the desired state as the API returns it; the observed
+// state is in the Last Recorded Status section.
+func suspendValue(suspend *bool) string {
+	if suspend == nil {
+		return "-"
 	}
-	return "not requested"
+	return strconv.FormatBool(*suspend)
 }
 
 const initialCursorPreview = 32

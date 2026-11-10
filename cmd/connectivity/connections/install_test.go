@@ -130,7 +130,7 @@ func TestInstallPreservesNativeMissingStableVersionError(t *testing.T) {
 		},
 	}}
 
-	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--confirm")
+	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--channel=stable", "--confirm")
 
 	require.ErrorIs(t, err, apiError)
 	var nativeError *connectivity.Error

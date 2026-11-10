@@ -9,7 +9,9 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	xmodsemver "golang.org/x/mod/semver"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connectors"
@@ -35,6 +37,9 @@ const (
 
 type InstallStore struct {
 	Connection connectivity.Connection `json:"connection"`
+	// Guided reports that nothing was installed because a selector must be
+	// chosen; the guidance is on stderr.
+	Guided bool `json:"guided,omitempty"`
 }
 
 type approvalFunc func(*cobra.Command, string, ...any) bool
@@ -130,7 +135,7 @@ func installConnectorArgument(_ *cobra.Command, args []string) string {
 // resolveInstallConnectorVersion drives --set completion. Without --version
 // or --channel it uses the stable release, and falls back to the catalogue's
 // latest version when the connector has no stable release yet, so completion
-// still lists the fields.
+// still lists the fields. Installation itself never falls back.
 func resolveInstallConnectorVersion(ctx context.Context, client *sdk.FormanceV1, cmd *cobra.Command, args []string) (*connectivity.ConnectorVersion, error) {
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
@@ -138,22 +143,62 @@ func resolveInstallConnectorVersion(ctx context.Context, client *sdk.FormanceV1,
 	if len(args) == 0 {
 		return nil, nil
 	}
-	selector := installVersionSelector(cmd)
-	version, err := resolveConnectorVersion(ctx, client, args[0], selector)
-	if err == nil || cmd.Flags().Changed(versionFlag) || cmd.Flags().Changed(channelFlag) || !isNotFound(err) {
+	version, err := resolveConnectorVersion(ctx, client, args[0], installVersionSelector(cmd))
+	if err == nil || selectorChanged(cmd) || !isEmptyChannel(err) {
 		// Any other failure keeps the stable selection install would use,
 		// so completion never suggests keys from a different schema.
 		return version, err
 	}
-	response, getErr := client.GetConnector(ctx, operations.GetConnectorRequest{Name: url.PathEscape(args[0])}, nil)
-	if getErr != nil || response == nil || response.Connector == nil {
-		return nil, err
-	}
-	latest := fctl.StringPointerToString(response.Connector.LatestVersion)
+	latest := latestConnectorVersion(ctx, client, args[0])
 	if latest == "" {
 		return nil, err
 	}
 	return resolveConnectorVersion(ctx, client, args[0], latest)
+}
+
+func selectorChanged(cmd *cobra.Command) bool {
+	return cmd.Flags().Changed(versionFlag) || cmd.Flags().Changed(channelFlag)
+}
+
+func latestConnectorVersion(ctx context.Context, client *sdk.FormanceV1, connector string) string {
+	response, err := client.GetConnector(ctx, operations.GetConnectorRequest{Name: url.PathEscape(connector)}, nil)
+	if err != nil || response == nil || response.Connector == nil {
+		return ""
+	}
+	return fctl.StringPointerToString(response.Connector.LatestVersion)
+}
+
+// selectorGuidance explains an empty default stable channel with the
+// selectors that would install the latest version. Install never picks a
+// prerelease on the user's behalf; they choose what they install. It returns
+// "" for explicit selectors and other failures.
+func selectorGuidance(ctx context.Context, client *sdk.FormanceV1, cmd *cobra.Command, connector string, err error) string {
+	if selectorChanged(cmd) || !isEmptyChannel(err) {
+		return ""
+	}
+	hint := fmt.Sprintf("connector %q has no stable release; choose what to install with --channel rc|beta|alpha or --version", connector)
+	latest := latestConnectorVersion(ctx, client, connector)
+	if channel, ok := versionChannel(latest); ok && channel != "stable" {
+		hint = fmt.Sprintf("connector %q has no stable release; to install its latest version, pass --channel %s or --version %s", connector, channel, latest)
+	}
+	return hint
+}
+
+// versionChannel names the narrowest channel admitting a version: a release
+// is stable, a prerelease is on the channel named by its first identifier.
+func versionChannel(version string) (string, bool) {
+	if !isStrictSemver(version) {
+		return "", false
+	}
+	prerelease := strings.TrimPrefix(xmodsemver.Prerelease(normalizeSemver(version)), "-")
+	if prerelease == "" {
+		return "stable", true
+	}
+	identifier, _, _ := strings.Cut(prerelease, ".")
+	if _, ok := channelPrereleases[identifier]; !ok || identifier == "stable" {
+		return "", false
+	}
+	return identifier, true
 }
 
 // installVersionSelector picks the {version} slot value governing the config
@@ -167,6 +212,16 @@ func installVersionSelector(cmd *cobra.Command) string {
 		return channel
 	}
 	return "stable"
+}
+
+// isEmptyChannel reports a channel with no version: the API answers
+// 404 channel_empty, or not_found from servers predating that code.
+func isEmptyChannel(err error) bool {
+	var apiErr *connectivity.Error
+	if errors.As(err, &apiErr) && strings.EqualFold(fctl.StringPointerToString(apiErr.ErrorCode), "channel_empty") {
+		return true
+	}
+	return isNotFound(err)
 }
 
 // isNotFound reports a missing resource: the API's not_found error code, or
@@ -221,7 +276,15 @@ func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.F
 	connectorName := args[0]
 	version, err := resolveConnectorVersion(cmd.Context(), client, connectorName, installVersionSelector(cmd))
 	if err != nil {
-		return nil, err
+		guidance := selectorGuidance(cmd.Context(), client, cmd, connectorName, err)
+		if guidance == "" {
+			return nil, err
+		}
+		// Nothing is chosen on the user's behalf: guide them and stop
+		// without installing.
+		pterm.Info.WithWriter(cmd.ErrOrStderr()).Println(guidance)
+		c.store.Guided = true
+		return c, nil
 	}
 
 	envFiles, err := cmd.Flags().GetStringArray(envFileFlag)
@@ -298,6 +361,9 @@ func configHasData(config *connectivity.ConnectionConfiguration) bool {
 }
 
 func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
+	if c.store.Guided {
+		return nil
+	}
 	instance := c.store.Connection
 	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q installed with connector %q for ledger %q.", instance.Name,
 		fctl.StringPointerToString(instance.ConnectionConfiguration.Connector),

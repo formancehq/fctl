@@ -17,6 +17,9 @@ import (
 
 type showInstanceClientMock struct {
 	get func(context.Context, string) (*connectivity.Connection, error)
+	// versions serves the catalogue; nil answers every catalogue read with an
+	// error, which show must tolerate.
+	versions *connectorVersions
 }
 
 func TestShowRendersPortableStatusAndConfigurationValues(t *testing.T) {
@@ -103,7 +106,7 @@ func TestShowConnectionRendersSuspensionAndOrderedProvenance(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Contains(t, output, "Suspend")
-	require.Contains(t, output, "requested")
+	require.Contains(t, output, "true")
 	require.NotContains(t, output, "Replicas")
 	require.Contains(t, output, "Suspended By")
 	require.Contains(t, output, "request/stripe-eu, policy/maintenance")
@@ -184,4 +187,62 @@ func TestShowRawLastErrorWithoutIngestion(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
 	require.Nil(t, envelope.Data.Connection.ConnectionStatus.IngestionStatus)
 	require.Equal(t, rawError, *envelope.Data.Connection.ConnectionStatus.LastError)
+}
+
+func TestShowGivenSchemaDefaultsThenAddsUnsetKeysOnly(t *testing.T) {
+	instance := instanceFixture("stripe-eu")
+	instance.ConnectionConfiguration.Env = map[string]string{"REGION": "us"}
+	var requestedVersion string
+	client := showInstanceClientMock{
+		get: func(context.Context, string) (*connectivity.Connection, error) { return &instance, nil },
+		versions: &connectorVersions{getVersion: func(_ context.Context, _, version string) (*connectivity.ConnectorVersion, error) {
+			requestedVersion = version
+			return &connectivity.ConnectorVersion{Version: version, ConfigSchema: map[string]any{
+				"env": map[string]any{"properties": map[string]any{
+					"REGION":    map[string]any{"type": "string", "default": "eu"},
+					"PAGE_SIZE": map[string]any{"type": "integer", "default": 100},
+					"TOKEN":     map[string]any{"type": "string"},
+				}},
+			}}, nil
+		}},
+	}
+	command := testNewShowCommand(factoryReturning(client))
+	command.Flags().String(fctl.OutputFlag, "plain", "")
+
+	output, err := executeCommand(command, "--output", "json", "stripe-eu")
+
+	require.NoError(t, err)
+	require.Equal(t, "2.0.0", requestedVersion, "defaults come from the applied version")
+	var envelope struct {
+		Data ShowStore `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
+	require.Equal(t, map[string]string{"PAGE_SIZE": "100"}, envelope.Data.Defaults)
+}
+
+func TestShowGivenAnUnreadableSchemaThenStillShowsTheConnection(t *testing.T) {
+	instance := instanceFixture("stripe-eu")
+	command := testNewShowCommand(factoryWithInstance(instance))
+	command.Flags().String(fctl.OutputFlag, "plain", "")
+
+	output, err := executeCommand(command, "--output", "json", "stripe-eu")
+
+	require.NoError(t, err)
+	var envelope struct {
+		Data ShowStore `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(output), &envelope))
+	require.Equal(t, instance, envelope.Data.Connection)
+	require.Nil(t, envelope.Data.Defaults)
+}
+
+func TestConfigRowsListsDefaultsWithReturnedValues(t *testing.T) {
+	config := &connectivity.ConnectionConfiguration{Env: map[string]string{"REGION": "us"}}
+
+	rows := configRows(config, map[string]string{"PAGE_SIZE": "100"})
+
+	require.Len(t, rows, 2)
+	for _, row := range rows {
+		require.Len(t, row, 3)
+	}
 }

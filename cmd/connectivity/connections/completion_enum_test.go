@@ -13,7 +13,8 @@ import (
 )
 
 // prereleaseCatalog serves a connector with no stable release, like every
-// connector published on the catalogue today.
+// connector published on the catalogue today. The API reports the empty
+// stable channel as channel_empty.
 type prereleaseCatalog struct {
 	requested []string
 }
@@ -22,7 +23,7 @@ func (c *prereleaseCatalog) RoundTrip(r *http.Request) (*http.Response, error) {
 	c.requested = append(c.requested, r.URL.Path)
 	switch r.URL.Path {
 	case "/api/connectivity/connectors/ee-stripeconnect/versions/stable":
-		return jsonHTTPResponse(r, http.StatusNotFound, `{"errorCode":"not_found","errorMessage":"no stable version"}`), nil
+		return jsonHTTPResponse(r, http.StatusNotFound, `{"errorCode":"channel_empty","errorMessage":"no stable version"}`), nil
 	case "/api/connectivity/connectors/ee-stripeconnect":
 		return mockHTTPResponse(r, http.StatusOK, connectivity.Connector{Name: "ee-stripeconnect", LatestVersion: stringPtr("v0.5.0-beta.14")}, nil)
 	case "/api/connectivity/connectors/ee-stripeconnect/versions/v0.5.0-beta.14":
@@ -55,6 +56,7 @@ func TestInstallSetCompletionGivenNoStableReleaseThenUsesTheLatestVersionSchema(
 	require.Equal(t, []string{"ENVIRONMENT=\trequired · Bound Stripe environment: sandbox or live. [sandbox | live]"}, candidates)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp|cobra.ShellCompDirectiveNoSpace|cobra.ShellCompDirectiveKeepOrder, directive)
 	require.Contains(t, catalog.requested, "/api/connectivity/connectors/ee-stripeconnect")
+	require.Contains(t, catalog.requested, "/api/connectivity/connectors/ee-stripeconnect/versions/v0.5.0-beta.14")
 }
 
 func TestInstallSetCompletionGivenAServerErrorThenKeepsTheStableSelection(t *testing.T) {

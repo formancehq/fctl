@@ -39,14 +39,17 @@ func NewSuspendCommand() *cobra.Command {
 	return newSuspensionCommand("suspend", "Pause ingestion for a connection", true)
 }
 
-func NewUnsuspendCommand() *cobra.Command {
-	return newSuspensionCommand("unsuspend", "Resume ingestion for a connection", false)
+// NewResumeCommand keeps unsuspend as an alias for scripts written against
+// the earlier command name.
+func NewResumeCommand() *cobra.Command {
+	return newSuspensionCommand("resume", "Resume ingestion for a connection", false, "unsuspend")
 }
 
-func newSuspensionCommand(name, description string, suspend bool) *cobra.Command {
+func newSuspensionCommand(name, description string, suspend bool, aliases ...string) *cobra.Command {
 	controller := NewSuspensionController(suspend)
 	return fctl.NewCommand(
 		name+" <connection>",
+		fctl.WithAliases(aliases...),
 		fctl.WithShortDescription(description),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectionNames()),
@@ -96,9 +99,9 @@ func (c *SuspensionController) run(cmd *cobra.Command, args []string, client *sd
 }
 
 func (c *SuspensionController) Render(cmd *cobra.Command, _ []string) error {
-	request := "suspension"
+	request := "Suspend"
 	if !c.store.Suspend {
-		request = "resumption"
+		request = "Resume"
 	}
-	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q %s requested.", c.store.Name, request))
+	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("%s requested for connection %q.", request, c.store.Name))
 }

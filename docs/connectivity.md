@@ -26,7 +26,7 @@ fctl connectivity
     ├── install <connector> --ledger <ledger>
     ├── configure <connection>
     ├── suspend <connection> --confirm
-    ├── unsuspend <connection> --confirm
+    ├── resume <connection> --confirm
     └── uninstall <connection>
 ```
 
@@ -79,7 +79,12 @@ or use one as a fallback.
 ## Versions and channels
 
 An install without `--version` or `--channel` explicitly sends `channel:
-stable`. `--version` selects a ConnectorVersion by its exact name, including
+stable`. When the connector has no stable release yet, the API answers
+`channel_empty` and install does not choose another version. It prints one
+information line on stderr naming the `--channel` and `--version` values that
+select the latest version, installs nothing and exits with status 0.
+JSON output then reports `"guided": true`. An explicit `--channel stable`
+returns the API error instead. `--version` selects a ConnectorVersion by its exact name, including
 an administrator-created opaque OCI tag; it does not select a maturity
 channel. An opaque tag can follow newly verified artifacts under the operator’s
 version rules; selecting its name does not pin its content digest.
@@ -164,18 +169,19 @@ including required secrets and a version/channel selector.
 
 ## Suspension, resumption and deletion
 
-`connections suspend` and `connections unsuspend` request the desired
+`connections suspend` and `connections resume` request the desired
 ingestion state through the Connectivity API. Both commands require
 confirmation, either interactively or with `--confirm`:
 
 ```bash
 fctl connectivity connections suspend stripe-prod --confirm
-fctl connectivity connections unsuspend stripe-prod --confirm
+fctl connectivity connections resume stripe-prod --confirm
 ```
 
 A successful command means the request was accepted; reconciliation may still
-be in progress. Use `connections show <connection>` to compare desired
-`Suspend` with observed lifecycle, ingestion state and `Suspended By` provenance. A Policy
+be in progress. `unsuspend` remains an alias of `resume`. Use
+`connections show <connection>` to compare the desired `Suspend` value
+returned by the API (`true` or `false`) with observed lifecycle, ingestion state and `Suspended By` provenance. A Policy
 can keep ingestion suspended after the tenant requests resumption. Workload
 resources, placement and other administrator settings belong to Policies;
 replica count is not a tenant setting.
@@ -184,7 +190,7 @@ replica count is not a tenant setting.
 until operator cleanup completes; command success does not prove that the
 source has disappeared from Core.
 
-`suspend` and `unsuspend` JSON output includes the `connection` returned by the
+`suspend` and `resume` JSON output includes the `connection` returned by the
 API next to `name` and `suspend`.
 
 ## Terminal output
@@ -211,7 +217,11 @@ Progress and last-error details are available through `connections show` and
 JSON output.
 
 `connections show` summarizes multi-line file values by their first line and
-line count, and long initial cursors by their first characters and length.
+line count, and long initial cursors by their first characters and length. The
+Configuration table also lists, with kind `default`, the keys the applied
+version's schema (else the pinned version's) declares with a default and the
+connection does not set; JSON output carries them under `defaults`. When the
+schema cannot be read, `show` omits these rows and still succeeds.
 
 `connectors show` groups configuration fields by the schema's
 `presentation.groups`, in the publisher's order, and marks advanced groups.
@@ -270,7 +280,9 @@ sentence of its description and its allowed values; `--set KEY=<TAB>` offers
 those values. Completion reads only what is typed before the cursor, so type
 `--version` or `--channel` before `--set`. Without either, `install` completion
 uses the stable release and falls back to the connector's latest version when it
-has no stable release. Free-text flags such as `--ledger`, `--name`,
+has no stable release, so the keys are listed before you pick a selector. Completion renews an expired stack token with its
+refresh token; when that fails it offers no candidates and never opens a
+browser, so run any command once to log in again. Free-text flags such as `--ledger`, `--name`,
 `--poll-interval`, `--query` and `--cursor` never complete file names; only
 `--config`, `--env-file` and `--set KEY=@` do.
 

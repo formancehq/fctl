@@ -9,6 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/go-libs/v4/oidc/client"
+
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	sdk "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
@@ -21,7 +23,7 @@ const (
 	CompletionMaxPages = 5
 )
 
-// CompletionClient uses only an existing, unexpired stack token and never prompts.
+// CompletionClient uses the stored stack token, refreshing it when expired, and never prompts.
 func CompletionClient(cmd *cobra.Command) (*sdk.FormanceV1, *cobra.Command, context.CancelFunc, bool) {
 	parent := cmd.Context()
 	if parent == nil {
@@ -41,7 +43,11 @@ func CompletionClient(cmd *cobra.Command) (*sdk.FormanceV1, *cobra.Command, cont
 		return nil, nil, func() {}, false
 	}
 	token, err := fctl.ReadStackToken(&completionCommand, profileName, organizationID, stackID)
-	if err != nil || token == nil || token.Expired() {
+	if err != nil || token == nil {
+		cancel()
+		return nil, nil, func() {}, false
+	}
+	if token.Expired() && !refreshStackToken(&completionCommand, relyingParty, profileName, stackID, *token) {
 		cancel()
 		return nil, nil, func() {}, false
 	}
@@ -52,6 +58,20 @@ func CompletionClient(cmd *cobra.Command) (*sdk.FormanceV1, *cobra.Command, cont
 	}
 	return client.Connectivity.V1, &completionCommand, cancel, true
 }
+
+// refreshStackToken renews an expired stack token with its refresh token.
+// Completion must never start the browser device flow the client factory
+// falls back to, so a failed refresh offers no candidates instead.
+func refreshStackToken(cmd *cobra.Command, relyingParty client.RelyingParty, profileName, stackID string, token fctl.AccessToken) bool {
+	refreshed, err := refreshToken(cmd.Context(), relyingParty, token)
+	if err != nil || refreshed == nil {
+		return false
+	}
+	return fctl.WriteStackToken(cmd, profileName, stackID, *refreshed) == nil
+}
+
+// refreshToken is a seam for tests.
+var refreshToken = fctl.Refresh
 
 type silentDialog struct{}
 

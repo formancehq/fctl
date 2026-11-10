@@ -116,7 +116,7 @@ func TestListConnectionsRejectsMissingSDKCursorData(t *testing.T) {
 
 func TestSuspensionCommandsRejectEmptySDKSuccess(t *testing.T) {
 	for _, suspend := range []bool{true, false} {
-		action := "unsuspend"
+		action := "resume"
 		if suspend {
 			action = "suspend"
 		}
@@ -127,13 +127,13 @@ func TestSuspensionCommandsRejectEmptySDKSuccess(t *testing.T) {
 					require.Equal(t, "/api/connectivity/connections/example", r.URL.Path)
 					return jsonHTTPResponse(r, http.StatusOK, body), nil
 				})})
-				command := testNewUnsuspendCommand(factoryWithSDK(api))
+				command := testNewResumeCommand(factoryWithSDK(api))
 				if suspend {
 					command = testNewSuspendCommand(factoryWithSDK(api))
 				}
 				output, err := executeCommand(command, "example", "--confirm")
 				require.ErrorContains(t, err, "empty response")
-				require.NotContains(t, output, "requested.")
+				require.NotContains(t, output, "requested")
 			})
 		}
 	}
