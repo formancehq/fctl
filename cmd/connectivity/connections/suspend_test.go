@@ -28,8 +28,8 @@ func TestSuspensionCommandsPatchOnlyDesiredBooleanAndTreatAlreadyConvergedRespon
 		suspend    bool
 		wantOutput string
 	}{
-		{name: "suspend", command: testNewSuspendCommand, suspend: true, wantOutput: `Connection "stripe-eu" suspension requested.`},
-		{name: "unsuspend", command: testNewUnsuspendCommand, suspend: false, wantOutput: `Connection "stripe-eu" resumption requested.`},
+		{name: "suspend", command: testNewSuspendCommand, suspend: true, wantOutput: `Suspend requested for connection "stripe-eu".`},
+		{name: "resume", command: testNewResumeCommand, suspend: false, wantOutput: `Resume requested for connection "stripe-eu".`},
 	}
 
 	for _, test := range tests {
@@ -74,7 +74,7 @@ func TestSuspensionCommandsPreserveAPIError(t *testing.T) {
 		return nil, apiError
 	}}
 
-	for _, command := range []func(testSDKFactory) *cobra.Command{testNewSuspendCommand, testNewUnsuspendCommand} {
+	for _, command := range []func(testSDKFactory) *cobra.Command{testNewSuspendCommand, testNewResumeCommand} {
 		_, err := executeCommand(command(factoryReturning(client)), "stripe-eu", "--confirm")
 		require.ErrorIs(t, err, apiError)
 	}
@@ -87,9 +87,19 @@ func TestSuspensionCommandsRejectInvalidArgumentsBeforeUsingClient(t *testing.T)
 		return nil, errors.New("factory must not be used")
 	}
 
-	for _, command := range []func(testSDKFactory) *cobra.Command{testNewSuspendCommand, testNewUnsuspendCommand} {
+	for _, command := range []func(testSDKFactory) *cobra.Command{testNewSuspendCommand, testNewResumeCommand} {
 		_, err := executeCommand(command(factory), "stripe-eu", "extra", "--confirm")
 		require.Error(t, err)
 	}
 	require.False(t, usedFactory)
+}
+
+func TestResumeReplacesUnsuspend(t *testing.T) {
+	root := NewCommand(mockReadFile(nil), mockPathCompleter(nil))
+
+	resume, _, err := root.Find([]string{"resume"})
+	require.NoError(t, err)
+	require.Equal(t, "resume", resume.Name())
+	unsuspend, _, _ := root.Find([]string{"unsuspend"})
+	require.Equal(t, root, unsuspend, "unsuspend is no longer a command")
 }

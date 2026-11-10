@@ -23,7 +23,7 @@ func NewCommand(read configuration.ReadFileFunc, paths PathCompleter) *cobra.Com
 			configuration.NewCommand(update),
 			configure,
 			NewSuspendCommand(),
-			NewUnsuspendCommand(),
+			NewResumeCommand(),
 			NewUninstallCommand(),
 		),
 	)

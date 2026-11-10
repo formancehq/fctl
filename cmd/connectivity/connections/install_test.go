@@ -39,16 +39,15 @@ func TestInstallBuildsConnectionFromVersionSchemaAndOnlySetsChangedScalars(t *te
 		},
 	}
 	read := mockReadFile(map[string]string{
-		"install.yaml":  "env:\n  API_URL: https://config.example\n",
-		"connector.env": "TIMEOUT=45s\n",
-		"token.txt":     "file-token",
+		"install.yaml": "env:\n  API_URL: https://config.example\n  TIMEOUT: 45s\n",
+		"token.txt":    "file-token",
 	})
 
 	output, err := executeCommand(
 		testNewInstallCommand(factoryReturning(client), read, mockPathCompleter(nil)),
 		"stripe", "--name=stripe-eu", "--ledger=main", "--version=2.0.0",
 		"--poll-interval=3s", "--config=install.yaml",
-		"--env-file=connector.env", "--set=TOKEN=@token.txt", "--confirm",
+		"--set=TOKEN=@token.txt", "--confirm",
 	)
 
 	require.NoError(t, err)
@@ -130,7 +129,7 @@ func TestInstallPreservesNativeMissingStableVersionError(t *testing.T) {
 		},
 	}}
 
-	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--confirm")
+	_, err := executeCommand(testNewInstallCommand(factoryReturning(client), mockReadFile(nil), mockPathCompleter(nil)), "stripe", "--ledger=main", "--channel=stable", "--confirm")
 
 	require.ErrorIs(t, err, apiError)
 	var nativeError *connectivity.Error

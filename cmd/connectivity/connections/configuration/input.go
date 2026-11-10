@@ -1,7 +1,6 @@
 package configuration
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"maps"
@@ -41,7 +40,6 @@ type SchemaField struct {
 
 type InputOptions struct {
 	ConfigFile string
-	EnvFiles   []string
 	SetValues  []string
 	// Patch records supplied values, including explicit nulls; nil disables intent capture.
 	Patch map[string]any
@@ -819,16 +817,6 @@ func buildConfig(cmd *cobra.Command, version *connectivity.ConnectorVersion, bas
 		}
 	}
 
-	for _, path := range inputs.EnvFiles {
-		contents, err := readInput(cmd, read, path)
-		if err != nil {
-			return nil, fmt.Errorf("cannot read env file %q", path)
-		}
-		if err := applyDotenv(config, contract, contents, unknown, inputs.Patch); err != nil {
-			return nil, fmt.Errorf("parsing env file %s:%w", path, err)
-		}
-	}
-
 	for _, assignment := range inputs.SetValues {
 		key, value, err := parseAssignment(assignment)
 		if err != nil {
@@ -920,86 +908,6 @@ func parseAssignment(raw string) (string, string, error) {
 		return "", "", fmt.Errorf("invalid --set: empty key")
 	}
 	return key, parts[1], nil
-}
-
-func applyDotenv(config *connectivity.ConnectionConfiguration, contract schemaContract, contents string, unknown map[string]struct{}, patch map[string]any) error {
-	scanner := bufio.NewScanner(strings.NewReader(contents))
-	line := 0
-	for scanner.Scan() {
-		line++
-		raw := strings.TrimSpace(scanner.Text())
-		if raw == "" || strings.HasPrefix(raw, "#") {
-			continue
-		}
-		raw = strings.TrimPrefix(raw, "export ")
-		equals := strings.IndexByte(raw, '=')
-		if equals <= 0 {
-			return fmt.Errorf("%d: expected KEY=value", line)
-		}
-		key := strings.TrimSpace(raw[:equals])
-		if key == "" {
-			return fmt.Errorf("%d: expected KEY=value", line)
-		}
-		value := unquoteEnvValue(raw[equals+1:])
-		field, exists := configField(contract, key, ConfigEnv)
-		if !exists {
-			unknown[key] = struct{}{}
-			continue
-		}
-		parsed, err := literalValue(value)
-		if err != nil {
-			return fmt.Errorf("configuration key %q: %w", key, err)
-		}
-		applyValue(config, field, parsed)
-		if err := recordValue(patch, field, value); err != nil {
-			return err
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func unquoteEnvValue(value string) string {
-	value = strings.TrimSpace(value)
-	if comment := dotenvCommentIndex(value); comment >= 0 {
-		value = strings.TrimSpace(value[:comment])
-	}
-	if len(value) >= 2 {
-		if value[0] == '"' && value[len(value)-1] == '"' {
-			return applyDoubleQuoteEscapes(value[1 : len(value)-1])
-		}
-		if value[0] == '\'' && value[len(value)-1] == '\'' {
-			return value[1 : len(value)-1]
-		}
-	}
-	return value
-}
-
-func dotenvCommentIndex(value string) int {
-	var quote byte
-	for index := 0; index < len(value); index++ {
-		character := value[index]
-		if quote != 0 {
-			if quote == '"' && character == '\\' && index+1 < len(value) {
-				index++
-				continue
-			}
-			if character == quote {
-				quote = 0
-			}
-			continue
-		}
-		if character == '"' || character == '\'' {
-			quote = character
-			continue
-		}
-		if character == '#' && (index == 0 || value[index-1] == ' ' || value[index-1] == '\t') {
-			return index
-		}
-	}
-	return -1
 }
 
 func applyDoubleQuoteEscapes(value string) string {

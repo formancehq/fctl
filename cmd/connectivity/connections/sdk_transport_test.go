@@ -25,7 +25,6 @@ func TestConfigureUsesSDKRouteAndPreservesMergePatchIntent(t *testing.T) {
 		{name: "delete one entry", flags: []string{"--config=config.yaml"}, config: "env:\n  TOKEN: null\n  API_URL: replacement\n", want: `{"configuration":{"env":{"TOKEN":null,"API_URL":"replacement"}}}`},
 		{name: "delete entire map", flags: []string{"--config=config.yaml"}, config: "env: null\nfiles: null\n", want: `{"configuration":{"env":null,"files":null}}`},
 		{name: "empty map preserves values", flags: []string{"--config=config.yaml", "--poll-interval=1m"}, config: "env: {}\n", want: `{"configuration":{"pollInterval":"1m"}}`},
-		{name: "opaque cursor", flags: []string{"--initial-cursor=AP9h"}, want: `{"configuration":{"initialCursor":"AP9h"}}`},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			instance := instanceFixture("source/name?x")
@@ -116,7 +115,7 @@ func TestListConnectionsRejectsMissingSDKCursorData(t *testing.T) {
 
 func TestSuspensionCommandsRejectEmptySDKSuccess(t *testing.T) {
 	for _, suspend := range []bool{true, false} {
-		action := "unsuspend"
+		action := "resume"
 		if suspend {
 			action = "suspend"
 		}
@@ -127,13 +126,13 @@ func TestSuspensionCommandsRejectEmptySDKSuccess(t *testing.T) {
 					require.Equal(t, "/api/connectivity/connections/example", r.URL.Path)
 					return jsonHTTPResponse(r, http.StatusOK, body), nil
 				})})
-				command := testNewUnsuspendCommand(factoryWithSDK(api))
+				command := testNewResumeCommand(factoryWithSDK(api))
 				if suspend {
 					command = testNewSuspendCommand(factoryWithSDK(api))
 				}
 				output, err := executeCommand(command, "example", "--confirm")
 				require.ErrorContains(t, err, "empty response")
-				require.NotContains(t, output, "requested.")
+				require.NotContains(t, output, "requested")
 			})
 		}
 	}

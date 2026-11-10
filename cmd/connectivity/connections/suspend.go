@@ -39,8 +39,8 @@ func NewSuspendCommand() *cobra.Command {
 	return newSuspensionCommand("suspend", "Pause ingestion for a connection", true)
 }
 
-func NewUnsuspendCommand() *cobra.Command {
-	return newSuspensionCommand("unsuspend", "Resume ingestion for a connection", false)
+func NewResumeCommand() *cobra.Command {
+	return newSuspensionCommand("resume", "Resume ingestion for a connection", false)
 }
 
 func newSuspensionCommand(name, description string, suspend bool) *cobra.Command {
@@ -96,9 +96,9 @@ func (c *SuspensionController) run(cmd *cobra.Command, args []string, client *sd
 }
 
 func (c *SuspensionController) Render(cmd *cobra.Command, _ []string) error {
-	request := "suspension"
+	request := "Suspend"
 	if !c.store.Suspend {
-		request = "resumption"
+		request = "Resume"
 	}
-	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q %s requested.", c.store.Name, request))
+	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("%s requested for connection %q.", request, c.store.Name))
 }

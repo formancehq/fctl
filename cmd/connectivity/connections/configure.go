@@ -46,10 +46,8 @@ func NewConfigureCommand(read configuration.ReadFileFunc, paths PathCompleter) *
 		fctl.WithValidArgsFunction(CompleteConnectionNames()),
 		fctl.WithStringFlag(versionFlag, "", "Exact connector version to pin, for example v0.5.0-beta.14. Cannot be combined with --channel"),
 		fctl.WithStringFlag(channelFlag, "", "Maturity channel to track: stable, rc, beta or alpha. Cannot be combined with --version"),
-		fctl.WithStringFlag(initialCursorFlag, "", "Base64 cursor ingestion starts from. Does not reset a running cursor"),
 		fctl.WithStringFlag(pollIntervalFlag, "", "Polling interval as a Go duration, for example 30s. Defaults to the service value"),
-		fctl.WithStringFlag(configFlag, "", "YAML or JSON configuration file"),
-		fctl.WithStringArrayFlag(envFileFlag, nil, "Dotenv configuration file (repeatable)"),
+		fctl.WithStringFlag(configFlag, "", "Configuration file, YAML or JSON, with an env map and a files map: {env: {KEY: value}, files: {/path/in/plugin: contents}}. a null value removes that key"),
 		fctl.WithStringArrayFlag(setFlag, nil, "Configuration value KEY=VALUE, or KEY=@path to read a file (repeatable). Completion follows a --version or --channel typed before it"),
 		fctl.WithConfirmFlag(),
 		fctl.WithController[*ConfigureStore](controller),
@@ -59,7 +57,7 @@ func NewConfigureCommand(read configuration.ReadFileFunc, paths PathCompleter) *
 			"fctl connectivity connections configure stripeconnect-fpss \\",
 			"    --set HISTORY_START=2026-01-01T00:00:00Z",
 		),
-		fctl.WithoutFileCompletion(pollIntervalFlag, initialCursorFlag),
+		fctl.WithoutFileCompletion(pollIntervalFlag),
 		fctl.WithFlagCompletion(versionFlag, completeVersions(resolveConfigureConnector)),
 		fctl.WithFlagCompletion(channelFlag, connectivityinternal.CompleteChannels()),
 		fctl.WithFlagCompletion(setFlag, CompleteSetValues(resolveConfigureConnectorVersion, paths)),
@@ -141,9 +139,6 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 	if err := validateSelectors(cmd); err != nil {
 		return nil, err
 	}
-	if _, err := initialCursor(cmd); err != nil {
-		return nil, err
-	}
 
 	_, profile, profileName, relyingParty, err := fctl.LoadAndAuthenticateCurrentProfile(cmd)
 	if err != nil {
@@ -158,10 +153,6 @@ func (c *ConfigureController) Run(cmd *cobra.Command, args []string) (fctl.Rende
 
 func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk.FormanceV1) (fctl.Renderable, error) {
 	if err := validateSelectors(cmd); err != nil {
-		return nil, err
-	}
-	cursor, err := initialCursor(cmd)
-	if err != nil {
 		return nil, err
 	}
 
@@ -180,7 +171,7 @@ func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk
 
 	connector := fctl.StringPointerToString(instance.ConnectionConfiguration.Connector)
 	specPatch := map[string]any{}
-	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(envFileFlag) || cmd.Flags().Changed(setFlag)
+	configChanged := cmd.Flags().Changed(configFlag) || cmd.Flags().Changed(setFlag)
 	if configChanged {
 		pinned, channel, err := configureVersionSelector(cmd, instance)
 		if err != nil {
@@ -195,10 +186,6 @@ func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk
 		if err != nil {
 			return nil, err
 		}
-		envFiles, err := cmd.Flags().GetStringArray(envFileFlag)
-		if err != nil {
-			return nil, err
-		}
 		setValues, err := cmd.Flags().GetStringArray(setFlag)
 		if err != nil {
 			return nil, err
@@ -207,7 +194,6 @@ func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk
 		_, err = configuration.BuildConfigureConfig(cmd, version, &instance.ConnectionConfiguration, configuration.InputOptions{
 			Patch:      intent,
 			ConfigFile: fctl.GetString(cmd, configFlag),
-			EnvFiles:   envFiles,
 			SetValues:  setValues,
 		}, c.read)
 		if err != nil {
@@ -228,9 +214,6 @@ func (c *ConfigureController) run(cmd *cobra.Command, args []string, client *sdk
 	}
 	if cmd.Flags().Changed(pollIntervalFlag) {
 		specPatch["pollInterval"] = fctl.GetString(cmd, pollIntervalFlag)
-	}
-	if cmd.Flags().Changed(initialCursorFlag) {
-		specPatch["initialCursor"] = cursor
 	}
 	if len(specPatch) == 0 {
 		return nil, fmt.Errorf("no configuration changes requested")

@@ -163,58 +163,12 @@ func TestBuildInstallConfigParsesLiteralYAML(t *testing.T) {
 	require.Equal(t, "structured-ca", got.Files["/etc/plugin/ca.pem"])
 }
 
-func TestBuildInstallConfigParsesDotenvFilesInOrder(t *testing.T) {
-	got, err := configuration.BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), configuration.InputOptions{EnvFiles: []string{"first.env", "second.env"}}, mapReadFile(map[string]string{
-		"first.env":  "# comment\n\nAPI_URL=https://first.example\nTOKEN=first=token\n",
-		"second.env": "API_URL=https://second.example\n",
-	}))
-
-	require.NoError(t, err)
-	require.Equal(t, "https://second.example", got.Env["API_URL"])
-	require.Equal(t, "first=token", got.Env["TOKEN"])
-}
-
-func TestBuildInstallConfigParsesEstablishedDotenvSyntax(t *testing.T) {
-	got, err := configuration.BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), configuration.InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
-		"values.env": ` export API_URL = https://env.example # endpoint
-TOKEN="line-one\nline-two\t\"quoted\"\\tail"
-TIMEOUT='  literal # value  '
-`,
-	}))
-
-	require.NoError(t, err)
-	require.Equal(t, "https://env.example", got.Env["API_URL"])
-	require.Equal(t, "line-one\nline-two\t\"quoted\"\\tail", got.Env["TOKEN"])
-	require.Equal(t, "  literal # value  ", got.Env["TIMEOUT"])
-}
-
-func TestBuildInstallConfigUnquotesDotenvValueBeforeTrailingComment(t *testing.T) {
-	got, err := configuration.BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), configuration.InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
-		"values.env": "TOKEN=\"abc#def\" # trailing comment\n",
-	}))
-
-	require.NoError(t, err)
-	require.Equal(t, "abc#def", got.Env["TOKEN"])
-}
-
-func TestBuildInstallConfigPreservesHashWithinUnquotedDotenvValue(t *testing.T) {
-	got, err := configuration.BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), configuration.InputOptions{EnvFiles: []string{"values.env"}}, mapReadFile(map[string]string{
-		"values.env": "TOKEN=abc#def\n",
-	}))
-
-	require.NoError(t, err)
-	require.Equal(t, "abc#def", got.Env["TOKEN"])
-}
-
 func TestBuildInstallConfigAppliesDocumentedSourcePrecedence(t *testing.T) {
 	got, err := configuration.BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), configuration.InputOptions{
 		ConfigFile: "config.yaml",
-		EnvFiles:   []string{"first.env", "second.env"},
 		SetValues:  []string{"API_URL=https://set-one.example", "API_URL=https://set-two.example"},
 	}, mapReadFile(map[string]string{
 		"config.yaml": "env:\n  API_URL: https://config.example\n",
-		"first.env":   "API_URL=https://env-one.example\n",
-		"second.env":  "API_URL=https://env-two.example\n",
 	}))
 
 	require.NoError(t, err)
@@ -328,12 +282,6 @@ func TestBuildInstallConfigReturnsInputReadAndParseErrors(t *testing.T) {
 
 		require.ErrorContains(t, err, "config.yaml")
 	})
-
-	t.Run("malformed dotenv", func(t *testing.T) {
-		_, err := configuration.BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), configuration.InputOptions{EnvFiles: []string{"bad.env"}}, mapReadFile(map[string]string{"bad.env": "TOKEN\n"}))
-
-		require.ErrorContains(t, err, "bad.env:1")
-	})
 }
 
 func TestBuildConfigDecodeErrorsDoNotEchoSecrets(t *testing.T) {
@@ -426,7 +374,7 @@ func TestConfigureRejectsUnrepresentableMapClearAndSetWithoutLosingIntent(t *tes
 }
 
 func TestConfigurationReadErrorsDoNotEchoSecretContents(t *testing.T) {
-	for _, input := range []configuration.InputOptions{{ConfigFile: "config"}, {EnvFiles: []string{"env"}}, {SetValues: []string{"TOKEN=@file"}}} {
+	for _, input := range []configuration.InputOptions{{ConfigFile: "config"}, {SetValues: []string{"TOKEN=@file"}}} {
 		_, err := configuration.BuildInstallConfig(&cobra.Command{}, versionWithOptionalSchema(), input, func(*cobra.Command, string) (string, error) { return "", errors.New("SECRET-SENTINEL") })
 		require.Error(t, err)
 		require.NotContains(t, err.Error(), "SECRET-SENTINEL")
