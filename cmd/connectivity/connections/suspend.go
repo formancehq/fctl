@@ -39,17 +39,14 @@ func NewSuspendCommand() *cobra.Command {
 	return newSuspensionCommand("suspend", "Pause ingestion for a connection", true)
 }
 
-// NewResumeCommand keeps unsuspend as an alias for scripts written against
-// the earlier command name.
 func NewResumeCommand() *cobra.Command {
-	return newSuspensionCommand("resume", "Resume ingestion for a connection", false, "unsuspend")
+	return newSuspensionCommand("resume", "Resume ingestion for a connection", false)
 }
 
-func newSuspensionCommand(name, description string, suspend bool, aliases ...string) *cobra.Command {
+func newSuspensionCommand(name, description string, suspend bool) *cobra.Command {
 	controller := NewSuspensionController(suspend)
 	return fctl.NewCommand(
 		name+" <connection>",
-		fctl.WithAliases(aliases...),
 		fctl.WithShortDescription(description),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectionNames()),

@@ -94,11 +94,12 @@ func TestSuspensionCommandsRejectInvalidArgumentsBeforeUsingClient(t *testing.T)
 	require.False(t, usedFactory)
 }
 
-func TestResumeKeepsUnsuspendAsAnAlias(t *testing.T) {
+func TestResumeReplacesUnsuspend(t *testing.T) {
 	root := NewCommand(mockReadFile(nil), mockPathCompleter(nil))
 
-	command, _, err := root.Find([]string{"unsuspend"})
-
+	resume, _, err := root.Find([]string{"resume"})
 	require.NoError(t, err)
-	require.Equal(t, "resume", command.Name())
+	require.Equal(t, "resume", resume.Name())
+	unsuspend, _, _ := root.Find([]string{"unsuspend"})
+	require.Equal(t, root, unsuspend, "unsuspend is no longer a command")
 }

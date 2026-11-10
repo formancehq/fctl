@@ -36,7 +36,8 @@ const (
 )
 
 type InstallStore struct {
-	Connection connectivity.Connection `json:"connection"`
+	// Connection is omitted when nothing was installed.
+	Connection *connectivity.Connection `json:"connection,omitempty"`
 	// Guided reports that nothing was installed because a selector must be
 	// chosen; the guidance is on stderr.
 	Guided bool `json:"guided,omitempty"`
@@ -352,7 +353,7 @@ func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.F
 	if instance == nil || instance.Name == "" {
 		return nil, fmt.Errorf("install connectivity connection %q: empty response", name)
 	}
-	c.store.Connection = *instance
+	c.store.Connection = instance
 	return c, nil
 }
 

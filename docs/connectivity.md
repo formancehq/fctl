@@ -83,7 +83,7 @@ stable`. When the connector has no stable release yet, the API answers
 `channel_empty` and install does not choose another version. It prints one
 information line on stderr naming the `--channel` and `--version` values that
 select the latest version, installs nothing and exits with status 0.
-JSON output then reports `"guided": true`. An explicit `--channel stable`
+JSON output is then `{"data": {"guided": true}}`, without a `connection`. An explicit `--channel stable`
 returns the API error instead. `--version` selects a ConnectorVersion by its exact name, including
 an administrator-created opaque OCI tag; it does not select a maturity
 channel. An opaque tag can follow newly verified artifacts under the operator’s
@@ -179,7 +179,7 @@ fctl connectivity connections resume stripe-prod --confirm
 ```
 
 A successful command means the request was accepted; reconciliation may still
-be in progress. `unsuspend` remains an alias of `resume`. Use
+be in progress. Use
 `connections show <connection>` to compare the desired `Suspend` value
 returned by the API (`true` or `false`) with observed lifecycle, ingestion state and `Suspended By` provenance. A Policy
 can keep ingestion suspended after the tenant requests resumption. Workload
