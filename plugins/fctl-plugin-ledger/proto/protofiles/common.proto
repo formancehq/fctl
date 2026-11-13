@@ -1,0 +1,910 @@
+syntax = "proto3";
+
+package common;
+
+option go_package = "github.com/formancehq/fctl-plugin-ledger/proto/commonpb";
+
+import "signature.proto";
+
+// ============================================================================
+// Core Data Types
+// ============================================================================
+
+message Timestamp {
+  uint64 data = 1;
+}
+
+// Metadata represents account or transaction metadata as a map of string key-value pairs
+message Metadata {
+  string key = 1;
+  MetadataValue value = 2;
+}
+
+// NullValue represents a metadata value that could not be converted to the
+// declared type. It preserves the original raw value for debugging, but
+// signals to consumers that the value is unusable in its expected type.
+message NullValue {
+  string original = 1;
+}
+
+message MetadataValue {
+  oneof type {
+    string string_value = 1;  // wire-compatible with existing field 1
+    int64 int_value = 2;
+    bool bool_value = 3;
+    NullValue null_value = 4;
+    uint64 uint_value = 5;
+  }
+}
+
+message MetadataSet {
+  repeated Metadata metadata = 1;
+}
+
+message Uint256 {
+  fixed64 v0 = 1;  // least significant limb
+  fixed64 v1 = 2;
+  fixed64 v2 = 3;
+  fixed64 v3 = 4;  // most significant limb
+}
+
+// Posting represents a single posting in a transaction
+message Posting {
+  string source = 1;
+  string destination = 2;
+  Uint256 amount = 3;
+  string asset = 4;
+}
+
+// Transaction represents a transaction
+message Transaction {
+  repeated Posting postings = 1;
+  MetadataSet metadata = 2;
+  Timestamp timestamp = 3;
+  string reference = 4;
+  uint64 id = 5;
+  bool reverted = 6;
+  Timestamp inserted_at = 7;
+  Timestamp updated_at = 8;
+  Timestamp reverted_at = 9;
+}
+
+message Script {
+  string plain = 1;
+  map<string, string> vars = 2;
+}
+
+// ============================================================================
+// Volumes
+// ============================================================================
+
+// Volumes represents input and output volumes
+message Volumes {
+  string input = 1;   // big.Int as string
+  string output = 2;  // big.Int as string
+}
+
+// VolumesWithBalance represents volumes with balance
+message VolumesWithBalance {
+  string input = 1;    // big.Int as string
+  string output = 2;   // big.Int as string
+  string balance = 3;  // big.Int as string
+}
+
+// VolumesByAssets represents volumes grouped by asset
+message VolumesByAssets {
+  map<string, Volumes> volumes = 1;
+}
+
+// PostCommitVolumes represents volumes after commit, grouped by account and asset
+message PostCommitVolumes {
+  map<string, VolumesByAssets> volumes_by_account = 1;
+}
+
+// ============================================================================
+// Account
+// ============================================================================
+
+// Account represents an account in the ledger
+message Account {
+  string address = 1;
+  MetadataSet metadata = 2;
+  Timestamp first_usage = 3;
+  Timestamp insertion_date = 4;
+  Timestamp updated_at = 5;
+  map<string, VolumesWithBalance> volumes = 6;  // Volumes per asset
+}
+
+// AccountsVolumes represents volumes for a specific account and asset
+message AccountsVolumes {
+  string account = 1;
+  string asset = 2;
+  string input = 3;   // big.Int as string
+  string output = 4;  // big.Int as string
+}
+
+// ============================================================================
+// Target (for metadata operations)
+// ============================================================================
+
+enum TargetType {
+  TARGET_TYPE_ACCOUNT = 0;
+  TARGET_TYPE_TRANSACTION = 1;
+}
+
+message TargetAccount {
+  string addr = 1;
+}
+
+message TargetTransaction {
+  uint64 id = 1;
+}
+
+message Target {
+  oneof target {
+    TargetAccount account = 1;
+    TargetTransaction transaction = 2;
+  }
+}
+
+// ============================================================================
+// Metadata Schema
+// ============================================================================
+
+enum MetadataType {
+  METADATA_TYPE_STRING = 0;
+  METADATA_TYPE_INT64 = 1;
+  METADATA_TYPE_BOOL = 2;
+  METADATA_TYPE_UINT64 = 3;
+  METADATA_TYPE_INT8 = 4;
+  METADATA_TYPE_INT16 = 5;
+  METADATA_TYPE_INT32 = 6;
+  METADATA_TYPE_UINT8 = 7;
+  METADATA_TYPE_UINT16 = 8;
+  METADATA_TYPE_UINT32 = 9;
+}
+
+enum MetadataConversionStatus {
+  METADATA_CONVERSION_COMPLETE = 0;
+  METADATA_CONVERSION_CONVERTING = 1;
+}
+
+enum IndexBuildStatus {
+  INDEX_BUILD_STATUS_UNSPECIFIED = 0;
+  INDEX_BUILD_STATUS_BUILDING = 1;
+  INDEX_BUILD_STATUS_READY = 2;
+}
+
+message MetadataFieldSchema {
+  MetadataType type = 1;
+  MetadataConversionStatus status = 2;
+  uint64 total_keys = 3;
+  uint64 converted_keys = 4;
+  bool indexed = 5;
+  IndexBuildStatus index_build_status = 6;
+}
+
+message MetadataSchema {
+  map<string, MetadataFieldSchema> account_fields = 1;
+  map<string, MetadataFieldSchema> transaction_fields = 2;
+}
+
+message SetMetadataFieldTypeCommand {
+  TargetType target_type = 1;
+  string key = 2;
+  MetadataType type = 3;
+}
+
+// AddressIndexConfig controls per-role account-transaction indexes on a ledger.
+message AddressIndexConfig {
+  bool address = 1;
+  bool source = 2;
+  bool destination = 3;
+  IndexBuildStatus address_status = 4;
+  IndexBuildStatus source_status = 5;
+  IndexBuildStatus destination_status = 6;
+}
+
+// MetadataIndexTarget identifies a metadata index by target type and key.
+message MetadataIndexTarget {
+  TargetType target = 1;
+  string key = 2;
+}
+
+// ============================================================================
+// Idempotency
+// ============================================================================
+
+message Idempotency {
+  string key = 1;
+}
+
+// IdempotencyEntry represents an idempotency key entry stored in Pebble
+message IdempotencyEntry {
+  bytes hash = 1;                          // Idempotency hash
+  uint64 log_id = 2;                        // Log ID
+}
+
+// ============================================================================
+// Log
+// ============================================================================
+
+message Log {
+  uint64 sequence = 1;
+  LogPayload payload = 2;
+  Idempotency idempotency = 3;
+  bytes hash = 4;
+  signature.RequestSignature signature = 5;
+  string receipt = 6;
+  signature.ResponseSignature response_signature = 7;
+}
+
+message LogPayload {
+  oneof type {
+    CreateLedgerLog create_ledger = 1;
+    DeleteLedgerLog delete_ledger = 2;
+    ApplyLedgerLog apply = 3;
+    RegisterSigningKeyLog register_signing_key = 4;
+    RevokeSigningKeyLog revoke_signing_key = 5;
+    SetSigningConfigLog set_signing_config = 6;
+    AddedEventsSinkLog added_events_sink = 7;
+    RemovedEventsSinkLog removed_events_sink = 8;
+    ClosePeriodLog close_period = 9;
+    SealPeriodLog seal_period = 10;
+    ArchivePeriodLog archive_period = 11;
+    ConfirmArchivePeriodLog confirm_archive_period = 12;
+    SetMaintenanceModeLog set_maintenance_mode = 13;
+    SetPeriodScheduleLog set_period_schedule = 14;
+    DeletePeriodScheduleLog delete_period_schedule = 15;
+    SetAuditConfigLog set_audit_config = 16;
+    PromoteLedgerLog promote_ledger = 17;
+    CreatedPreparedQueryLog created_prepared_query = 18;
+    UpdatedPreparedQueryLog updated_prepared_query = 19;
+    DeletedPreparedQueryLog deleted_prepared_query = 20;
+    SavedNumscriptLog saved_numscript = 21;
+    DeletedNumscriptLog deleted_numscript = 22;
+  }
+}
+
+message PromoteLedgerLog {
+  LedgerInfo info = 1;
+}
+
+// ============================================================================
+// Signing Key Log Messages
+// ============================================================================
+
+// RegisterSigningKeyLog records a signing key registration.
+message RegisterSigningKeyLog {
+  string key_id = 1;
+  bytes public_key = 2;
+  string parent_key_id = 3;
+}
+
+// RevokeSigningKeyLog records a signing key revocation.
+message RevokeSigningKeyLog {
+  string key_id = 1;
+  repeated string cascaded_key_ids = 2;
+}
+
+// SigningKey represents a registered signing key with its parent relationship.
+message SigningKey {
+  string key_id = 1;
+  bytes public_key = 2;
+  string parent_key_id = 3;
+}
+
+// SetSigningConfigLog records a signing configuration change.
+message SetSigningConfigLog {
+  bool require_signatures = 1;
+}
+
+// AddedEventsSinkLog records the addition (or update) of a named sink config.
+message AddedEventsSinkLog {
+  SinkConfig config = 1;
+}
+
+// RemovedEventsSinkLog records the removal of a named sink config.
+message RemovedEventsSinkLog {
+  string name = 1;
+}
+
+// SetMaintenanceModeLog records a maintenance mode change.
+message SetMaintenanceModeLog {
+  bool enabled = 1;
+}
+
+// SetPeriodScheduleLog records a period schedule change.
+message SetPeriodScheduleLog {
+  string cron = 1;
+}
+
+// DeletePeriodScheduleLog records the removal of the period schedule.
+message DeletePeriodScheduleLog {}
+
+// SetAuditConfigLog records an audit configuration change.
+message SetAuditConfigLog {
+  bool enabled = 1;
+}
+
+// CreatedPreparedQueryLog records the creation of a prepared query.
+message CreatedPreparedQueryLog {
+  PreparedQuery query = 1;
+}
+
+// UpdatedPreparedQueryLog records the update of a prepared query filter.
+message UpdatedPreparedQueryLog {
+  string ledger = 1;
+  string name = 2;
+  QueryFilter previous_filter = 3;
+  QueryFilter new_filter = 4;
+}
+
+// DeletedPreparedQueryLog records the deletion of a prepared query.
+message DeletedPreparedQueryLog {
+  string ledger = 1;
+  string name = 2;
+}
+
+// ============================================================================
+// Event Types
+// ============================================================================
+
+enum EventType {
+  EVENT_TYPE_UNSPECIFIED = 0;
+  COMMITTED_TRANSACTION = 1;
+  REVERTED_TRANSACTION = 2;
+  SAVED_METADATA = 3;
+  DELETED_METADATA = 4;
+  CREATED_LEDGER = 5;
+  DELETED_LEDGER = 6;
+}
+
+// ============================================================================
+// Numscript Library Messages
+// ============================================================================
+
+// NumscriptInfo represents a stored numscript with versioning.
+message NumscriptInfo {
+  string name = 1;
+  string content = 2;
+  string version = 3;
+  Timestamp created_at = 4;
+}
+
+// SavedNumscriptLog records a numscript being saved to the library.
+message SavedNumscriptLog {
+  NumscriptInfo info = 1;
+}
+
+// DeletedNumscriptLog records a numscript being deleted from the library.
+message DeletedNumscriptLog {
+  string name = 1;
+}
+
+// SinkConfig wraps a single sink configuration with per-sink settings.
+message SinkConfig {
+  string name = 1;  // Stable identifier for per-sink cursor and status keys
+  oneof type {
+    NatsSinkConfig nats = 2;
+    ClickHouseSinkConfig clickhouse = 6;
+    KafkaSinkConfig kafka = 7;
+    HttpSinkConfig http = 8;
+  }
+  string format = 3;          // "json" or "protobuf" (default: "json")
+  int32 batch_size = 4;       // Max events per batch (default: 64)
+  int64 batch_delay_ms = 5;   // Max delay before flush in ms (default: 10)
+  repeated EventType event_types = 9;  // Empty = all events (default)
+}
+
+// SinkStatus tracks per-sink operational state (replicated via Raft).
+message SinkStatus {
+  string sink_name = 1;
+  uint64 cursor = 2;         // Last published sequence
+  SinkError error = 3;       // Most recent error (nil = healthy)
+}
+
+// SinkError records a sink failure.
+message SinkError {
+  string message = 1;
+  Timestamp occurred_at = 2;
+}
+
+// NatsSinkConfig holds NATS JetStream sink configuration.
+message NatsSinkConfig {
+  string url = 1;
+  string topic = 2;
+}
+
+// ClickHouseSinkConfig holds ClickHouse sink configuration.
+message ClickHouseSinkConfig {
+  string dsn = 1;    // e.g. "clickhouse://user:pass@host:9000/db"
+  string table = 2;  // Table name (default: "ledger_events")
+}
+
+// KafkaSinkConfig holds Apache Kafka sink configuration.
+message KafkaSinkConfig {
+  repeated string brokers = 1;  // e.g. ["localhost:9092"]
+  string topic = 2;             // Kafka topic name
+  bool tls = 3;                 // Enable TLS
+  string sasl_mechanism = 4;    // SASL mechanism: "", "PLAIN", "SCRAM-SHA-256", "SCRAM-SHA-512"
+  string sasl_username = 5;
+  string sasl_password = 6;
+}
+
+// HttpSinkConfig holds HTTP webhook sink configuration.
+message HttpSinkConfig {
+  string endpoint = 1;          // Target URL (e.g. "https://example.com/webhooks/ledger")
+  string secret = 2;            // Optional HMAC-SHA256 secret for X-Webhook-Signature header
+}
+
+message CreateLedgerLog {
+  LedgerInfo info = 1;
+}
+
+message DeleteLedgerLog {
+  LedgerInfo info = 1;  // Ledger info with deleted_at set
+}
+
+message ApplyLedgerLog {
+  string ledger_name = 1;
+  LedgerLog log = 2;
+}
+
+message LedgerLog {
+  LedgerLogPayload data = 1;
+  Timestamp date = 2;
+  uint64 id = 3;
+}
+
+message LedgerLogPayload {
+  oneof payload {
+    CreatedTransaction created_transaction = 1;
+    RevertedTransaction reverted_transaction = 2;
+    SavedMetadata saved_metadata = 3;
+    DeletedMetadata deleted_metadata = 4;
+    SetMetadataFieldTypeLog set_metadata_field_type = 5;
+    RemovedMetadataFieldTypeLog removed_metadata_field_type = 6;
+    ConvertMetadataBatchLog convert_metadata_batch = 7;
+    MetadataConversionCompleteLog metadata_conversion_complete = 8;
+    FillGapLog fill_gap = 9;
+    CreateIndexLog create_index = 10;
+    DropIndexLog drop_index = 11;
+    IndexReadyLog index_ready = 12;
+    SetChartOfAccountsLog set_chart_of_accounts = 13;
+    SetChartEnforcementModeLog set_chart_enforcement_mode = 14;
+  }
+}
+
+// CreateIndexLog records the creation of an index.
+message CreateIndexLog {
+  oneof index {
+    AddressRole address_role = 1;
+    MetadataIndexTarget metadata = 2;
+  }
+}
+
+// DropIndexLog records the removal of an index.
+message DropIndexLog {
+  oneof index {
+    AddressRole address_role = 1;
+    MetadataIndexTarget metadata = 2;
+  }
+}
+
+// IndexReadyLog records that an index has finished building.
+message IndexReadyLog {
+  oneof index {
+    AddressRole address_role = 1;
+    MetadataIndexTarget metadata = 2;
+  }
+}
+
+message FillGapLog {
+  uint64 original_id = 1;  // v2 log ID that this gap fills
+}
+
+message ConvertMetadataBatchLog {
+  TargetType target_type = 1;
+  string key = 2;
+  uint32 count = 3;
+}
+
+message MetadataConversionCompleteLog {
+  TargetType target_type = 1;
+  string key = 2;
+}
+
+message CreatedTransaction {
+  Transaction transaction = 1;
+  map<string, MetadataSet> account_metadata = 2;
+  uint64 period_id = 3;  // Period that was OPEN when this transaction was created
+  PostCommitVolumes post_commit_volumes = 4;  // Opt-in: volumes after commit (only when expand_volumes is true)
+  repeated ChartViolation warnings = 5;  // Chart of accounts violations (AUDIT mode only)
+}
+
+message RevertedTransaction {
+  uint64 reverted_transaction_id = 1;
+  Transaction revert_transaction = 2;
+  PostCommitVolumes post_commit_volumes = 3;  // Opt-in: volumes after commit (only when expand_volumes is true)
+  repeated ChartViolation warnings = 4;  // Chart of accounts violations (AUDIT mode only)
+}
+
+message SavedMetadata {
+  Target target = 1;
+  MetadataSet metadata = 2;
+  repeated ChartViolation warnings = 3;  // Chart of accounts violations (AUDIT mode only)
+}
+
+message DeletedMetadata {
+  Target target = 1;
+  string key = 2;                           // Metadata key to delete
+}
+
+// SetMetadataFieldTypeLog records a metadata field type declaration.
+message SetMetadataFieldTypeLog {
+  TargetType target_type = 1;
+  string key = 2;
+  MetadataType type = 3;
+}
+
+// RemovedMetadataFieldTypeLog records the removal of a metadata field type declaration.
+message RemovedMetadataFieldTypeLog {
+  TargetType target_type = 1;
+  string key = 2;
+}
+
+// ============================================================================
+// Period
+// ============================================================================
+
+enum PeriodStatus {
+  PERIOD_OPEN = 0;
+  PERIOD_CLOSING = 1;
+  PERIOD_CLOSED = 2;
+  PERIOD_ARCHIVED = 3;
+  PERIOD_ARCHIVING = 4;
+}
+
+message Period {
+  uint64 id = 1;
+  Timestamp start = 2;
+  Timestamp end = 3;
+  PeriodStatus status = 4;
+  uint64 close_sequence = 5;
+  bytes sealing_hash = 6;
+  bytes last_log_hash = 7;   // Log chain hash at the time the period was closed (for crash recovery)
+  uint64 start_sequence = 8; // First log sequence in this period (previous close_sequence + 1, or 1 for the first period)
+}
+
+message ClosePeriodLog {
+  Period closed_period = 1;
+  Period new_period = 2;
+}
+
+message SealPeriodLog {
+  Period period = 1;
+}
+
+message ArchivePeriodLog {
+  Period period = 1;  // The period being archived (still CLOSED at this point)
+}
+
+message ConfirmArchivePeriodLog {
+  Period period = 1;  // Period now in ARCHIVED status
+}
+
+// ============================================================================
+// Ledger Mode
+// ============================================================================
+
+enum LedgerMode {
+  LEDGER_MODE_NORMAL = 0;
+  LEDGER_MODE_MIRROR = 1;
+}
+
+message MirrorSourceConfig {
+  string ledger_name = 1;  // Source ledger name (common to all source types)
+  oneof type {
+    HttpMirrorSourceConfig http = 2;
+    PostgresMirrorSourceConfig postgres = 3;
+  }
+  uint32 batch_size = 4;  // Max logs per batch (0 = default 100). Client's responsibility to avoid saturating the instance.
+}
+
+message HttpMirrorSourceConfig {
+  string base_url = 1;
+  OAuth2ClientCredentials oauth2_client_credentials = 2;
+}
+
+message OAuth2ClientCredentials {
+  string client_id = 1;
+  string client_secret = 2;
+  string token_endpoint = 3;
+  repeated string scopes = 4;
+}
+
+message PostgresMirrorSourceConfig {
+  string dsn = 1;  // e.g. "postgres://user:pass@host:5432/ledger?sslmode=disable"
+}
+
+message MirrorSyncError {
+  string message = 1;
+  Timestamp occurred_at = 2;
+}
+
+enum MirrorSyncState {
+  MIRROR_SYNC_STATE_SYNCING = 0;
+  MIRROR_SYNC_STATE_FOLLOWING = 1;
+}
+
+message MirrorSyncProgress {
+  MirrorSyncState state = 1;
+  uint64 cursor = 2;
+  uint64 source_log_count = 3;
+  uint64 remaining_logs = 4;
+  MirrorSyncError error = 5;
+}
+
+// ============================================================================
+// Ledger Info
+// ============================================================================
+
+// LedgerInfo represents information about a ledger
+message LedgerInfo {
+  string name = 1;                          // Ledger name
+  Timestamp created_at = 2;                 // Creation timestamp
+  reserved 3;                               // Was: uint32 id (removed: ledger name used as key)
+  Timestamp deleted_at = 4;                 // Soft delete timestamp (nil if not deleted)
+  MetadataSchema metadata_schema = 5;       // Per-key metadata type declarations
+  LedgerMode mode = 6;                      // Normal or mirror mode
+  MirrorSourceConfig mirror_source = 7;     // Mirror source config (set when mode=MIRROR)
+  MirrorSyncProgress mirror_sync_progress = 8;  // Populated at read time for MIRROR ledgers
+  AddressIndexConfig address_indexes = 9;   // Per-role account-transaction index config
+  ChartOfAccounts chart_of_accounts = 10;    // Account address validation tree (nil = no validation)
+  ChartEnforcementMode enforcement_mode = 11; // How chart violations are handled
+}
+
+// ============================================================================
+// Metadata Commands (shared between bulk operations and raft)
+// ============================================================================
+
+// SaveMetadataCommand is used for adding metadata
+message SaveMetadataCommand {
+  Target target = 1;
+  MetadataSet metadata = 2;
+}
+
+// DeleteMetadataCommand is used for deleting metadata
+message DeleteMetadataCommand {
+  Target target = 1;
+  string key = 2;
+}
+
+message TransactionUpdate {
+  uint64 by_log = 1;
+  repeated TransactionUpdateType updates = 2;
+}
+
+message TransactionUpdateType {
+  oneof transaction_modification_type_payload {
+    TransactionUpdateRevert transaction_modification_revert = 1;
+    TransactionUpdateAddMetadata transaction_modification_add_metadata = 2;
+    TransactionUpdateDeleteMetadata transaction_modification_delete_metadata = 3;
+    TransactionInit transaction_init = 4;
+  }
+}
+
+message TransactionUpdateRevert {
+  uint64 by_transaction = 1;
+}
+
+message TransactionUpdateAddMetadata {
+  Metadata metadata = 1;
+}
+
+message TransactionUpdateDeleteMetadata {
+  string key = 1;
+}
+
+message TransactionInit {}
+
+// IdempotencyKeyValue stores the log sequence associated with an idempotency key.
+message IdempotencyKeyValue {
+  uint64 log_sequence = 1;
+  bytes hash = 2;
+}
+
+// TransactionReferenceValue stores the transaction ID associated with a unique reference within a ledger.
+message TransactionReferenceValue {
+  uint64 transaction_id = 1;
+}
+
+// ============================================================================
+// Chart of Accounts
+// ============================================================================
+
+// ChartOfAccounts defines the account address structure for a ledger.
+message ChartOfAccounts {
+  map<string, ChartSegment> roots = 1;
+}
+
+// ChartSegment represents a node in the chart of accounts tree.
+message ChartSegment {
+  bool account = 1;
+  map<string, ChartSegment> children = 2;
+  ChartVariable variable = 3;
+}
+
+// ChartVariable represents a variable child segment with an optional regex constraint.
+message ChartVariable {
+  string name = 1;
+  string pattern = 2;
+  bool account = 3;
+  map<string, ChartSegment> children = 4;
+  ChartVariable variable = 5;
+}
+
+// ChartViolation represents an account address that does not match the chart of accounts.
+// Returned as warnings in AUDIT mode.
+message ChartViolation {
+  string address = 1;
+}
+
+// ChartEnforcementMode controls how chart violations are handled.
+enum ChartEnforcementMode {
+  CHART_ENFORCEMENT_STRICT = 0;  // Reject transactions with invalid addresses (default)
+  CHART_ENFORCEMENT_AUDIT = 1;   // Log warning but allow the transaction
+}
+
+// SetChartOfAccountsLog records a chart of accounts change.
+message SetChartOfAccountsLog {
+  ChartOfAccounts chart_of_accounts = 1;
+}
+
+// SetChartEnforcementModeLog records an enforcement mode change.
+message SetChartEnforcementModeLog {
+  ChartEnforcementMode enforcement_mode = 1;
+}
+
+// ============================================================================
+// Prepared Queries — Filter Model
+// ============================================================================
+
+message QueryFilter {
+  oneof filter {
+    FieldCondition field = 1;
+    AddressMatch address = 2;
+    AndFilter and = 3;
+    OrFilter or = 4;
+    NotFilter not = 5;
+  }
+}
+
+message AndFilter {
+  repeated QueryFilter filters = 1;
+}
+
+message OrFilter {
+  repeated QueryFilter filters = 1;
+}
+
+message NotFilter {
+  QueryFilter filter = 1;
+}
+
+// FieldRef identifies the metadata key for a condition.
+// The execution context (QueryTarget) determines whether this refers to
+// account or transaction metadata.
+message FieldRef {
+  string metadata = 1;
+}
+
+// FieldCondition = FieldRef × Condition.
+message FieldCondition {
+  FieldRef field = 1;
+  oneof condition {
+    StringCondition string_cond = 2;
+    IntCondition int_cond = 3;
+    UintCondition uint_cond = 4;
+    BoolCondition bool_cond = 5;
+    ExistsCondition exists_cond = 6;
+  }
+}
+
+message StringCondition {
+  oneof value {
+    string hardcoded = 1;
+    string param = 2;
+  }
+}
+
+message IntCondition {
+  optional int64 min = 1;
+  optional int64 max = 2;
+  bool min_exclusive = 3;
+  bool max_exclusive = 4;
+  string param_min = 5;
+  string param_max = 6;
+}
+
+message UintCondition {
+  optional uint64 min = 1;
+  optional uint64 max = 2;
+  bool min_exclusive = 3;
+  bool max_exclusive = 4;
+  string param_min = 5;
+  string param_max = 6;
+}
+
+message BoolCondition {
+  oneof value {
+    bool hardcoded = 1;
+    string param = 2;
+  }
+}
+
+message ExistsCondition {
+  bool include_null = 1;
+}
+
+enum AddressRole {
+  ADDRESS_ROLE_ANY = 0;
+  ADDRESS_ROLE_SOURCE = 1;
+  ADDRESS_ROLE_DESTINATION = 2;
+}
+
+message AddressMatch {
+  oneof match {
+    string hardcoded_prefix = 1;
+    string hardcoded_exact = 2;
+    string param_prefix = 3;
+    string param_exact = 4;
+  }
+  AddressRole role = 5;
+}
+
+enum QueryTarget {
+  QUERY_TARGET_ACCOUNTS = 0;
+  QUERY_TARGET_TRANSACTIONS = 1;
+}
+
+enum QueryMode {
+  QUERY_MODE_LIST = 0;
+  QUERY_MODE_AGGREGATE_VOLUMES = 1;
+}
+
+// PreparedQuery is a named, parameterized query template stored in the primary store.
+message PreparedQuery {
+  string name = 1;
+  string ledger = 2;
+  QueryFilter filter = 3;
+  QueryTarget target = 4;
+}
+
+// AggregatedVolume represents per-asset aggregated input/output volumes.
+message AggregatedVolume {
+  string asset = 1;
+  Uint256 input = 2;
+  Uint256 output = 3;
+}
+
+message AggregateResult {
+  repeated AggregatedVolume volumes = 1;
+}
+
+// PreparedQueryCursor follows the cursor-based pagination pattern.
+message PreparedQueryCursor {
+  uint32 page_size = 1;
+  bool has_more = 2;
+  string previous = 3;
+  string next = 4;
+  repeated string account_data = 5;
+  repeated uint64 transaction_data = 6;
+}
+
+// LedgerStats contains aggregate statistics for a ledger.
+message LedgerStats {
+  uint64 account_count = 1;
+  uint64 transaction_count = 2;
+}
