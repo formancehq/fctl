@@ -1,0 +1,524 @@
+# Source: formancehq/docs, apps/docs/content/schemas-library/stablecoin-issuer.yaml
+# Revision: 2022dbe964864777d92ed6ed55f05671f2ac017a
+# Documentation-only meta wrapper omitted for the Ledger schema API.
+chart:
+  platform:
+    banks:
+      $bank_id:
+        reserve: {}
+        yield:
+          accrued: {}
+    mints:
+      $mint_id:
+        inTransit: {}
+    redemptions:
+      $redemption_id:
+        settling: {}
+        payable: {}
+    reserves:
+      rebalance:
+        $rebalance_id:
+          inTransit: {}
+    fees:
+      redemption: {}
+    revenue:
+      yield: {}
+  holders:
+    $holder_id: {}
+    .self: {}
+  counterparties:
+    banks:
+      $bank_id: {}
+  external:
+    fiat:
+      wires: {}
+      payouts: {}
+    networks:
+      $network_id:
+        supply: {}
+transactions:
+  MINT_INITIATE:
+    description: >-
+      Holder fiat wire acknowledged for a mint; cash recorded in transit, no
+      token credited yet
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $mint_id
+        monetary $fiat_amount
+        string $mint_ref
+      }
+
+      send $fiat_amount (
+        source = @external:fiat:wires allowing unbounded overdraft
+        destination = @platform:mints:$mint_id:inTransit
+      )
+
+      set_tx_meta("event_type", "mint_initiate")
+      set_tx_meta("mint_id", $mint_id)
+      set_tx_meta("mint_ref", $mint_ref)
+  MINT_SETTLE:
+    description: >-
+      Reserve bank confirms settlement; in-transit fiat becomes reserve and
+      token is minted to the holder
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $bank_id
+        account $mint_id
+        account $holder_id
+        account $network_id
+        monetary $fiat_amount
+        monetary $token_amount
+        string $mint_ref
+      }
+
+      send $fiat_amount (
+        source = @platform:mints:$mint_id:inTransit
+        destination = @platform:banks:$bank_id:reserve
+      )
+
+      send $token_amount (
+        source = @external:networks:$network_id:supply allowing unbounded overdraft
+        destination = @holders:$holder_id
+      )
+
+      set_tx_meta("event_type", "mint_settle")
+      set_tx_meta("mint_id", $mint_id)
+      set_tx_meta("mint_ref", $mint_ref)
+  MINT_RETURN:
+    description: >-
+      Mint wire reversed before settlement; in-transit fiat returned, no token
+      minted
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $mint_id
+        monetary $fiat_amount
+        string $original_posting_id
+      }
+
+      send $fiat_amount (
+        source = @platform:mints:$mint_id:inTransit
+        destination = @external:fiat:wires
+      )
+
+      set_tx_meta("event_type", "mint_return")
+      set_tx_meta("mint_id", $mint_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $original_posting_id)
+  TRANSFER:
+    description: >-
+      Instant peer-to-peer token transfer between two holders, no reserve
+      movement
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $from_holder_id
+        account $to_holder_id
+        monetary $token_amount
+        string $transfer_ref
+      }
+
+      send $token_amount (
+        source = @holders:$from_holder_id
+        destination = @holders:$to_holder_id
+      )
+
+      set_tx_meta("event_type", "transfer")
+      set_tx_meta("transfer_ref", $transfer_ref)
+  TRANSFER_REVERSE:
+    description: Reversal of a prior token transfer, tokens returned to the original sender
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $from_holder_id
+        account $to_holder_id
+        monetary $token_amount
+        string $original_posting_id
+      }
+
+      send $token_amount (
+        source = @holders:$to_holder_id
+        destination = @holders:$from_holder_id
+      )
+
+      set_tx_meta("event_type", "transfer_reverse")
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $original_posting_id)
+  REDEEM_REQUEST:
+    description: >-
+      Holder burns token for redemption; fiat payout obligation and 10 bps fee
+      booked, reserve untouched until settlement
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $holder_id
+        account $network_id
+        account $redemption_id
+        monetary $token_amount
+        monetary $gross_fiat
+        monetary $fee
+        string $redemption_ref
+      }
+
+      send $token_amount (
+        source = @holders:$holder_id
+        destination = @external:networks:$network_id:supply
+      )
+
+      send $gross_fiat (
+        source = @platform:redemptions:$redemption_id:settling allowing unbounded overdraft
+        destination = {
+          max $fee to @platform:fees:redemption
+          remaining to @platform:redemptions:$redemption_id:payable
+        }
+      )
+
+      set_tx_meta("event_type", "redeem_request")
+      set_tx_meta("redemption_id", $redemption_id)
+      set_tx_meta("redemption_ref", $redemption_ref)
+  REDEEM_SETTLE:
+    description: >-
+      Reserve bank settles the redemption payout; reserve drains, net fiat
+      leaves to the holder
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $bank_id
+        account $redemption_id
+        monetary $gross_fiat
+        monetary $net_fiat
+        string $redemption_ref
+      }
+
+      send $gross_fiat (
+        source = @platform:banks:$bank_id:reserve
+        destination = @platform:redemptions:$redemption_id:settling
+      )
+
+      send $net_fiat (
+        source = @platform:redemptions:$redemption_id:payable
+        destination = @external:fiat:payouts
+      )
+
+      set_tx_meta("event_type", "redeem_settle")
+      set_tx_meta("redemption_id", $redemption_id)
+      set_tx_meta("redemption_ref", $redemption_ref)
+  REDEEM_RETURN:
+    description: >-
+      Settled redemption payout returned; redemption cancelled, reserve and
+      token restored to the holder
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $bank_id
+        account $holder_id
+        account $network_id
+        account $redemption_id
+        monetary $token_amount
+        monetary $net_fiat
+        monetary $fee
+        string $original_posting_id
+      }
+
+      send $net_fiat (
+        source = @external:fiat:payouts allowing unbounded overdraft
+        destination = @platform:banks:$bank_id:reserve
+      )
+
+      send $fee (
+        source = @platform:fees:redemption allowing unbounded overdraft
+        destination = @platform:banks:$bank_id:reserve
+      )
+
+      send $token_amount (
+        source = @external:networks:$network_id:supply allowing unbounded overdraft
+        destination = @holders:$holder_id
+      )
+
+      set_tx_meta("event_type", "redeem_return")
+      set_tx_meta("redemption_id", $redemption_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $original_posting_id)
+  REBALANCE_INITIATE:
+    description: >-
+      Reserve cash sent from one reserve bank toward the other; held in transit
+      until it settles
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $from_bank_id
+        account $rebalance_id
+        monetary $fiat_amount
+        string $rebalance_ref
+      }
+
+      send $fiat_amount (
+        source = @platform:banks:$from_bank_id:reserve
+        destination = @platform:reserves:rebalance:$rebalance_id:inTransit
+      )
+
+      set_tx_meta("event_type", "rebalance_initiate")
+      set_tx_meta("rebalance_id", $rebalance_id)
+      set_tx_meta("rebalance_ref", $rebalance_ref)
+  REBALANCE_SETTLE:
+    description: Interbank reserve transfer settles into the destination bank's reserve
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $to_bank_id
+        account $rebalance_id
+        monetary $fiat_amount
+        string $rebalance_ref
+      }
+
+      send $fiat_amount (
+        source = @platform:reserves:rebalance:$rebalance_id:inTransit
+        destination = @platform:banks:$to_bank_id:reserve
+      )
+
+      set_tx_meta("event_type", "rebalance_settle")
+      set_tx_meta("rebalance_id", $rebalance_id)
+      set_tx_meta("rebalance_ref", $rebalance_ref)
+  REBALANCE_RETURN:
+    description: Failed interbank reserve transfer returned to the origin bank's reserve
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $from_bank_id
+        account $rebalance_id
+        monetary $fiat_amount
+        string $original_posting_id
+      }
+
+      send $fiat_amount (
+        source = @platform:reserves:rebalance:$rebalance_id:inTransit
+        destination = @platform:banks:$from_bank_id:reserve
+      )
+
+      set_tx_meta("event_type", "rebalance_return")
+      set_tx_meta("rebalance_id", $rebalance_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $original_posting_id)
+  YIELD_ACCRUE:
+    description: >-
+      Reserve bank credits interest on reserves into a segregated yield-accrued
+      sub-account
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $bank_id
+        monetary $yield_amount
+        string $accrual_period
+      }
+
+      send $yield_amount (
+        source = @counterparties:banks:$bank_id allowing unbounded overdraft
+        destination = @platform:banks:$bank_id:yield:accrued
+      )
+
+      set_tx_meta("event_type", "yield_accrue")
+      set_tx_meta("accrual_period", $accrual_period)
+  YIELD_SWEEP:
+    description: Monthly sweep of accrued reserve yield into operational revenue
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $bank_id
+        monetary $yield_amount
+        string $sweep_period
+      }
+
+      send $yield_amount (
+        source = @platform:banks:$bank_id:yield:accrued
+        destination = @platform:revenue:yield
+      )
+
+      set_tx_meta("event_type", "yield_sweep")
+      set_tx_meta("sweep_period", $sweep_period)
+queries:
+  parity_invariant_supply_vs_total_backing:
+    description: >-
+      The load-bearing 1:1 proof, run daily. Total circulating token supply must
+      equal total settled fiat reserve plus reserve backing in motion (interbank
+      rebalances), with redemptions that are burned-but-not-yet-paid subtracted
+      because their backing is owed out. Mint cash in transit is excluded: those
+      tokens are not yet minted, so that fiat is not yet backing. The two sides
+      are read as separate balance queries and compared by the caller; the
+      equality is stated below in prose.
+    resource: accounts
+    body:
+      $match:
+        address: 'holders:'
+  cross_check_holder_supply_vs_network_supply:
+    description: >-
+      A second, independent measure of total circulating supply: the sum of the
+      per-network on-chain boundaries. The boundaries run negative (tokens
+      issued into circulation), so their absolute value is circulating supply.
+      This must equal the holder-side total; a drift means a mint or burn
+      touched one side without the other.
+    resource: accounts
+    body:
+      $match:
+        address: 'external:networks::supply'
+  per_bank_reserve_balance:
+    description: >-
+      Run per bank against that bank's statement. The reserve account holds
+      settled backing; reconciliation passes when the ledger balance equals the
+      bank's reported segregated-reserve balance for that account. Substitute
+      the concrete bank id.
+    resource: accounts
+    body:
+      $match:
+        address: platform:banks:bankA:reserve
+  total_circulating_supply_holder_side:
+    description: >-
+      Sums every holder's token balance into the platform-wide circulating
+      liability. Run on demand or on the daily reporting schedule.
+    resource: accounts
+    body:
+      $match:
+        address: 'holders:'
+  per_holder_circulating_balance:
+    description: One holder's circulating token balance. Substitute the holder id.
+    resource: accounts
+    body:
+      $match:
+        address: holders:H001
+  per_network_circulating_supply:
+    description: >-
+      Circulating supply on one network, read from that network's on-chain
+      boundary (runs negative; take the absolute value). Substitute the network
+      id. The whole-fleet rollup uses external:networks::supply.
+    resource: accounts
+    vars:
+      network_id:
+        type: string
+    body:
+      $match:
+        address: external:networks:${network_id}:supply
+  total_settled_reserve:
+    description: >-
+      Sums the settled reserve across both reserve banks. This is the
+      settled-backing figure in the parity proof.
+    resource: accounts
+    body:
+      $match:
+        address: platform:banks::reserve
+  in_flight_backing_dashboard:
+    description: >-
+      Every fiat amount that is in motion or owed: mint cash in transit
+      (pre-backing), redemptions settling (backing owed out), and interbank
+      rebalances in transit (backing in motion). Run as an operational dashboard
+      to see all in-flight fiat at a glance.
+    resource: accounts
+    body:
+      $or:
+        - $match:
+            address: platform:mints::inTransit
+        - $match:
+            address: platform:redemptions::settling
+        - $match:
+            address: platform:reserves:rebalance::inTransit
+  accrued_yield_awaiting_sweep:
+    description: >-
+      Interest credited by the reserve banks but not yet swept to revenue, held
+      in the segregated yield-accrued sub-accounts. Reconciles against each
+      bank's reported interest.
+    resource: accounts
+    body:
+      $match:
+        address: platform:banks::yield:accrued
+  daily_redemption_fee_revenue:
+    description: >-
+      The accrued redemption-fee balance. For the daily figure, read flow into
+      this account over the day with the volumes endpoint below; for the running
+      total, read the balance here.
+    resource: accounts
+    body:
+      $match:
+        address: platform:fees:redemption
+  swept_yield_revenue:
+    description: The running total of reserve yield booked as operational revenue.
+    resource: accounts
+    body:
+      $match:
+        address: platform:revenue:yield
+  daily_redemption_fee_revenue_flow:
+    description: >-
+      Fee revenue earned in a day, read as volume into the redemption-fee
+      account over the daily window.
+    resource: volumes
+    body:
+      $match:
+        address: platform:fees:redemption
+  reserve_settlement_throughput:
+    description: >-
+      Fiat settled into and out of one reserve bank over a period (mint
+      settlements in, redemption settlements out). Substitute the bank id and
+      window.
+    resource: volumes
+    body:
+      $match:
+        address: platform:banks:bankA:reserve
+  per_holder_token_throughput:
+    description: >-
+      Token in and out of one holder over a period (mints, transfers,
+      redemptions). Substitute the holder id and window.
+    resource: volumes
+    body:
+      $match:
+        address: holders:H001
+  aging_mints_in_transit:
+    description: >-
+      Per-mint in-transit accounts that should drain to zero at settlement or
+      return. A non-zero balance is a mint that is wired but neither settled nor
+      returned; cross-reference the transaction timestamp against the expected
+      settlement window.
+      Lists every in-transit mint account; read the balances from the response and
+      treat non-zero ones as aging. Not filtered server-side: a balance filter needs
+      one literal asset and this flow is asset-agnostic.
+    resource: accounts
+    body:
+      $match:
+        address: platform:mints::inTransit
+  aging_redemptions_settling:
+    description: >-
+      Per-redemption settling accounts with an outstanding balance: token burned
+      but fiat payout not yet settled. Non-zero is the in-transit redemption
+      population.
+      Lists every settling redemption account; non-zero balances in the response are
+      the ones still owed out. Not filtered server-side: a balance filter needs one
+      literal asset.
+    resource: accounts
+    body:
+      $match:
+        address: platform:redemptions::settling
+  aging_rebalances_in_transit:
+    description: >-
+      Per-rebalance in-transit accounts that have not settled or returned.
+      Non-zero past the expected interbank window is a stuck rebalance.
+      Lists every in-transit rebalance account; non-zero balances are legs that left
+      one bank and have not arrived at the other. Not filtered server-side: a
+      balance filter needs one literal asset.
+    resource: accounts
+    body:
+      $match:
+        address: platform:reserves:rebalance::inTransit
+  all_transactions_touching_one_holder:
+    description: >-
+      Every posting that hit a holder, in either direction, for drill-down.
+      Substitute the holder id.
+    resource: transactions
+    body:
+      $match:
+        account: holders:H001
+  trace_one_redemption_end_to_end:
+    description: >-
+      Every transaction tagged with a redemption id, across request, settlement,
+      and any return. Substitute the redemption id.
+    resource: transactions
+    body:
+      $match:
+        metadata[redemption_id]: R001

@@ -1,0 +1,106 @@
+# Source: formancehq/docs, apps/docs/content/schemas-local/rideshare-tutorial.yaml
+# Revision: 2022dbe964864777d92ed6ed55f05671f2ac017a
+# Documentation-only meta wrapper omitted for the Ledger schema API.
+chart:
+  world:
+    .self: {}
+
+  rider:
+    $rider_id:
+      ride:
+        $ride_id:
+          payment:
+            .self: {}
+
+  ride:
+    $ride_id:
+      main:
+        .self: {}
+      fees:
+        .self: {}
+
+  driver:
+    $driver_id:
+      ride:
+        $ride_id:
+          .self: {}
+      main:
+        .self: {}
+
+transactions:
+  RIDE_BOOKING:
+    description: >
+      Rider books a ride. Record the estimated payment from the external
+      world into the rider's ride payment account.
+    interpreter: experimental
+    featureFlags: [experimental-account-interpolation]
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+          number $amount
+          account $rider_id
+          account $ride_id
+      }
+
+      send [USD/2 $amount] (
+          source = @world
+          destination = @rider:$rider_id:ride:$ride_id:payment
+      )
+
+  RIDE_CONFIRMATION:
+    description: >
+      RideShare confirms the ride. Transfer the recorded amount from
+      the rider's payment account to the ride's main account.
+    interpreter: experimental
+    featureFlags: [experimental-account-interpolation]
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+          number $amount
+          account $rider_id
+          account $ride_id
+      }
+
+      send [USD/2 $amount] (
+          source = @rider:$rider_id:ride:$ride_id:payment
+          destination = @ride:$ride_id:main
+      )
+
+  RIDE_COMPLETION:
+    description: >
+      Driver finishes the ride and RideShare verifies it. Split the
+      payment between the driver's earnings and RideShare's service fees.
+    interpreter: experimental
+    featureFlags: [experimental-account-interpolation]
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+          number $amount
+          account $ride_id
+          account $driver_id
+      }
+
+      send [USD/2 $amount] (
+          source = @ride:$ride_id:main
+          destination = {
+              10% to @ride:$ride_id:fees
+              remaining to @driver:$driver_id:main
+          }
+      )
+
+  DRIVER_PAYOUT:
+    description: >
+      Driver requests withdrawal. Transfer all accumulated earnings
+      back to the external world.
+    interpreter: experimental
+    featureFlags: [experimental-account-interpolation]
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+          account $driver_id
+      }
+
+      send [USD/2 *] (
+          source = @driver:$driver_id:main
+          destination = @world
+      )

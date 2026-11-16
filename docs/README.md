@@ -7,3 +7,4 @@ the same PRs as the code they describe (RFC 0004).
   resuming an interrupted import.
 - [Terminal output helpers](terminal-output.md): fitting tables, text and help
   to the terminal width, and completion options shared by all commands.
+- [Stack demo](stack-demo.md): financial recipe generators and Ledger v2/v3 validation.

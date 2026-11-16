@@ -1,0 +1,488 @@
+# Source: formancehq/docs, apps/docs/content/schemas-library/marketplace-payouts.yaml
+# Revision: 2022dbe964864777d92ed6ed55f05671f2ac017a
+# Documentation-only meta wrapper omitted for the Ledger schema API.
+chart:
+  sellers:
+    $seller_id:
+      payable: {}
+      payout:
+        pending: {}
+      .self: {}
+  escrow:
+    orders:
+      $order_id:
+        held: {}
+  platform:
+    revenue:
+      commission: {}
+      fx: {}
+      .self: {}
+    expense:
+      refunds: {}
+      chargebacks: {}
+      .self: {}
+    banks:
+      $bank_id:
+        operating: {}
+        payout: {}
+    treasury:
+      fx: {}
+    suspense:
+      reconciliation:
+        differences: {}
+  counterparties:
+    psp:
+      $psp_id:
+        settlement: {}
+        feesPayable: {}
+        .self: {}
+  exchanges:
+    conv:
+      $conversion_id: {}
+transactions:
+  ORDER_PAYMENT_CAPTURED:
+    description: >-
+      Buyer card payment captured at the PSP; gross splits into commission, PSP
+      fee, and held seller share
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $psp_id
+        account $order_id
+        account $seller_id
+        monetary $gross
+        monetary $commission
+        monetary $psp_fee
+        string $order_ref
+      }
+
+      send $gross (
+        source = @counterparties:psp:$psp_id:settlement allowing unbounded overdraft
+        destination = {
+          max $commission to @platform:revenue:commission
+          max $psp_fee to @counterparties:psp:$psp_id:feesPayable
+          remaining to @escrow:orders:$order_id:held
+        }
+      )
+
+      set_tx_meta("event_type", "order_payment_captured")
+      set_tx_meta("order_id", $order_ref)
+      set_tx_meta("seller_id", $seller_id)
+  PSP_SETTLEMENT:
+    description: Daily PSP cash sweep to the platform bank; PSP retains its fees
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $psp_id
+        account $bank_id
+        monetary $gross_settled
+        monetary $fees_retained
+        string $settlement_ref
+      }
+
+      send $gross_settled (
+        source = @platform:banks:$bank_id:operating allowing unbounded overdraft
+        destination = @counterparties:psp:$psp_id:settlement
+      )
+
+      send $fees_retained (
+        source = @counterparties:psp:$psp_id:feesPayable
+        destination = @platform:banks:$bank_id:operating
+      )
+
+      set_tx_meta("event_type", "psp_settlement")
+      set_tx_meta("settlement_ref", $settlement_ref)
+  SELLER_FUNDS_RELEASE:
+    description: Delivery confirmed; held order funds released to the seller payable
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $order_id
+        account $seller_id
+        string $order_ref
+      }
+
+      send [USD/2 *] (
+        source = @escrow:orders:$order_id:held
+        destination = @sellers:$seller_id:payable
+      )
+
+      set_tx_meta("event_type", "seller_funds_release")
+      set_tx_meta("order_id", $order_ref)
+  SELLER_PAYOUT_INITIATE:
+    description: Weekly payout run reserves the seller's payable into an in-flight payout
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $seller_id
+        monetary $amount
+        string $payout_ref
+      }
+
+      send $amount (
+        source = @sellers:$seller_id:payable
+        destination = @sellers:$seller_id:payout:pending
+      )
+
+      set_tx_meta("event_type", "seller_payout_initiate")
+      set_tx_meta("payout_ref", $payout_ref)
+  SELLER_PAYOUT_SETTLE:
+    description: Weekly payout bank transfer confirmed; in-flight payout discharged
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $seller_id
+        account $bank_id
+        monetary $amount
+        string $payout_ref
+      }
+
+      send $amount (
+        source = @sellers:$seller_id:payout:pending
+        destination = @platform:banks:$bank_id:payout
+      )
+
+      set_tx_meta("event_type", "seller_payout_settle")
+      set_tx_meta("payout_ref", $payout_ref)
+  SELLER_PAYOUT_RETURN:
+    description: Reserved payout failed; in-flight amount returned to the seller payable
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $seller_id
+        monetary $amount
+        string $payout_ref
+      }
+
+      send $amount (
+        source = @sellers:$seller_id:payout:pending
+        destination = @sellers:$seller_id:payable
+      )
+
+      set_tx_meta("event_type", "seller_payout_return")
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("payout_ref", $payout_ref)
+  REFUND:
+    description: >-
+      Refund a past order to the buyer; clawed back from seller, commission, and
+      platform-absorbed PSP fee
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $psp_id
+        account $seller_id
+        monetary $gross
+        monetary $seller_net
+        monetary $commission
+        string $order_ref
+        string $original_posting_id
+      }
+
+      send $gross (
+        source = {
+          max $seller_net from @sellers:$seller_id:payable allowing unbounded overdraft
+          max $commission from @platform:revenue:commission allowing unbounded overdraft
+          @platform:expense:refunds allowing unbounded overdraft
+        }
+        destination = @counterparties:psp:$psp_id:settlement
+      )
+
+      set_tx_meta("event_type", "refund")
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $original_posting_id)
+      set_tx_meta("order_id", $order_ref)
+  CHARGEBACK:
+    description: >-
+      Buyer chargeback; charged against the seller balance with the platform
+      absorbing any shortfall
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $psp_id
+        account $seller_id
+        monetary $gross
+        string $order_ref
+        string $dispute_ref
+      }
+
+      send $gross (
+        source = {
+          max $gross from @sellers:$seller_id:payable
+          @platform:expense:chargebacks allowing unbounded overdraft
+        }
+        destination = @counterparties:psp:$psp_id:settlement
+      )
+
+      set_tx_meta("event_type", "chargeback")
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $dispute_ref)
+      set_tx_meta("order_id", $order_ref)
+  MULTI_CURRENCY_PAYOUT:
+    description: >-
+      Cross the seller payable to the payout currency at the treasury rate, into
+      the in-flight payout
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $seller_id
+        account $conversion_id
+        monetary $sell_amount
+        monetary $buy_gross
+        monetary $spread
+        string $execution_rate
+        string $payout_ref
+      }
+
+
+      send $sell_amount (
+        source = @sellers:$seller_id:payable
+        destination = @exchanges:conv:$conversion_id
+      )
+
+
+      send $sell_amount (
+        source = @exchanges:conv:$conversion_id
+        destination = @platform:treasury:fx
+      )
+
+
+      send $buy_gross (
+        source = @platform:treasury:fx allowing unbounded overdraft
+        destination = @exchanges:conv:$conversion_id
+      )
+
+
+      send $buy_gross (
+        source = @exchanges:conv:$conversion_id
+        destination = {
+          max $spread to @platform:revenue:fx
+          remaining to @sellers:$seller_id:payout:pending
+        }
+      )
+
+
+      set_account_meta(@exchanges:conv:$conversion_id, "execution_rate",
+      $execution_rate)
+
+      set_account_meta(@exchanges:conv:$conversion_id, "status", "settled")
+
+      set_tx_meta("event_type", "multi_currency_payout")
+
+      set_tx_meta("payout_ref", $payout_ref)
+  RECON_ADJUSTMENT:
+    description: >-
+      Book a ledger-vs-statement reconciliation difference into suspense pending
+      investigation
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $psp_id
+        monetary $amount
+        string $recon_ref
+      }
+
+      send $amount (
+        source = @counterparties:psp:$psp_id:settlement allowing unbounded overdraft
+        destination = @platform:suspense:reconciliation:differences
+      )
+
+      set_tx_meta("event_type", "recon_adjustment")
+      set_tx_meta("recon_ref", $recon_ref)
+queries:
+  one_seller_s_outstanding_position:
+    name: one_seller_s_outstanding_position
+    description: >-
+      Every account and balance under one seller: released payable plus any
+      in-flight payout. Returns one row per (account, asset).
+    resource: accounts
+    vars:
+      seller_id:
+        type: string
+    body:
+      $match:
+        address: 'sellers:${seller_id}:'
+  held_versus_available_for_one_seller:
+    name: held_versus_available_for_one_seller
+    description: >-
+      The seller's available payable balance only (excludes held escrow, which
+      is keyed by order, not seller).
+    resource: accounts
+    vars:
+      seller_id:
+        type: string
+    body:
+      $match:
+        address: sellers:${seller_id}:payable
+  sellers_with_a_negative_balance:
+    name: sellers_with_a_negative_balance
+    description: >-
+      Seller payables that have gone negative, which happens when a refund
+      landed after the seller was already paid out. These are the amounts the
+      platform must recover.
+    resource: accounts
+    body:
+      $and:
+        - $match:
+            address: sellers::payable
+        - $lt:
+            balance[USD/2]: 0
+  total_seller_liability:
+    name: total_seller_liability
+    description: >-
+      Sum of every seller's released payable across all sellers, per asset
+      (aggregate-balances endpoint maps to accounts resource).
+    resource: accounts
+    body:
+      $match:
+        address: sellers::payable
+  total_held_in_delivery_confirmation:
+    name: total_held_in_delivery_confirmation
+    description: >-
+      Sum of all per-order held escrow balances across the marketplace, per
+      asset (aggregate-balances endpoint maps to accounts resource).
+    resource: accounts
+    body:
+      $match:
+        address: escrow:orders::held
+  platform_revenue_by_stream:
+    name: platform_revenue_by_stream
+    description: >-
+      Every platform revenue stream broken out (commission and FX spread), per
+      asset (aggregate-balances endpoint maps to accounts resource).
+    resource: accounts
+    body:
+      $match:
+        address: 'platform:revenue:'
+  treasury_fx_position:
+    name: treasury_fx_position
+    description: >-
+      The platform's open FX book position from currency crossings, per asset
+      (aggregate-balances endpoint maps to accounts resource).
+    resource: accounts
+    body:
+      $match:
+        address: platform:treasury:fx
+  platform_absorbed_refund_and_chargeback_cost:
+    name: platform_absorbed_refund_and_chargeback_cost
+    description: >-
+      The platform's expense accounts for absorbed PSP fees on refunds and for
+      chargeback shortfalls, per asset (aggregate-balances endpoint maps to
+      accounts resource).
+    resource: accounts
+    body:
+      $match:
+        address: 'platform:expense:'
+  per_order_fee_and_commission_split:
+    name: per_order_fee_and_commission_split
+    description: >-
+      How much flowed into commission, the PSP fee payable, and the held escrow
+      for one order, read as volume into each leg over the order's window.
+    resource: volumes
+    vars:
+      psp_id:
+        type: string
+      order_id:
+        type: string
+    body:
+      $or:
+        - $match:
+            address: platform:revenue:commission
+        - $match:
+            address: counterparties:psp:${psp_id}:feesPayable
+        - $match:
+            address: escrow:orders:${order_id}:held
+  revenue_earned_over_a_period:
+    name: revenue_earned_over_a_period
+    description: >-
+      Volume into the platform revenue accounts over a reporting window:
+      commission plus FX spread recognized in the period.
+    resource: volumes
+    body:
+      $match:
+        address: 'platform:revenue:'
+  payout_throughput_for_one_seller:
+    name: payout_throughput_for_one_seller
+    description: >-
+      How much money moved out to one seller over a period, read as volume out
+      of the seller's in-flight payout into the payout bank.
+    resource: volumes
+    vars:
+      seller_id:
+        type: string
+    body:
+      $match:
+        address: sellers:${seller_id}:payout:pending
+  psp_net_position:
+    name: psp_net_position
+    description: >-
+      The platform's full net position with one PSP: the settlement receivable
+      (running negative) and the fees payable (running positive).
+    resource: accounts
+    vars:
+      psp_id:
+        type: string
+    body:
+      $match:
+        address: 'counterparties:psp:${psp_id}:'
+  psp_settlement_reconciliation:
+    name: psp_settlement_reconciliation
+    description: >-
+      The ledger side of the daily PSP reconciliation: the settlement receivable
+      for one PSP, compared against the PSP settlement report's reported held
+      balance.
+    resource: accounts
+    vars:
+      psp_id:
+        type: string
+    body:
+      $match:
+        address: counterparties:psp:${psp_id}:settlement
+  payout_bank_file_reconciliation:
+    name: payout_bank_file_reconciliation
+    description: >-
+      The ledger side of the weekly payout reconciliation: volume into the
+      payout bank account over the payout window, compared against the total of
+      the payout bank file.
+    resource: volumes
+    body:
+      $match:
+        address: platform:banks::payout
+  aging_escrow_holds:
+    name: aging_escrow_holds
+    description: >-
+      Per-order escrow holds with a non-zero balance: an escrow drains to zero
+      when its order is released or refunded, so a lingering non-zero balance
+      past the expected hold window is the aging signal.
+    resource: accounts
+    body:
+      $and:
+        - $match:
+            address: escrow:orders::held
+        - $not:
+            $match:
+              balance[USD/2]: 0
+  unresolved_reconciliation_differences:
+    name: unresolved_reconciliation_differences
+    description: >-
+      The suspense differences account: non-zero means reconciliation deltas
+      booked but not yet resolved.
+    resource: accounts
+    body:
+      $and:
+        - $match:
+            address: platform:suspense:reconciliation:differences
+        - $not:
+            $match:
+              balance[USD/2]: 0
+  audit_trail_for_one_order:
+    name: audit_trail_for_one_order
+    description: >-
+      Every transaction tagged with one order id, in any direction: capture,
+      release, refund, chargeback.
+    resource: transactions
+    vars:
+      order_id:
+        type: string
+    body:
+      $match:
+        metadata[order_id]: '${order_id}'

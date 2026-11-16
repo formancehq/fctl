@@ -1,0 +1,205 @@
+# Source: formancehq/docs, apps/docs/content/schemas-library/payment-acceptance.yaml
+# Revision: 2022dbe964864777d92ed6ed55f05671f2ac017a
+# Documentation-only meta wrapper omitted for the Ledger schema API.
+chart:
+  acquirers:
+    $acquirer_id:
+      .pattern: '^[a-zA-Z0-9_-]+$'
+      main:
+        .self: {}
+        .metadata:
+          type:
+            default: "acquirer"
+
+  banks:
+    $bank_id:
+      .pattern: '^[a-zA-Z0-9_:-]+$'
+      main:
+        .self: {}
+        .metadata:
+          type:
+            default: "nostro"
+
+  clients:
+    $client_id:
+      .pattern: '^[a-zA-Z0-9_-]+$'
+      main:
+        .self: {}
+        .metadata:
+          type:
+            default: "wallet"
+
+  platform:
+    $platform_name:
+      fees:
+        .self: {}
+      revenue:
+        .self: {}
+      chargeback_fees:
+        .self: {}
+
+transactions:
+  CARD_AUTHORIZATION_GROSS_TOPUP:
+    description: >
+      Record a card authorization for a wallet top-up. The full gross
+      amount is immediately available to the end user. The acquirer's
+      captured authorization is treated as an asset — a binding promise
+      to settle.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+          asset $asset
+          number $amount
+          account $acquirer_id
+          account $client_id
+          account $platform_name
+          string $authorization_id
+      }
+
+      send [$asset $amount] (
+          source = @acquirers:$acquirer_id:main allowing unbounded overdraft
+          destination = @clients:$client_id:main
+      )
+
+      set_tx_meta("authorization_id", $authorization_id)
+      set_tx_meta("type", "card_authorization_gross_topup")
+
+  ACQUIRER_SETTLEMENT:
+    description: >
+      Record an acquirer settlement to your bank account. The acquirer
+      settles the net amount (gross minus fees). The bank receives the
+      net settlement and the platform fee account absorbs the difference
+      to zero-out the acquirer balance.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+          asset $asset
+          number $net_amount
+          number $fee_amount
+          account $acquirer_id
+          account $bank_id
+          account $platform_name
+          string $settlement_ref
+      }
+
+      send [$asset $net_amount] (
+          source = @banks:$bank_id:main allowing unbounded overdraft
+          destination = @acquirers:$acquirer_id:main
+      )
+
+      send [$asset $fee_amount] (
+          source = @platform:$platform_name:fees allowing unbounded overdraft
+          destination = @acquirers:$acquirer_id:main
+      )
+
+      set_tx_meta("settlement_ref", $settlement_ref)
+      set_tx_meta("type", "acquirer_settlement")
+
+  CARD_REFUND:
+    description: >
+      Process a refund for a previously captured card payment. Reverses
+      the original booking by debiting the client wallet and crediting
+      the acquirer account.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+          asset $asset
+          number $amount
+          account $acquirer_id
+          account $client_id
+          string $refund_id
+          string $original_authorization_id
+      }
+
+      send [$asset $amount] (
+          source = @clients:$client_id:main
+          destination = @acquirers:$acquirer_id:main
+      )
+
+      set_tx_meta("refund_id", $refund_id)
+      set_tx_meta("original_authorization_id", $original_authorization_id)
+      set_tx_meta("type", "card_refund")
+
+  CHARGEBACK:
+    description: >
+      Handle a chargeback from the acquirer. Debits the client wallet
+      for the disputed amount and charges the chargeback fee to the
+      platform chargeback fee account.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+          asset $asset
+          number $amount
+          number $chargeback_fee
+          account $acquirer_id
+          account $client_id
+          account $platform_name
+          string $chargeback_id
+          string $original_authorization_id
+      }
+
+      send [$asset $amount] (
+          source = @clients:$client_id:main allowing unbounded overdraft
+          destination = @acquirers:$acquirer_id:main
+      )
+
+      send [$asset $chargeback_fee] (
+          source = @platform:$platform_name:chargeback_fees allowing unbounded overdraft
+          destination = @acquirers:$acquirer_id:main
+      )
+
+      set_tx_meta("chargeback_id", $chargeback_id)
+      set_tx_meta("original_authorization_id", $original_authorization_id)
+      set_tx_meta("type", "chargeback")
+
+queries:
+  CLIENT_BALANCE:
+    description: Get a specific client's wallet balance
+    resource: accounts
+    vars:
+      client_id:
+        type: string
+    params:
+      pageSize: 1
+    body:
+      $match:
+        address: "clients:${client_id}:main"
+
+  ACQUIRER_BALANCE:
+    description: Get a specific acquirer's unsettled balance
+    resource: accounts
+    vars:
+      acquirer_id:
+        type: string
+    params:
+      pageSize: 1
+    body:
+      $match:
+        address: "acquirers:${acquirer_id}:main"
+
+  UNSETTLED_AUTHORIZATIONS:
+    description: All acquirer accounts with outstanding unsettled balances
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "acquirers::main"
+
+  PLATFORM_FEES:
+    description: All platform fee accounts and their volumes
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "platform::fees"
+
+  PLATFORM_CHARGEBACK_FEES:
+    description: All platform chargeback fee accounts and their volumes
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "platform::chargeback_fees"
