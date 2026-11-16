@@ -1,0 +1,167 @@
+# Source: formancehq/docs, apps/docs/content/schemas-library/omnibus.yaml
+# Revision: 2022dbe964864777d92ed6ed55f05671f2ac017a
+# Documentation-only meta wrapper omitted for the Ledger schema API.
+chart:
+  banks:
+    $bank_id:
+      .pattern: '^[a-zA-Z0-9_:-]+$'
+      main:
+        .self: {}
+        .metadata:
+          type:
+            default: "nostro"
+      payout:
+        $payout_ref:
+          .self: {}
+
+  clients:
+    $client_id:
+      .pattern: '^[a-zA-Z0-9_-]+$'
+      main:
+        .self: {}
+        .metadata:
+          type:
+            default: "vostro"
+
+  platform:
+    $platform_name:
+      suspense:
+        payin:
+          .self: {}
+      revenue:
+        fees:
+          .self: {}
+      costs:
+        processing:
+          .self: {}
+
+transactions:
+  CLIENT_DEPOSIT:
+    description: >
+      Record a deposit when funds arrive at your bank account
+      with clear client identification.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $bank_id
+        account $client_id
+        string $reference
+      }
+      send [$asset $amount] (
+        source = @banks:$bank_id:main allowing unbounded overdraft
+        destination = @clients:$client_id:main
+      )
+      set_tx_meta("reference", $reference)
+
+  UNIDENTIFIED_DEPOSIT:
+    description: >
+      Handle deposits when you cannot immediately identify the client.
+      Funds go to a suspense account for later resolution.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $bank_id
+        account $platform_name
+        string $reference
+      }
+      send [$asset $amount] (
+        source = @banks:$bank_id:main allowing unbounded overdraft
+        destination = @platform:$platform_name:suspense:payin
+      )
+      set_tx_meta("reference", $reference)
+      set_tx_meta("status", "pending_identification")
+
+  SUSPENSE_RESOLUTION:
+    description: >
+      Resolve a suspense transaction by moving funds to the
+      identified client account.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $platform_name
+        account $client_id
+        string $original_reference
+      }
+      send [$asset $amount] (
+        source = @platform:$platform_name:suspense:payin
+        destination = @clients:$client_id:main
+      )
+      set_tx_meta("original_reference", $original_reference)
+      set_tx_meta("resolution_type", "client_identified")
+
+  PAYOUT_RESERVE:
+    description: >
+      Reserve funds for a client withdrawal. Moves from the client
+      account to a payout staging account tied to a specific reference.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $client_id
+        account $bank_id
+        string $payout_ref
+      }
+      send [$asset $amount] (
+        source = @clients:$client_id:main
+        destination = @banks:$bank_id:payout:$payout_ref
+      )
+      set_tx_meta("payout_ref", $payout_ref)
+      set_tx_meta("status", "reserved")
+
+  PAYOUT_SETTLEMENT:
+    description: >
+      Confirm a payout has settled at the bank. Moves from the
+      staging account to the bank's main account.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $bank_id
+        string $payout_ref
+        string $bank_reference
+      }
+      send [$asset $amount] (
+        source = @banks:$bank_id:payout:$payout_ref
+        destination = @banks:$bank_id:main
+      )
+      set_tx_meta("bank_reference", $bank_reference)
+      set_tx_meta("status", "settled")
+
+queries:
+  CLIENT_BALANCE:
+    description: Get a specific client's balance
+    resource: accounts
+    vars:
+      client_id:
+        type: string
+    params:
+      pageSize: 1
+    body:
+      $match:
+        address: "clients:${client_id}:main"
+
+  PENDING_SUSPENSE:
+    description: All unresolved suspense deposits
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: ":suspense:payin"
+
+  INFLIGHT_PAYOUTS:
+    description: All reserved but unsettled payouts
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: ":payout:"

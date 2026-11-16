@@ -36,6 +36,7 @@ func TestCLIExecution(t *testing.T) {
 		wantErr     string
 	}{
 		{name: "help", args: []string{"--help"}, wantOut: "Usage:"},
+		{name: "demo list with leading target flags", args: []string{"--organization=example-org", "--stack=example-stack", "stack", "demo", "--list"}, wantOut: "omnibus"},
 		{name: "version", args: []string{"--version"}, wantOut: "develop"},
 		{name: "json version", args: []string{"version", "-o", "json"}},
 		{name: "unknown command", args: []string{"unknown-command"}, wantStatus: 255, wantErr: `unknown command "unknown-command"`},

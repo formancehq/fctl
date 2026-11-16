@@ -1,0 +1,602 @@
+# Source: formancehq/docs, apps/docs/content/schemas-library/neobank-fbo.yaml
+# Revision: 2022dbe964864777d92ed6ed55f05671f2ac017a
+# Documentation-only meta wrapper omitted for the Ledger schema API.
+chart:
+  customers:
+    $customer_id:
+      .pattern: ^[a-zA-Z0-9_-]+$
+      available: {}
+      holds:
+        $auth_id:
+          .pattern: ^[a-zA-Z0-9_-]+$
+      withdrawals:
+        $withdrawal_id:
+          .pattern: ^[a-zA-Z0-9_-]+$
+          pending: {}
+      advances:
+        $advance_id:
+          .pattern: ^[a-zA-Z0-9_-]+$
+          outstanding: {}
+      .self: {}
+  platform:
+    banks:
+      sponsor:
+        fbo:
+          settled: {}
+          buffer: {}
+      corporate:
+        settled: {}
+        operating: {}
+    revenue:
+      interest: {}
+    expense:
+      advanceLoss: {}
+transactions:
+  ACH_DIRECT_DEPOSIT:
+    description: >-
+      Inbound ACH direct deposit settled into the FBO and credited to the
+      customer
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        monetary $amount
+        string $deposit_id
+        string $originator
+      }
+
+      send $amount (
+        source = @platform:banks:sponsor:fbo:settled allowing unbounded overdraft
+        destination = @customers:$customer_id:available
+      )
+
+      set_tx_meta("event_type", "ach_direct_deposit")
+      set_tx_meta("deposit_id", $deposit_id)
+      set_tx_meta("originator", $originator)
+  INCOMING_WIRE:
+    description: Inbound wire settled into the FBO and credited to the customer
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        monetary $amount
+        string $wire_id
+        string $originator
+      }
+
+      send $amount (
+        source = @platform:banks:sponsor:fbo:settled allowing unbounded overdraft
+        destination = @customers:$customer_id:available
+      )
+
+      set_tx_meta("event_type", "incoming_wire")
+      set_tx_meta("wire_id", $wire_id)
+      set_tx_meta("originator", $originator)
+  ACH_DEPOSIT_RETURN:
+    description: Reversal of a settled ACH deposit returned by the originating bank
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        monetary $amount
+        string $deposit_id
+      }
+
+      send $amount (
+        source = @customers:$customer_id:available allowing unbounded overdraft
+        destination = @platform:banks:sponsor:fbo:settled
+      )
+
+      set_tx_meta("event_type", "ach_deposit_return")
+      set_tx_meta("deposit_id", $deposit_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $deposit_id)
+  CARD_AUTH:
+    description: Debit-card authorization places a hold on the customer's available balance
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $auth_id
+        monetary $amount
+      }
+
+      send $amount (
+        source = @customers:$customer_id:available
+        destination = @customers:$customer_id:holds:$auth_id
+      )
+
+      set_tx_meta("event_type", "card_auth")
+      set_tx_meta("auth_id", $auth_id)
+  CARD_AUTH_REVERSE:
+    description: >-
+      Merchant-initiated reversal of a card authorization; hold returns to
+      available
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $auth_id
+        monetary $amount
+      }
+
+      send $amount (
+        source = @customers:$customer_id:holds:$auth_id
+        destination = @customers:$customer_id:available
+      )
+
+      set_tx_meta("event_type", "card_auth_reverse")
+      set_tx_meta("auth_id", $auth_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $auth_id)
+  CARD_AUTH_EXPIRE:
+    description: Authorization hold expires unused; remaining hold returns to available
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $auth_id
+        monetary $hold_balance = balance(@customers:$customer_id:holds:$auth_id, USD/2)
+      }
+
+      send $hold_balance (
+        source = @customers:$customer_id:holds:$auth_id
+        destination = @customers:$customer_id:available
+      )
+
+      set_tx_meta("event_type", "card_auth_expire")
+      set_tx_meta("auth_id", $auth_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $auth_id)
+  CARD_CAPTURE:
+    description: >-
+      Capture against an authorization; captured amount leaves the FBO,
+      remainder restored
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $auth_id
+        monetary $capture_amount
+        monetary $hold_balance = balance(@customers:$customer_id:holds:$auth_id, USD/2)
+      }
+
+      send $hold_balance (
+        source = @customers:$customer_id:holds:$auth_id
+        destination = {
+          max $capture_amount to @platform:banks:sponsor:fbo:settled
+          remaining to @customers:$customer_id:available
+        }
+      )
+
+      set_tx_meta("event_type", "card_capture")
+      set_tx_meta("auth_id", $auth_id)
+  CARD_REFUND:
+    description: Merchant refund of a prior capture credited to the customer
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        monetary $amount
+        string $refund_id
+        string $original_capture_id
+      }
+
+      send $amount (
+        source = @platform:banks:sponsor:fbo:settled allowing unbounded overdraft
+        destination = @customers:$customer_id:available
+      )
+
+      set_tx_meta("event_type", "card_refund")
+      set_tx_meta("refund_id", $refund_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $original_capture_id)
+  P2P_TRANSFER:
+    description: Instant in-ledger transfer between two customers; never touches the bank
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $from_customer_id
+        account $to_customer_id
+        monetary $amount
+        string $transfer_id
+      }
+
+      send $amount (
+        source = @customers:$from_customer_id:available
+        destination = @customers:$to_customer_id:available
+      )
+
+      set_tx_meta("event_type", "p2p_transfer")
+      set_tx_meta("transfer_id", $transfer_id)
+  ACH_WITHDRAWAL_RESERVE:
+    description: >-
+      Customer-requested outbound ACH withdrawal earmarked from available to
+      pending
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $withdrawal_id
+        monetary $amount
+      }
+
+      send $amount (
+        source = @customers:$customer_id:available
+        destination = @customers:$customer_id:withdrawals:$withdrawal_id:pending
+      )
+
+      set_tx_meta("event_type", "ach_withdrawal_reserve")
+      set_tx_meta("withdrawal_id", $withdrawal_id)
+  ACH_WITHDRAWAL_SETTLE:
+    description: Outbound ACH settles; pending funds leave the FBO
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $withdrawal_id
+        monetary $amount
+      }
+
+      send $amount (
+        source = @customers:$customer_id:withdrawals:$withdrawal_id:pending
+        destination = @platform:banks:sponsor:fbo:settled
+      )
+
+      set_tx_meta("event_type", "ach_withdrawal_settle")
+      set_tx_meta("withdrawal_id", $withdrawal_id)
+  ACH_WITHDRAWAL_RETURN:
+    description: Outbound ACH failed or returned; pending funds restored to available
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $withdrawal_id
+        monetary $amount
+      }
+
+      send $amount (
+        source = @customers:$customer_id:withdrawals:$withdrawal_id:pending
+        destination = @customers:$customer_id:available
+      )
+
+      set_tx_meta("event_type", "ach_withdrawal_return")
+      set_tx_meta("withdrawal_id", $withdrawal_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $withdrawal_id)
+  ADVANCE_ORIGINATION:
+    description: >-
+      Platform fronts an early-access advance; credited to available, booked as
+      a receivable
+    script: |-
+      #![feature("experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $advance_id
+        monetary $amount
+      }
+
+      send $amount (
+        source = @customers:$customer_id:advances:$advance_id:outstanding allowing unbounded overdraft
+        destination = @customers:$customer_id:available
+      )
+
+      set_tx_meta("event_type", "advance_origination")
+      set_tx_meta("advance_id", $advance_id)
+  ADVANCE_SETTLEMENT:
+    description: Expected deposit settles; repays the advance first, remainder to available
+    script: |-
+      #![feature("experimental-overdraft-function", "experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $advance_id
+        monetary $deposit_amount
+        monetary $advance_outstanding = overdraft(@customers:$customer_id:advances:$advance_id:outstanding, USD/2)
+      }
+
+      send $deposit_amount (
+        source = @platform:banks:sponsor:fbo:settled allowing unbounded overdraft
+        destination = {
+          max $advance_outstanding to @customers:$customer_id:advances:$advance_id:outstanding
+          remaining to @customers:$customer_id:available
+        }
+      )
+
+      set_tx_meta("event_type", "advance_settlement")
+      set_tx_meta("advance_id", $advance_id)
+  ADVANCE_WRITEOFF:
+    description: >-
+      Unrecoverable advance written off to loss; platform funds the FBO from
+      corporate
+    script: |-
+      #![feature("experimental-overdraft-function", "experimental-account-interpolation")]
+      vars {
+        account $customer_id
+        string $advance_id
+        monetary $advance_outstanding = overdraft(@customers:$customer_id:advances:$advance_id:outstanding, USD/2)
+      }
+
+      send $advance_outstanding (
+        source = @platform:expense:advanceLoss allowing unbounded overdraft
+        destination = @customers:$customer_id:advances:$advance_id:outstanding
+      )
+
+      send $advance_outstanding (
+        source = @platform:banks:sponsor:fbo:settled allowing unbounded overdraft
+        destination = @platform:banks:corporate:settled
+      )
+
+      set_tx_meta("event_type", "advance_writeoff")
+      set_tx_meta("advance_id", $advance_id)
+      set_tx_meta("adjustment_flag", "true")
+      set_tx_meta("adjusted_posting_event_id", $advance_id)
+  FBO_INTEREST_SWEEP:
+    description: Monthly sponsor interest on the FBO recognized as platform revenue
+    script: |-
+      vars {
+        monetary $amount
+        string $period_id
+      }
+
+      send $amount (
+        source = @platform:banks:sponsor:fbo:settled allowing unbounded overdraft
+        destination = @platform:revenue:interest
+      )
+
+      set_tx_meta("event_type", "fbo_interest_sweep")
+      set_tx_meta("period_id", $period_id)
+  OPERATING_MOVEMENT_TO_CORPORATE:
+    description: Weekly sweep of platform float from the FBO buffer to the corporate bank
+    script: |-
+      vars {
+        monetary $amount
+        string $movement_id
+      }
+
+      send $amount (
+        source = @platform:banks:sponsor:fbo:buffer
+        destination = @platform:banks:sponsor:fbo:settled
+      )
+
+      send $amount (
+        source = @platform:banks:corporate:settled allowing unbounded overdraft
+        destination = @platform:banks:corporate:operating
+      )
+
+      set_tx_meta("event_type", "operating_movement_to_corporate")
+      set_tx_meta("movement_id", $movement_id)
+  OPERATING_MOVEMENT_TO_FBO:
+    description: >-
+      Weekly top-up of platform float from the corporate bank into the FBO
+      buffer
+    script: |-
+      vars {
+        monetary $amount
+        string $movement_id
+      }
+
+      send $amount (
+        source = @platform:banks:corporate:operating
+        destination = @platform:banks:corporate:settled
+      )
+
+      send $amount (
+        source = @platform:banks:sponsor:fbo:settled allowing unbounded overdraft
+        destination = @platform:banks:sponsor:fbo:buffer
+      )
+
+      set_tx_meta("event_type", "operating_movement_to_fbo")
+      set_tx_meta("movement_id", $movement_id)
+queries:
+  daily_fbo_reconciliation_invariant_1:
+    name: Daily FBO reconciliation (invariant 1)
+    description: >-
+      The single asset-side account the platform reconciles against the
+      sponsor's reported FBO statement every day. The FBO settled account runs
+      negative; its absolute value is the ledger's view of settled cash in the
+      pooled account.
+    resource: accounts
+    body:
+      $match:
+        address: platform:banks:sponsor:fbo:settled
+  total_claims_against_the_fbo_internal_solvency_check:
+    name: Total claims against the FBO (internal solvency check)
+    description: >-
+      The sum of every positive claim against the FBO settled cash: all customer
+      available, held, and pending-withdrawal balances, the platform's FBO
+      float, and FBO interest revenue. Compared internally against the FBO
+      backing plus outstanding advances (design.md invariant 1).
+    resource: accounts
+    body:
+      $or:
+        - $match:
+            address: customers::available
+        - $match:
+            address: 'customers::holds::'
+        - $match:
+            address: customers::withdrawals::pending
+        - $match:
+            address: platform:banks:sponsor:fbo:buffer
+        - $match:
+            address: platform:revenue:interest
+  customer_available_balance:
+    name: Customer available balance
+    description: >-
+      One customer's spendable balance right now. The canonical per-customer
+      balance read.
+    resource: accounts
+    vars:
+      customer_id:
+        type: string
+    body:
+      $match:
+        address: customers:${customer_id}:available
+  customer_total_holds:
+    name: Customer total holds
+    description: >-
+      All current authorization holds for one customer, one row per hold. The
+      sum is that customer's on-hold amount; available plus held is the
+      customer's gross balance.
+    resource: accounts
+    vars:
+      customer_id:
+        type: string
+    body:
+      $match:
+        address: 'customers:${customer_id}:holds:'
+  customer_full_position:
+    name: Customer full position
+    description: >-
+      Every account in one customer's subtree (available, each hold, each
+      pending withdrawal, each advance) in a single read. Each row is one
+      (account, asset, balance) triple.
+    resource: accounts
+    vars:
+      customer_id:
+        type: string
+    body:
+      $match:
+        address: 'customers:${customer_id}:'
+  total_customer_spendable_and_held_liability:
+    name: Total customer spendable and held liability
+    description: >-
+      Total amount the platform owes customers as spendable plus on-hold funds,
+      across every customer. This is the headline platform liability per asset.
+    resource: accounts
+    body:
+      $or:
+        - $match:
+            address: customers::available
+        - $match:
+            address: 'customers::holds::'
+  total_platform_float:
+    name: Total platform float
+    description: >-
+      The platform's own money, provably separate from customer funds: the float
+      held inside the FBO plus the operating float at the corporate bank.
+      Neither address sits under the customers root, which is the structural
+      proof of separation.
+    resource: accounts
+    body:
+      $or:
+        - $match:
+            address: platform:banks:sponsor:fbo:buffer
+        - $match:
+            address: platform:banks:corporate:operating
+  outstanding_advances:
+    name: Outstanding advances
+    description: >-
+      Every advance account that still carries a balance. Advance accounts run
+      negative while outstanding and drain to zero when the deposit settles, so
+      a non-zero balance is an open advance.
+    resource: accounts
+    body:
+      $and:
+        - $match:
+            address: customers::advances::outstanding
+        - $not:
+            $match:
+              balance[USD/2]: 0
+  aging_advances:
+    name: Aging advances
+    description: >-
+      Advances that still carry a balance after the expected-deposit window.
+      Combined with an insertion_date upper bound on the API path, this surfaces
+      short or unrecovered advances that need clawback or write-off.
+    resource: accounts
+    body:
+      $and:
+        - $match:
+            address: customers::advances::outstanding
+        - $not:
+            $match:
+              balance[USD/2]: 0
+  total_advance_exposure:
+    name: Total advance exposure
+    description: >-
+      The platform's total early-access advance exposure right now: the summed
+      magnitude of every outstanding advance receivable.
+    resource: accounts
+    body:
+      $match:
+        address: customers::advances::outstanding
+  pending_withdrawals_in_flight:
+    name: Pending withdrawals in flight
+    description: >-
+      Every per-withdrawal pending account that still carries a balance:
+      outbound ACH funds earmarked but not yet settled or returned. Drains to
+      zero on settle or return, so a non-zero balance is in-flight.
+    resource: accounts
+    body:
+      $and:
+        - $match:
+            address: customers::withdrawals::pending
+        - $not:
+            $match:
+              balance[USD/2]: 0
+  card_capture_volume:
+    name: Card capture volume
+    description: >-
+      Capture cash leaving the FBO over a window. Read volume on the settled
+      account over the window (use startTime/endTime URL parameters).
+    resource: volumes
+    body:
+      $match:
+        address: platform:banks:sponsor:fbo:settled
+  p2p_transfer_volume:
+    name: P2P transfer volume
+    description: >-
+      Total peer-to-peer volume moving through customer available balances over
+      a window. Read volume on the customer available subtree (use
+      startTime/endTime URL parameters).
+    resource: volumes
+    body:
+      $match:
+        address: customers::available
+  monthly_interest_revenue:
+    name: Monthly interest revenue
+    description: >-
+      FBO interest recognized to platform revenue over the month. Read the
+      volume into the interest revenue account over the window (use
+      startTime/endTime URL parameters).
+    resource: volumes
+    body:
+      $match:
+        address: platform:revenue:interest
+  advance_loss_to_date:
+    name: Advance loss to date
+    description: >-
+      Realized loss on unrecovered advances. The advance-loss expense account
+      runs negative; its magnitude is the cumulative loss. Read the current
+      balance for the running total, or volume for a period figure.
+    resource: accounts
+    body:
+      $match:
+        address: platform:expense:advanceLoss
+  customer_transaction_audit:
+    name: Customer transaction audit
+    description: >-
+      Every transaction that touched any account in one customer's subtree, in
+      either direction. For drill-down and dispute investigation, not for
+      balance questions.
+    resource: transactions
+    vars:
+      customer_id:
+        type: string
+    body:
+      $match:
+        account: 'customers:${customer_id}:'
+  authorization_lifecycle_audit:
+    name: Authorization lifecycle audit
+    description: >-
+      Every transaction for one card authorization (auth, capture, reverse, or
+      expire), identified by the per-hold account.
+    resource: transactions
+    vars:
+      customer_id:
+        type: string
+      auth_id:
+        type: string
+    body:
+      $match:
+        account: 'customers:${customer_id}:holds:${auth_id}'

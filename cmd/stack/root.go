@@ -3,6 +3,7 @@ package stack
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/formancehq/fctl/v3/cmd/stack/demo"
 	"github.com/formancehq/fctl/v3/cmd/stack/mcp"
 	"github.com/formancehq/fctl/v3/cmd/stack/modules"
 	"github.com/formancehq/fctl/v3/cmd/stack/users"
@@ -25,6 +26,7 @@ func NewCommand() *cobra.Command {
 			NewUpgradeCommand(),
 			NewHistoryCommand(),
 			NewProxyCommand(),
+			demo.NewCommand(),
 			mcp.NewCommand(),
 			users.NewCommand(),
 			modules.NewCommand(),

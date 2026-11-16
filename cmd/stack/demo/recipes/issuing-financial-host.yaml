@@ -1,0 +1,597 @@
+# Source: formancehq/docs, apps/docs/content/schemas-library/issuing-financial-host.yaml
+# Revision: 2022dbe964864777d92ed6ed55f05671f2ac017a
+# Documentation-only meta wrapper omitted for the Ledger schema API.
+# Local correction: authorizations tag hold accounts with pii_id for ACTIVE_HOLDS_FOR_CARD.
+chart:
+  cardholder:
+    $account_id:
+      .pattern: '^[a-zA-Z0-9_-]+$'
+      main:
+        .self: {}
+        .metadata:
+          type:
+            default: "cardholder"
+      hold:
+        $authorization_id:
+          .self: {}
+          .metadata:
+            type:
+              default: "authorization_hold"
+      refund:
+        pending:
+          $refund_auth_id:
+            .self: {}
+            .metadata:
+              type:
+                default: "refund_pending"
+
+  banks:
+    $bank_id:
+      .pattern: '^[a-zA-Z0-9_:-]+$'
+      main:
+        .self: {}
+        .metadata:
+          type:
+            default: "nostro"
+
+  schemes:
+    $scheme_id:
+      .pattern: '^[a-zA-Z0-9_-]+$'
+      main:
+        .self: {}
+        .metadata:
+          type:
+            default: "scheme_liability"
+      chargeback:
+        .self: {}
+        .metadata:
+          type:
+            default: "scheme_chargeback"
+
+  platform:
+    $platform_name:
+      fees:
+        .self: {}
+      revenue:
+        .self: {}
+      chargeback_fees:
+        .self: {}
+
+  program_manager:
+    $pm_id:
+      .pattern: '^[a-zA-Z0-9_-]+$'
+      liability:
+        .self: {}
+        .metadata:
+          type:
+            default: "program_manager_liability"
+
+transactions:
+  CARD_AUTHORIZATION_APPROVED:
+    description: >
+      Authorize a card transaction by moving funds from the cardholder's
+      main account to a hold account. Supports optional overdraft.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        number $overdraft
+        account $account_id
+        string $authorization_id
+        string $pii_id
+        string $trx_details
+      }
+
+      send [$asset $amount] (
+        source = @cardholder:$account_id:main allowing overdraft up to [$asset $overdraft]
+        destination = @cardholder:$account_id:hold:$authorization_id
+      )
+
+      set_account_meta(@cardholder:$account_id:hold:$authorization_id, "pii_id", $pii_id)
+
+      set_tx_meta("authorization_id", $authorization_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+
+  CARD_AUTHORIZATION_PARTIAL:
+    description: >
+      Authorize a card transaction for up to the requested amount, approving
+      only what is available (including overdraft). Used for partial approvals
+      at fuel dispensers, etc.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        number $overdraft
+        account $account_id
+        string $authorization_id
+        string $pii_id
+        string $trx_details
+      }
+
+      send [$asset *] (
+        source = max [$asset $amount] from @cardholder:$account_id:main allowing overdraft up to [$asset $overdraft]
+        destination = @cardholder:$account_id:hold:$authorization_id
+      )
+
+      set_account_meta(@cardholder:$account_id:hold:$authorization_id, "pii_id", $pii_id)
+
+      set_tx_meta("authorization_id", $authorization_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+
+  CARD_AUTHORIZATION_INCREMENTAL:
+    description: >
+      Increase an existing authorization hold by moving additional funds
+      to the same hold account. Used for hotels, car rentals, etc.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        number $overdraft
+        account $account_id
+        string $authorization_id
+        string $pii_id
+        string $trx_details
+      }
+
+      send [$asset $amount] (
+        source = @cardholder:$account_id:main allowing overdraft up to [$asset $overdraft]
+        destination = @cardholder:$account_id:hold:$authorization_id
+      )
+
+      set_account_meta(@cardholder:$account_id:hold:$authorization_id, "pii_id", $pii_id)
+
+      set_tx_meta("authorization_id", $authorization_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("authorization_type", "incremental")
+
+  AUTHORIZATION_REVERSAL:
+    description: >
+      Release a specific amount from an authorization hold back to the
+      cardholder's main account. Supports both full and partial reversals.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $account_id
+        string $authorization_id
+        string $reversal_id
+        string $pii_id
+        string $trx_details
+      }
+
+      send [$asset $amount] (
+        source = @cardholder:$account_id:hold:$authorization_id
+        destination = @cardholder:$account_id:main
+      )
+
+      set_tx_meta("authorization_id", $authorization_id)
+      set_tx_meta("reversal_id", $reversal_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "authorization_reversal")
+
+  PRESENTMENT:
+    description: >
+      Settle an authorized transaction by moving held funds from the hold
+      account to the scheme's liability account.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $account_id
+        string $authorization_id
+        string $presentment_id
+        account $scheme_id
+        string $pii_id
+        string $trx_details
+      }
+
+      send [$asset $amount] (
+        source = @cardholder:$account_id:hold:$authorization_id
+        destination = @schemes:$scheme_id:main
+      )
+
+      set_tx_meta("authorization_id", $authorization_id)
+      set_tx_meta("presentment_id", $presentment_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "presentment")
+
+  PRESENTMENT_WITH_TIP:
+    description: >
+      Settle a transaction where the presentment exceeds the authorization
+      (e.g., restaurant tip). Debits the hold for the authorized amount and
+      the main account for the additional amount.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $auth_amount
+        number $additional_amount
+        account $account_id
+        string $authorization_id
+        string $presentment_id
+        account $scheme_id
+        string $pii_id
+        string $trx_details
+      }
+
+      // Move the authorized amount from hold to scheme
+      send [$asset $auth_amount] (
+        source = @cardholder:$account_id:hold:$authorization_id
+        destination = @schemes:$scheme_id:main
+      )
+
+      // Debit the additional amount (tip) directly from main account
+      send [$asset $additional_amount] (
+        source = @cardholder:$account_id:main
+        destination = @schemes:$scheme_id:main
+      )
+
+      set_tx_meta("authorization_id", $authorization_id)
+      set_tx_meta("presentment_id", $presentment_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "presentment_with_tip")
+
+  OFFLINE_PRESENTMENT:
+    description: >
+      Process an offline transaction where no prior authorization exists.
+      Debits the cardholder's main account directly with unbounded overdraft,
+      since the chip already approved the transaction.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $account_id
+        string $presentment_id
+        account $scheme_id
+        string $pii_id
+        string $trx_details
+      }
+
+      // Mandatory debit from main account - no prior authorization exists
+      send [$asset $amount] (
+        source = @cardholder:$account_id:main allowing unbounded overdraft
+        destination = @schemes:$scheme_id:main
+      )
+
+      set_tx_meta("presentment_id", $presentment_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "offline_presentment")
+      set_tx_meta("authorization_mode", "offline")
+
+  REFUND_AUTHORIZATION:
+    description: >
+      Authorize a refund from a merchant. Funds move from the scheme
+      to a pending refund account, not yet available to the cardholder.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $account_id
+        string $refund_auth_id
+        account $scheme_id
+        string $pii_id
+        string $trx_details
+      }
+
+      // Move from scheme to pending refund account (not yet available to cardholder)
+      send [$asset $amount] (
+        source = @schemes:$scheme_id:main allowing unbounded overdraft
+        destination = @cardholder:$account_id:refund:pending:$refund_auth_id
+      )
+
+      set_tx_meta("refund_auth_id", $refund_auth_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "refund_authorization")
+      set_tx_meta("refund_status", "pending")
+
+  REFUND_POSTING:
+    description: >
+      Complete a refund by releasing pending funds to the cardholder's
+      main account, making them available for use.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $account_id
+        string $refund_auth_id
+        string $refund_posting_id
+        string $trx_details
+      }
+
+      // Release funds from pending to main account (now available to cardholder)
+      send [$asset $amount] (
+        source = @cardholder:$account_id:refund:pending:$refund_auth_id
+        destination = @cardholder:$account_id:main
+      )
+
+      set_tx_meta("refund_auth_id", $refund_auth_id)
+      set_tx_meta("refund_posting_id", $refund_posting_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "refund_posting")
+      set_tx_meta("refund_status", "completed")
+
+  HOLD_REVERSAL_WILDCARD:
+    description: >
+      Release all remaining funds from a hold account back to the cardholder.
+      Uses wildcard amount to automatically release whatever balance remains.
+      Used after partial presentments, expired authorizations, or cancellations.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        account $account_id
+        string $authorization_id
+        string $reversal_id
+        string $pii_id
+        string $trx_details
+      }
+
+      // Release all remaining funds from hold account back to main account
+      send [$asset *] (
+        source = @cardholder:$account_id:hold:$authorization_id
+        destination = @cardholder:$account_id:main
+      )
+
+      set_tx_meta("authorization_id", $authorization_id)
+      set_tx_meta("reversal_id", $reversal_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "hold_reversal")
+
+  CHARGEBACK_ACCEPTANCE:
+    description: >
+      Accept a chargeback by crediting the cardholder from the scheme's
+      dedicated chargeback account.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $account_id
+        string $chargeback_id
+        account $scheme_id
+        string $original_presentment_id
+        string $pii_id
+        string $trx_details
+      }
+
+      // Credit cardholder from scheme's chargeback account
+      send [$asset $amount] (
+        source = @schemes:$scheme_id:chargeback allowing unbounded overdraft
+        destination = @cardholder:$account_id:main
+      )
+
+      set_tx_meta("chargeback_id", $chargeback_id)
+      set_tx_meta("original_presentment_id", $original_presentment_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "chargeback_acceptance")
+      set_tx_meta("chargeback_status", "accepted")
+
+  CHARGEBACK_CONFIRMATION:
+    description: >
+      Confirm a chargeback by moving funds from the scheme's main settlement
+      account to cover the chargeback account. Aligns with scheme settlement
+      deductions.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        string $chargeback_id
+        account $scheme_id
+        string $settlement_ref
+        string $trx_details
+      }
+
+      // Cover the chargeback account from scheme's main settlement account
+      send [$asset $amount] (
+        source = @schemes:$scheme_id:main allowing unbounded overdraft
+        destination = @schemes:$scheme_id:chargeback
+      )
+
+      set_tx_meta("chargeback_id", $chargeback_id)
+      set_tx_meta("settlement_ref", $settlement_ref)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "chargeback_confirmation")
+      set_tx_meta("chargeback_status", "confirmed")
+
+  SECOND_PRESENTMENT:
+    description: >
+      Reverse a chargeback when the merchant wins a dispute. Debits the
+      cardholder and re-establishes the scheme liability.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $account_id
+        string $chargeback_id
+        string $second_presentment_id
+        account $scheme_id
+        string $pii_id
+        string $trx_details
+      }
+
+      // Debit cardholder (reverses the chargeback credit) and credit scheme liability
+      send [$asset $amount] (
+        source = @cardholder:$account_id:main allowing unbounded overdraft
+        destination = @schemes:$scheme_id:main
+      )
+
+      set_tx_meta("chargeback_id", $chargeback_id)
+      set_tx_meta("second_presentment_id", $second_presentment_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "second_presentment")
+      set_tx_meta("chargeback_status", "reversed")
+
+  STIP_ADVICE:
+    description: >
+      Process a Stand-In Processing advice for a transaction approved by
+      the processor when the issuer was unavailable. Mandatory debit with
+      unbounded overdraft.
+    script: |
+      #![feature("experimental-account-interpolation")]
+      vars {
+        asset $asset
+        number $amount
+        account $account_id
+        string $stip_advice_id
+        account $scheme_id
+        string $pii_id
+        string $trx_details
+      }
+
+      // Mandatory debit from main account - transaction was already approved by stand-in processor
+      send [$asset $amount] (
+        source = @cardholder:$account_id:main allowing unbounded overdraft
+        destination = @schemes:$scheme_id:main
+      )
+
+      set_tx_meta("stip_advice_id", $stip_advice_id)
+      set_tx_meta("pii_id", $pii_id)
+      set_tx_meta("trx_details", $trx_details)
+      set_tx_meta("transaction_type", "stip_advice")
+      set_tx_meta("authorization_mode", "stand_in")
+
+queries:
+  ALL_HOLDS:
+    description: All authorization hold accounts across all cardholders
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "cardholder::hold:"
+
+  CARDHOLDER_HOLDS:
+    description: All authorization holds for a specific cardholder
+    resource: volumes
+    vars:
+      account_id:
+        type: string
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "cardholder:${account_id}:hold:"
+
+  SPECIFIC_HOLD:
+    description: A single authorization hold amount
+    resource: accounts
+    vars:
+      account_id:
+        type: string
+      authorization_id:
+        type: string
+    params:
+      pageSize: 1
+    body:
+      $match:
+        address: "cardholder:${account_id}:hold:${authorization_id}"
+
+  PENDING_REFUNDS:
+    description: All authorized but unposted refunds
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "cardholder::refund:pending:"
+
+  SCHEME_LIABILITY:
+    description: Total liability owed to a specific scheme
+    resource: accounts
+    vars:
+      scheme_id:
+        type: string
+    params:
+      pageSize: 1
+    body:
+      $match:
+        address: "schemes:${scheme_id}:main"
+
+  ALL_SCHEME_LIABILITIES:
+    description: All scheme accounts and their balances
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "schemes:"
+
+  ALL_CARDHOLDER_BALANCES:
+    description: All cardholder main account balances
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "cardholder::main"
+
+  SCHEME_CHARGEBACKS:
+    description: Chargeback liabilities for a specific scheme
+    resource: accounts
+    vars:
+      scheme_id:
+        type: string
+    params:
+      pageSize: 1
+    body:
+      $match:
+        address: "schemes:${scheme_id}:chargeback"
+
+  ALL_CHARGEBACKS:
+    description: All scheme chargeback accounts
+    resource: volumes
+    params:
+      pageSize: 100
+    body:
+      $match:
+        address: "schemes::chargeback"
+
+  ACTIVE_HOLDS_FOR_CARD:
+    description: Active authorization holds for a specific payment instrument with balance
+    resource: volumes
+    vars:
+      pii_id:
+        type: string
+    params:
+      pageSize: 100
+    body:
+      $and:
+        - $match:
+            address: "cardholder::hold:"
+        - $match:
+            metadata[pii_id]: "${pii_id}"
+        - $gt:
+            balance[EUR/2]: 0
+
+  OFFLINE_TRANSACTIONS:
+    description: All offline transaction presentments
+    resource: transactions
+    params:
+      pageSize: 100
+    body:
+      $and:
+        - $match:
+            account: "cardholder:"
+        - $match:
+            metadata[transaction_type]: "offline_presentment"
