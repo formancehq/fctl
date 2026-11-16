@@ -16,6 +16,9 @@ The catalog contains all runnable schemas published in the documentation at
 revision `2022dbe964864777d92ed6ed55f05671f2ac017a`. The source path and revision
 are recorded in each embedded YAML. `recipes/*.yaml` are
 compiled into the binary; running the command does not fetch documentation.
+The issuing recipe includes one local correction: approved, partial and incremental
+authorizations write `pii_id` on the hold account so `ACTIVE_HOLDS_FOR_CARD` can
+find funded holds for that payment instrument.
 
 | `--type` | Official templates | Scenario |
 | --- | ---: | --- |
@@ -92,7 +95,7 @@ scripts do not provide a funding operation:
 
 These inline transactions are marked `demo.template=DEMO_BOOTSTRAP`; they are not
 presented as official templates. The effective chart declares their `world`
-source. The original embedded YAML remains unchanged. Rideshare also uses `world`
+source. The opening-funds setup does not modify the embedded YAML. Rideshare also uses `world`
 as its documented external source/sink.
 
 All writes are synthetic Ledger entries. No bank, blockchain or Payments

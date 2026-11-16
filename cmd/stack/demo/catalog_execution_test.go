@@ -156,6 +156,54 @@ func TestCatalogRecipesExecuteRepeatedCycles(t *testing.T) {
 	}
 }
 
+// Check the query's data contract against actual interpreter output. This does
+// not replace executing the volumes query against a deployed Ledger v2 server.
+func TestIssuingAuthorizationsPopulateActiveHoldQueryFields(t *testing.T) {
+	schema, err := loadRecipeSchema("issuing-financial-host")
+	require.NoError(t, err)
+	query := schema.V2QueryTemplates["ACTIVE_HOLDS_FOR_CARD"].V2VolumeQueryTemplate
+	require.NotNil(t, query)
+	require.Equal(t, map[string]any{"$and": []any{
+		map[string]any{"$match": map[string]any{"address": "cardholder::hold:"}},
+		map[string]any{"$match": map[string]any{"metadata[pii_id]": "${pii_id}"}},
+		map[string]any{"$gt": map[string]any{"balance[EUR/2]": float64(0)}},
+	}}, query.Body)
+	require.Contains(t, query.Vars, "pii_id")
+	for _, template := range []string{"CARD_AUTHORIZATION_APPROVED", "CARD_AUTHORIZATION_PARTIAL", "CARD_AUTHORIZATION_INCREMENTAL"} {
+		t.Run(template, func(t *testing.T) {
+			parsed := ns.Parse(schema.V2TransactionTemplates[template].Script)
+			require.Empty(t, parsed.GetParsingErrors())
+			const hold = "cardholder:alice:hold:auth_1"
+			balances := ns.Balances{"cardholder:alice:main": {"EUR/2": big.NewInt(100)}}
+			if template == "CARD_AUTHORIZATION_INCREMENTAL" {
+				// An incremental authorization must tag an existing hold too.
+				balances[hold] = ns.AccountBalance{"EUR/2": big.NewInt(20)}
+			}
+			vars := map[string]string{
+				"asset": "EUR/2", "amount": "150", "overdraft": "100",
+				"account_id": "alice", "authorization_id": "auth_1",
+				"pii_id": "card_1", "trx_details": "Synthetic authorization",
+			}
+			if template == "CARD_AUTHORIZATION_PARTIAL" {
+				vars["overdraft"] = "0" // Only the available 100 can be held.
+			}
+			result, err := parsed.Run(t.Context(), vars, ns.StaticStore{Balances: balances})
+			require.NoError(t, err)
+			require.NotEmpty(t, result.Postings)
+			for _, posting := range result.Postings {
+				require.Equal(t, hold, posting.Destination)
+				catalogAddBalance(balances, posting.Source, posting.Asset, new(big.Int).Neg(posting.Amount))
+				catalogAddBalance(balances, posting.Destination, posting.Asset, posting.Amount)
+			}
+			// All three conjuncts of ACTIVE_HOLDS_FOR_CARD must hold for the
+			// account, including account metadata rather than transaction metadata.
+			require.Positive(t, balances[hold]["EUR/2"].Sign())
+			require.Equal(t, vars["pii_id"], result.AccountsMetadata[hold]["pii_id"])
+			require.Len(t, result.AccountsMetadata, 1, "only the funded hold needs the instrument tag")
+		})
+	}
+}
+
 func catalogAddBalance(balances ns.Balances, account, asset string, amount *big.Int) {
 	if balances[account] == nil {
 		balances[account] = ns.AccountBalance{}
