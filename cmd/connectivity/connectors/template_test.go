@@ -3,6 +3,7 @@ package connectors
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +19,7 @@ import (
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
 	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 var templateNow = time.Date(2026, time.November, 10, 9, 0, 0, 0, time.UTC)
@@ -75,7 +77,10 @@ func templateClient(t *testing.T, schema map[string]any, gotVersion *string) *fo
 				*gotVersion = version
 			}
 			resolved := version
-			if version == "beta" {
+			switch version {
+			case "stable":
+				resolved = "2.0.0"
+			case "beta":
 				resolved = "2.1.0-beta.1"
 			}
 			return &connectivity.ConnectorVersion{Version: resolved, ConfigSchema: schema}, nil
@@ -105,14 +110,14 @@ func TestTemplateRendersCommentedYAML(t *testing.T) {
 	var gotVersion string
 	output, err := executeCommand(testNewTemplateCommand(templateClient(t, templateSchema(), &gotVersion), nil), "stripe", "--file", "-")
 	require.NoError(t, err)
-	require.Equal(t, "2.0.0", gotVersion, "defaults to the catalogue latest version")
+	require.Equal(t, "stable", gotVersion, "defaults to the stable channel, like connections install")
 
 	expected := `# Connection configuration for connector "stripe"
-# Generated from version 2.0.0 on 2026-11-10.
+# Generated from version 2.0.0 (channel: stable) on 2026-11-10.
 #
 # Fill in the values, then install with:
 #   fctl connectivity connections install stripe \
-#     --ledger <ledger> --version 2.0.0 --config stripe.yaml
+#     --ledger <ledger> --channel stable --config stripe.yaml
 #
 # Keys left empty are unset: install fails while a required key is unset.
 # Values are strings: quote numbers and booleans, for example "100" or "true".
@@ -242,14 +247,41 @@ func TestTemplateWithoutFields(t *testing.T) {
 	require.Empty(t, parsed)
 }
 
-func TestTemplateRequiresPublishedVersion(t *testing.T) {
+func emptyChannelClient(t *testing.T, gotVersion *string) *formance.FormanceV1 {
+	t.Helper()
 	connector := connectorFixture("stripe")
-	connector.LatestVersion = nil
-	client := sdkFor(connectorTransportMock{
+	return sdkFor(connectorTransportMock{
 		get: func(context.Context, string) (*connectivity.Connector, error) { return &connector, nil },
+		getVersion: func(_ context.Context, _, version string) (*connectivity.ConnectorVersion, error) {
+			*gotVersion = version
+			return nil, &sdkerrors.SDKError{StatusCode: http.StatusNotFound, Body: `{"errorCode":"channel_empty","errorMessage":"No validated version"}`}
+		},
 	})
-	_, err := executeCommand(testNewTemplateCommand(client, nil), "stripe", "--file", "-")
-	require.EqualError(t, err, `connector "stripe" has no published version`)
+}
+
+func TestTemplateWithoutStableReleaseAsksForAnExplicitSelector(t *testing.T) {
+	var gotVersion string
+	_, err := executeCommand(testNewTemplateCommand(emptyChannelClient(t, &gotVersion), nil), "stripe", "--file", "-")
+	require.Equal(t, "stable", gotVersion)
+	require.ErrorContains(t, err, `connector "stripe" has no release on the stable channel; set --channel or --version explicitly`)
+	var apiErr *connectivity.Error
+	require.ErrorAs(t, err, &apiErr, "the native API error stays available")
+	require.Equal(t, "channel_empty", *apiErr.ErrorCode)
+}
+
+func TestTemplateWithEmptyExplicitChannelAsksForAnExplicitSelector(t *testing.T) {
+	var gotVersion string
+	_, err := executeCommand(testNewTemplateCommand(emptyChannelClient(t, &gotVersion), nil), "stripe", "--channel", "rc", "--file", "-")
+	require.Equal(t, "rc", gotVersion)
+	require.ErrorContains(t, err, `connector "stripe" has no release on the rc channel; set --channel or --version explicitly`)
+}
+
+func TestTemplateWithMissingPinnedVersionKeepsTheAPIError(t *testing.T) {
+	var gotVersion string
+	_, err := executeCommand(testNewTemplateCommand(emptyChannelClient(t, &gotVersion), nil), "stripe", "--version", "9.9.9", "--file", "-")
+	require.Equal(t, "9.9.9", gotVersion)
+	require.Error(t, err)
+	require.NotContains(t, err.Error(), "set --channel or --version")
 }
 
 func TestTemplateWritesPrivateFileAndRefusesOverwrite(t *testing.T) {

@@ -166,8 +166,10 @@ including required secrets and a version/channel selector.
 ### Configuration templates
 
 `connectors template <connector>` generates a commented YAML file for
-`connections install --config` from the selected version's schema
-(`--version`, `--channel`, else the latest version, as for `connectors show`).
+`connections install --config` from the selected version's schema. Like `connections install`, it uses the
+newest version on the `stable` channel unless `--channel` or `--version` is
+set. When that channel has no release, the command fails and asks for an
+explicit `--channel` or `--version`.
 The header gives the matching install command, the schema `requirements`, and
 security tips when the schema has secret fields. Fields keep the
 `connectors show` grouping and order; each is preceded by its full description

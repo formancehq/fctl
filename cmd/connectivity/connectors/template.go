@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +19,8 @@ import (
 	connectivityinternal "github.com/formancehq/fctl/v3/cmd/connectivity/internal"
 	fctl "github.com/formancehq/fctl/v3/pkg"
 	formance "github.com/formancehq/fctl/v3/pkg/client"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/connectivity"
+	"github.com/formancehq/fctl/v3/pkg/client/pkg/models/sdkerrors"
 )
 
 const (
@@ -25,6 +28,10 @@ const (
 	templateChannelFlag = "channel"
 	templateFileFlag    = "file"
 	templateForceFlag   = "force"
+
+	// templateDefaultChannel matches the channel connections install tracks
+	// when neither --version nor --channel is set.
+	templateDefaultChannel = "stable"
 
 	// templateStdout is the --file value that prints the template.
 	templateStdout = "-"
@@ -76,8 +83,8 @@ func NewTemplateCommand() *cobra.Command {
 		}, "\n")),
 		fctl.WithArgs(cobra.ExactArgs(1)),
 		fctl.WithValidArgsFunction(CompleteConnectorNames()),
-		fctl.WithStringFlag(templateVersionFlag, "", "Use this exact version's schema, for example v0.5.0-beta.14. Defaults to the latest version"),
-		fctl.WithStringFlag(templateChannelFlag, "", "Use the schema of the newest version on this channel: stable, rc, beta or alpha"),
+		fctl.WithStringFlag(templateVersionFlag, "", "Use this exact version's schema, for example v0.5.0-beta.14. Cannot be combined with --channel"),
+		fctl.WithStringFlag(templateChannelFlag, "", "Use the schema of the newest version on this channel: stable, rc, beta or alpha. Defaults to stable when --version is not set"),
 		fctl.WithStringFlag(templateFileFlag, "", "Destination file. Defaults to ./<connector>.yaml; use - to print to stdout"),
 		fctl.WithBoolFlag(templateForceFlag, false, "Overwrite the destination file if it already exists"),
 		fctl.WithController[*TemplateStore](controller),
@@ -113,6 +120,10 @@ func (c *TemplateController) run(cmd *cobra.Command, args []string, client *form
 	if version != "" && channel != "" {
 		return nil, fmt.Errorf("--version and --channel cannot be combined")
 	}
+	// Like connections install, track the stable channel unless told otherwise.
+	if version == "" && channel == "" {
+		channel = templateDefaultChannel
+	}
 	selected := version
 	if selected == "" {
 		selected = channel
@@ -131,11 +142,12 @@ func (c *TemplateController) run(cmd *cobra.Command, args []string, client *form
 		return nil, err
 	}
 	schema, err := getSchemaVersion(cmd, client, name, *connector, selected)
+	if version == "" && channelEmpty(err) {
+		// The connector exists (fetched above), so the channel has no release.
+		return nil, fmt.Errorf("connector %q has no release on the %s channel; set --channel or --version explicitly: %w", name, channel, err)
+	}
 	if err != nil {
 		return nil, err
-	}
-	if schema == nil {
-		return nil, fmt.Errorf("connector %q has no published version", name)
 	}
 
 	configFile := file
@@ -176,6 +188,21 @@ func (c *TemplateController) Render(cmd *cobra.Command, _ []string) error {
 		}
 	}
 	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Configuration template for %q (%s) written to %s.", c.store.Connector, c.store.Version, c.store.File))
+}
+
+// channelEmpty reports that the requested channel resolved to no version:
+// the API's channel_empty or not_found codes, or a bare 404.
+func channelEmpty(err error) bool {
+	if err == nil {
+		return false
+	}
+	var apiErr *connectivity.Error
+	if errors.As(err, &apiErr) {
+		code := fctl.StringPointerToString(apiErr.ErrorCode)
+		return strings.EqualFold(code, "channel_empty") || strings.EqualFold(code, "not_found")
+	}
+	var sdkErr *sdkerrors.SDKError
+	return errors.As(err, &sdkErr) && sdkErr.StatusCode == http.StatusNotFound
 }
 
 // writeTemplateFile creates path readable only by the current user. It never
