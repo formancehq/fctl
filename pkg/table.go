@@ -187,6 +187,23 @@ func RenderText(out io.Writer, text string) error {
 	return err
 }
 
+// RenderWarning writes "Warning: text" like RenderText, in yellow when out is
+// a terminal so redirected output stays free of escape codes.
+func RenderWarning(out io.Writer, text string) error {
+	text = "Warning: " + text
+	width := TerminalWidth(out)
+	if width <= 0 {
+		_, err := fmt.Fprintln(out, text)
+		return err
+	}
+	lines := Wrap(text, width)
+	for i, line := range lines {
+		lines[i] = pterm.FgYellow.Sprint(line)
+	}
+	_, err := fmt.Fprintln(out, strings.Join(lines, "\n"))
+	return err
+}
+
 // RenderBullet writes "- text" with wrapped lines indented under the text.
 func RenderBullet(out io.Writer, text string) error {
 	lines := []string{text}

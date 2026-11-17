@@ -172,7 +172,7 @@ func (c *TemplateController) run(cmd *cobra.Command, args []string, client *form
 	}
 	c.store.File = file
 	if ignored, ok := c.gitIgnored(cmd.Context(), file); ok && !ignored {
-		c.store.Warning = fmt.Sprintf("%s is inside a git repository and not ignored. Add it to .gitignore before filling in credentials.", file)
+		c.store.Warning = fmt.Sprintf("%s is inside a git repository and not ignored. Add it to .gitignore before filling it in, so credentials and other sensitive information are never committed.", file)
 	}
 	return c, nil
 }
@@ -183,7 +183,7 @@ func (c *TemplateController) Render(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	if c.store.Warning != "" {
-		if err := fctl.RenderText(cmd.ErrOrStderr(), "Warning: "+c.store.Warning); err != nil {
+		if err := fctl.RenderWarning(cmd.ErrOrStderr(), c.store.Warning); err != nil {
 			return err
 		}
 	}

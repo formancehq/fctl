@@ -321,6 +321,7 @@ func TestTemplateWarnsWhenFileIsNotGitIgnored(t *testing.T) {
 	output, err := executeCommand(testNewTemplateCommand(client, notIgnored), "stripe", "--file", filepath.Join(dir, "a.yaml"))
 	require.NoError(t, err)
 	require.Contains(t, output, "Warning: "+filepath.Join(dir, "a.yaml")+" is inside a git repository and not ignored.")
+	require.Contains(t, output, "so credentials and other sensitive information are never committed.")
 
 	output, err = executeCommand(testNewTemplateCommand(client, ignored), "stripe", "--file", filepath.Join(dir, "b.yaml"))
 	require.NoError(t, err)
