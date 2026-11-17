@@ -91,14 +91,11 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 	if err != nil {
 		return nil, err
 	}
-	response, err := client.GetConnector(cmd.Context(), operations.GetConnectorRequest{Name: url.PathEscape(name)}, nil)
+	connector, err := getConnector(cmd, client, name)
 	if err != nil {
 		return nil, err
 	}
-	if response == nil || response.Connector == nil {
-		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
-	}
-	c.store.Connector = *response.Connector
+	c.store.Connector = *connector
 
 	versions, err := connectivityinternal.CollectPages(showVersionsPageSize, showVersionsMaxPages,
 		func(options connectivityinternal.ListOptions) ([]connectivity.ConnectorVersionSummary, bool, string, error) {
@@ -125,23 +122,45 @@ func (c *ShowController) run(cmd *cobra.Command, args []string, client *formance
 	}
 	c.store.Versions = versions
 
-	// Fetch the requested version or channel, else the exact release projected
-	// by the catalogue.
+	version, err := getSchemaVersion(cmd, client, name, c.store.Connector, selected)
+	if err != nil {
+		return nil, err
+	}
+	c.store.Version = version
+	return c, nil
+}
+
+// getConnector fetches a connector from the catalogue.
+func getConnector(cmd *cobra.Command, client *formance.FormanceV1, name string) (*connectivity.Connector, error) {
+	response, err := client.GetConnector(cmd.Context(), operations.GetConnectorRequest{Name: url.PathEscape(name)}, nil)
+	if err != nil {
+		return nil, err
+	}
+	if response == nil || response.Connector == nil {
+		return nil, fmt.Errorf("show connectivity connector %q: empty response", name)
+	}
+	return response.Connector, nil
+}
+
+// getSchemaVersion fetches the requested version or channel, else the exact
+// release projected by the catalogue. It returns nil when the connector has
+// no published version and none was requested.
+func getSchemaVersion(cmd *cobra.Command, client *formance.FormanceV1, name string, connector connectivity.Connector, selected string) (*connectivity.ConnectorVersion, error) {
 	version := selected
 	if version == "" {
-		version = fctl.StringPointerToString(c.store.Connector.LatestVersion)
+		version = fctl.StringPointerToString(connector.LatestVersion)
 	}
-	if version != "" {
-		response, err := client.GetConnectorVersion(cmd.Context(), operations.GetConnectorVersionRequest{Name: url.PathEscape(name), Version: url.PathEscape(version)}, nil)
-		if err != nil {
-			return nil, err
-		}
-		if response == nil || response.ConnectorVersion == nil {
-			return nil, fmt.Errorf("show connectivity connector %q: empty version %q response", name, version)
-		}
-		c.store.Version = response.ConnectorVersion
+	if version == "" {
+		return nil, nil
 	}
-	return c, nil
+	response, err := client.GetConnectorVersion(cmd.Context(), operations.GetConnectorVersionRequest{Name: url.PathEscape(name), Version: url.PathEscape(version)}, nil)
+	if err != nil {
+		return nil, err
+	}
+	if response == nil || response.ConnectorVersion == nil {
+		return nil, fmt.Errorf("show connectivity connector %q: empty version %q response", name, version)
+	}
+	return response.ConnectorVersion, nil
 }
 
 // showVersionSelector returns the --version or --channel value; at most one
@@ -238,6 +257,16 @@ type schemaField struct {
 	summary, defaultText string
 	hasDefault           bool
 	groupIndex           int
+	// details is the full description, enum the allowed values when the
+	// schema declares them exactly, and defaultRaw the schema default; the
+	// template command uses them where show keeps a one-line summary.
+	details    string
+	enum       []string
+	defaultRaw any
+}
+
+func (field schemaField) secret() bool {
+	return field.kind == "secret"
 }
 
 func (field schemaField) withDescription() schemaField {
@@ -300,9 +329,9 @@ func schemaFields(schema map[string]any) []schemaField {
 				kind = "secret"
 			}
 			description, _ := definition["description"].(string)
-			field := schemaField{key: key, source: section.source, kind: kind, summary: fctl.FirstSentence(description), required: required[key]}
+			field := schemaField{key: key, source: section.source, kind: kind, summary: fctl.FirstSentence(description), details: strings.TrimSpace(description), required: required[key]}
 			if value, ok := definition["default"]; ok {
-				field.defaultText, field.hasDefault = defaultValue(value), true
+				field.defaultText, field.hasDefault, field.defaultRaw = defaultValue(value), true, value
 			}
 			place, grouped := placements[section.reference+key]
 			if !grouped {
@@ -353,9 +382,9 @@ func appendComposedFields(schema map[string]any, fields []schemaField, placement
 		if field.Password {
 			kind = "secret"
 		}
-		composed := schemaField{key: key, source: source, kind: kind, summary: fctl.FirstSentence(field.Description), required: field.Required}
+		composed := schemaField{key: key, source: source, kind: kind, summary: fctl.FirstSentence(field.Description), details: strings.TrimSpace(field.Description), enum: field.Enum, required: field.Required}
 		if field.HasDefault {
-			composed.defaultText, composed.hasDefault = defaultValue(field.Default), true
+			composed.defaultText, composed.hasDefault, composed.defaultRaw = defaultValue(field.Default), true, field.Default
 		}
 		place, grouped := placements[reference]
 		if !grouped {
@@ -382,8 +411,14 @@ func withResolvedMetadata(field schemaField, resolved configuration.SchemaField)
 	if field.summary == "" {
 		field.summary = fctl.FirstSentence(resolved.Description)
 	}
+	if field.details == "" {
+		field.details = strings.TrimSpace(resolved.Description)
+	}
+	if len(field.enum) == 0 {
+		field.enum = resolved.Enum
+	}
 	if !field.hasDefault && resolved.HasDefault {
-		field.defaultText, field.hasDefault = defaultValue(resolved.Default), true
+		field.defaultText, field.hasDefault, field.defaultRaw = defaultValue(resolved.Default), true, resolved.Default
 	}
 	return field
 }

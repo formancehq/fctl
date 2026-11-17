@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connections/configuration"
 	"github.com/formancehq/fctl/v3/cmd/connectivity/connectors"
@@ -43,6 +44,9 @@ type InstallController struct {
 	read    configuration.ReadFileFunc
 	approve approvalFunc
 	store   *InstallStore
+	// secretConfigFile is the --config file when it holds secret values, so
+	// plain output can remind the user to dispose of it.
+	secretConfigFile string
 }
 
 var _ fctl.Controller[*InstallStore] = (*InstallController)(nil)
@@ -218,6 +222,7 @@ func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.F
 		return nil, fmt.Errorf("--ledger cannot be empty")
 	}
 
+	c.secretConfigFile = ""
 	connectorName := args[0]
 	version, err := resolveConnectorVersion(cmd.Context(), client, connectorName, installVersionSelector(cmd))
 	if err != nil {
@@ -290,7 +295,44 @@ func (c *InstallController) run(cmd *cobra.Command, args []string, client *sdk.F
 		return nil, fmt.Errorf("install connectivity connection %q: empty response", name)
 	}
 	c.store.Connection = *instance
+	if path := fctl.GetString(cmd, configFlag); configFileHasSecrets(cmd, c.read, path, version) {
+		c.secretConfigFile = path
+	}
 	return c, nil
+}
+
+// configFileHasSecrets reports whether the --config file sets a value for a
+// password field. Standard input cannot be read twice and is skipped.
+func configFileHasSecrets(cmd *cobra.Command, read configuration.ReadFileFunc, path string, version *connectivity.ConnectorVersion) bool {
+	if path == "" || path == "-" {
+		return false
+	}
+	fields, err := configuration.SchemaFields(version)
+	if err != nil {
+		return false
+	}
+	contents, err := read(cmd, path)
+	if err != nil {
+		return false
+	}
+	var document map[string]any
+	if err := yaml.Unmarshal([]byte(contents), &document); err != nil {
+		return false
+	}
+	for _, field := range fields {
+		if !field.Password {
+			continue
+		}
+		section := "env"
+		if field.Kind == configuration.ConfigFile {
+			section = "files"
+		}
+		values, _ := document[section].(map[string]any)
+		if value, _ := values[field.Key].(string); value != "" {
+			return true
+		}
+	}
+	return false
 }
 
 func configHasData(config *connectivity.ConnectionConfiguration) bool {
@@ -299,7 +341,13 @@ func configHasData(config *connectivity.ConnectionConfiguration) bool {
 
 func (c *InstallController) Render(cmd *cobra.Command, _ []string) error {
 	instance := c.store.Connection
-	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q installed with connector %q for ledger %q.", instance.Name,
+	if err := fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Connection %q installed with connector %q for ledger %q.", instance.Name,
 		fctl.StringPointerToString(instance.ConnectionConfiguration.Connector),
-		fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger)))
+		fctl.StringPointerToString(instance.ConnectionConfiguration.Ledger))); err != nil {
+		return err
+	}
+	if c.secretConfigFile == "" {
+		return nil
+	}
+	return fctl.RenderText(cmd.OutOrStdout(), fmt.Sprintf("Tip: %s contains credentials; delete it or move it to a safe place.", c.secretConfigFile))
 }

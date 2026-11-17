@@ -19,7 +19,8 @@ fctl connectivity
 ├── server-infos
 ├── connectors
 │   ├── list
-│   └── show <connector> [--version <version> | --channel <channel>]
+│   ├── show <connector> [--version <version> | --channel <channel>]
+│   └── template <connector> [--version <version> | --channel <channel>] [--file <path>] [--force]
 └── connections
     ├── list
     ├── show <connection>
@@ -161,6 +162,29 @@ The API validates the resulting configuration. Full HTTP PUT replacement is
 different: it preserves omitted connector and ledger identities, but clears
 omitted mutable fields. Callers must resupply the complete mutable configuration,
 including required secrets and a version/channel selector.
+
+### Configuration templates
+
+`connectors template <connector>` generates a commented YAML file for
+`connections install --config` from the selected version's schema
+(`--version`, `--channel`, else the latest version, as for `connectors show`).
+The header gives the matching install command, the schema `requirements`, and
+security tips when the schema has secret fields. Fields keep the
+`connectors show` grouping and order; each is preceded by its full description
+and a `Required|Optional · type · one of … · default …` line.
+
+Required keys are left empty, which YAML reads as null, so install reports
+them as missing until they are filled in. Optional keys are commented out,
+pre-filled with their default as a quoted string. Secret fields are never
+pre-filled.
+
+The file is written to `./<connector>.yaml` unless `--file` is set, with mode
+`0600`. An existing file is never replaced without `--force`. When the file is
+inside a git work tree and not ignored, a warning is printed. `--file -` prints
+the template to standard output instead.
+
+After a successful install, plain output reminds the user to delete or move
+the `--config` file when it holds a value for a secret field.
 
 ## Suspension, resumption and deletion
 

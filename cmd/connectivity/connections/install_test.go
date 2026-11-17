@@ -343,3 +343,41 @@ func TestInstallCompletionReturnsVersionsSchemaKeysAndFileCandidates(t *testing.
 	require.Equal(t, []string{"TOKEN=@fixtures/token.txt"}, sets)
 	require.Equal(t, cobra.ShellCompDirectiveNoFileComp, directive)
 }
+
+func TestInstallRemindsToDisposeOfAConfigFileHoldingSecrets(t *testing.T) {
+	client := mutationClientMock{
+		connectorVersions: connectorVersions{
+			getVersion: func(context.Context, string, string) (*connectivity.ConnectorVersion, error) {
+				return versionWithOptionalSchema(), nil
+			},
+		},
+		create: func(_ context.Context, body connectivity.ConnectionCreate) (*connectivity.Connection, error) {
+			return &connectivity.Connection{Name: body.Name, ConnectionConfiguration: createdConfiguration(body.ConnectionConfiguration)}, nil
+		},
+	}
+	const tip = "Tip: stripe.yaml contains credentials; delete it or move it to a safe place."
+	tests := []struct {
+		name   string
+		config string
+		args   []string
+		want   bool
+	}{
+		{name: "secret env value in the file", config: "env:\n  TOKEN: secret\n", want: true},
+		{name: "secret file value in the file", config: "files:\n  /etc/plugin/ca.pem: pem\n", want: true},
+		{name: "secret left empty in the file", config: "env:\n  TOKEN:\n  API_URL: https://example\n"},
+		{name: "secret supplied with --set", config: "env:\n  API_URL: https://example\n", args: []string{"--set=TOKEN=secret"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			read := mockReadFile(map[string]string{"stripe.yaml": tt.config})
+			args := append([]string{"stripe", "--ledger=main", "--version=2.0.0", "--config=stripe.yaml", "--confirm"}, tt.args...)
+			output, err := executeCommand(testNewInstallCommand(factoryReturning(client), read, mockPathCompleter(nil)), args...)
+			require.NoError(t, err)
+			if tt.want {
+				require.Contains(t, output, tip)
+			} else {
+				require.NotContains(t, output, "Tip:")
+			}
+		})
+	}
+}
